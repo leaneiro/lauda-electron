@@ -369,13 +369,16 @@ function registerRequests(): void {
         for (const action of whenWindowReady.splice(0)) action();
       });
     }
+    // LAUDA_PLATFORM lays the window out as on another system, to look at
+    // its title bar while developing; the menus and dialogs stay this one's.
+    const platform = (process.env.LAUDA_PLATFORM ?? process.platform) as "darwin" | "win32" | "linux";
     return {
-      platform: process.platform as "darwin" | "win32" | "linux",
+      platform,
       locale: strings.locale,
       settings: settings.value,
       version: buildInfo.version,
       gitHash: buildInfo.gitHash,
-      windowControlsWidth: isMac ? 0 : isWindows ? 138 : 104,
+      windowControlsWidth: platform === "darwin" ? 0 : platform === "win32" ? 138 : 104,
     };
   });
   handle("app:show-settings", () => showSettings());

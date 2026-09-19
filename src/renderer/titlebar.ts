@@ -206,9 +206,12 @@ export class TitleBar {
   private watchWindowControls(): void {
     const overlay = (navigator as Navigator & { windowControlsOverlay?: { visible: boolean; getTitlebarAreaRect(): DOMRect; addEventListener(type: string, listener: () => void): void } }).windowControlsOverlay;
     if (!overlay || isMac()) return;
+    // Until the system reports where its buttons are, the room measured for
+    // them on each system (set at startup) stands.
     const update = () => {
       const rect = overlay.getTitlebarAreaRect();
-      const room = overlay.visible && rect.width > 0 ? Math.max(window.innerWidth - (rect.x + rect.width), 0) : 0;
+      if (!overlay.visible || rect.width <= 0) return;
+      const room = Math.max(window.innerWidth - (rect.x + rect.width), 0);
       document.documentElement.style.setProperty("--window-controls-room", `${room}px`);
     };
     overlay.addEventListener("geometrychange", update);

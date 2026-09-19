@@ -8,11 +8,13 @@ const svg = (body: string, viewBox = "0 0 24 24") =>
 
 export const icons = {
   editorOnly: svg(
-    `<rect x="5.5" y="2.8" width="13" height="18.4" rx="2.6"/><path d="M8.8 8h6.4M8.8 11.4h6.4M8.8 14.8h4.2"/>`,
+    `<rect x="5.5" y="2.8" width="13" height="18.4" rx="2.6"/><path d="M8.7 7h6.2M8.7 9.6h6.2M8.7 12.2h3.4" stroke-width="1.45"/>`,
   ),
   split: svg(`<rect x="2.6" y="4.6" width="18.8" height="14.8" rx="2.8"/><path d="M12 4.8v14.4"/>`),
+  // A letter and two lines over a picture, the picture's hill and sun cut
+  // out of it, as in doc.richtext.
   previewOnly: svg(
-    `<rect x="5.5" y="2.8" width="13" height="18.4" rx="2.6"/><path d="M8.8 6.8h2.6M8.8 9.4h2.6M13.4 6.8h1.8M13.4 9.4h1.8"/><rect x="8.6" y="12.2" width="6.8" height="5.6" rx="1"/><path d="M8.9 17.4l2.3-2.4 1.6 1.5 1.1-1 1.3 1.4" stroke-width="1.2"/>`,
+    `<defs><mask id="picture-cutout"><rect width="24" height="24" fill="#fff"/><path d="M8.6 18.4l2.4-2.2 1.5 1.3 1.1-0.9 1.9 1.8z" fill="#000"/><circle cx="10.2" cy="14.4" r="0.8" fill="#000"/></mask></defs><rect x="5.5" y="2.8" width="13" height="18.4" rx="2.6"/><path d="M8.3 10.3l1.65-4.5 1.65 4.5M8.85 8.9h2.2" stroke-width="1.35"/><path d="M13.1 6.6h2.4M13.1 9.2h2.4" stroke-width="1.35"/><rect x="8.1" y="12.3" width="7.8" height="6.4" rx="0.9" fill="currentColor" stroke="none" mask="url(#picture-cutout)"/>`,
   ),
   outline: svg(
     `<circle cx="5.2" cy="6.6" r="1.25" fill="currentColor" stroke="none"/><circle cx="5.2" cy="12" r="1.25" fill="currentColor" stroke="none"/><circle cx="5.2" cy="17.4" r="1.25" fill="currentColor" stroke="none"/><path d="M9.2 6.6h10.4M9.2 12h10.4M9.2 17.4h10.4"/>`,

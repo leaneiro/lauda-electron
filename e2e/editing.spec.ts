@@ -77,7 +77,10 @@ test("scrolling the editor brings the preview to the same block", async () => {
   // (Just after the app moved the preview, its scroll events are echoes and
   // ignored for a moment, as in the native preview.)
   await window.waitForTimeout(400);
-  await preview.locator("h2").nth(29).evaluate((heading) => window.scrollTo(0, heading.getBoundingClientRect().top + window.scrollY - 48));
+  await preview.locator("h2").nth(29).evaluate((heading) => {
+    const page = heading.ownerDocument.defaultView!;
+    page.scrollTo(0, heading.getBoundingClientRect().top + page.scrollY - 48);
+  });
   await expect
     .poll(
       () =>

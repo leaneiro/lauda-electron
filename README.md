@@ -62,7 +62,24 @@ npm run dist:win     # NSIS installer, x64 and arm64
 ```
 
 Build Linux packages on Linux (or in a container) and Windows installers
-on Windows for the most reliable results.
+on Windows. On a Mac with Apple silicon and no Rosetta, the AppImage and
+NSIS tools don't run, but `npx electron-builder --linux deb` and
+`npx electron-builder --win zip` (a portable folder) do.
+
+`npm run e2e` tests the development build; with `LAUDA_EXECUTABLE` set to
+a packaged app's executable, the same tests run against it.
+`LAUDA_PLATFORM=win32` (or `linux`) lays the window out as on that system,
+to look at its title bar from another one.
+
+## Differences from the native app
+
+- The toolbar's Liquid Glass is imitated with translucency and blur; the
+  real material is macOS's own.
+- Browse All Versions is left out: it is macOS's version store.
+- Word counts use the browser's word boundaries, which agree with macOS
+  except in Japanese, which macOS splits its own way.
+- The Markdown parser is a different one (micromark instead of cmark),
+  made to produce the same HTML; a few unusual constructions still differ.
 
 ## Project layout
 

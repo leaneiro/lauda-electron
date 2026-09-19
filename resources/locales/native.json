@@ -1,0 +1,636 @@
+{
+  "%lld characters": {
+    "en": {
+      "one": "%lld character",
+      "other": "%lld characters"
+    },
+    "pt-BR": {
+      "zero": "%lld caracteres",
+      "one": "%lld caractere",
+      "other": "%lld caracteres"
+    },
+    "de": {
+      "other": "%lld Zeichen",
+      "one": "%lld Zeichen"
+    },
+    "es": {
+      "other": "%lld caracteres",
+      "one": "%lld carácter"
+    },
+    "fr": {
+      "other": "%lld caractères",
+      "one": "%lld caractère"
+    },
+    "ja": {
+      "other": "%lld文字"
+    },
+    "zh-Hans": {
+      "other": "%lld 个字符"
+    }
+  },
+  "%lld pt": {
+    "de": "%lld pt",
+    "es": "%lld pt",
+    "fr": "%lld pt",
+    "ja": "%lld pt",
+    "pt-BR": "%lld pt",
+    "zh-Hans": "%lld pt"
+  },
+  "%lld words": {
+    "en": {
+      "one": "%lld word",
+      "other": "%lld words"
+    },
+    "pt-BR": {
+      "zero": "%lld palavras",
+      "one": "%lld palavra",
+      "other": "%lld palavras"
+    },
+    "de": {
+      "other": "%lld Wörter",
+      "one": "%lld Wort"
+    },
+    "es": {
+      "other": "%lld palabras",
+      "one": "%lld palabra"
+    },
+    "fr": {
+      "other": "%lld mots",
+      "one": "%lld mot"
+    },
+    "ja": {
+      "other": "%lld語"
+    },
+    "zh-Hans": {
+      "other": "%lld 个单词"
+    }
+  },
+  "A single Return doesn't break the line, as in standard Markdown.": {
+    "pt-BR": "Um Enter sozinho não quebra a linha, como no Markdown padrão.",
+    "de": "Ein einzelnes Return erzeugt keinen Zeilenumbruch, wie in Standard-Markdown.",
+    "es": "Un solo Retorno no divide la línea, como en Markdown estándar.",
+    "fr": "Un simple retour ne crée pas de saut de ligne, comme en Markdown standard.",
+    "ja": "Return 1回では改行しません（標準のMarkdownと同じ）。",
+    "zh-Hans": "单独按一次 Return 不会换行，与标准 Markdown 相同。"
+  },
+  "Add Link": {
+    "pt-BR": "Adicionar Link",
+    "de": "Link hinzufügen",
+    "es": "Añadir enlace",
+    "fr": "Ajouter un lien",
+    "ja": "リンクを追加",
+    "zh-Hans": "添加链接"
+  },
+  "Appearance": {
+    "pt-BR": "Aparência",
+    "de": "Erscheinungsbild",
+    "es": "Aspecto",
+    "fr": "Apparence",
+    "ja": "外観",
+    "zh-Hans": "外观"
+  },
+  "Automatic": {
+    "pt-BR": "Automático",
+    "de": "Automatisch",
+    "es": "Automático",
+    "fr": "Automatique",
+    "ja": "自動",
+    "zh-Hans": "自动"
+  },
+  "Bold": {
+    "pt-BR": "Negrito",
+    "de": "Fett",
+    "es": "Negrita",
+    "fr": "Gras",
+    "ja": "ボールド",
+    "zh-Hans": "粗体"
+  },
+  "Browse All Versions…": {
+    "pt-BR": "Explorar Todas as Versões…",
+    "de": "Alle Versionen durchsuchen …",
+    "es": "Explorar todas las versiones…",
+    "fr": "Parcourir toutes les versions…",
+    "ja": "すべてのバージョンをブラウズ…",
+    "zh-Hans": "浏览所有版本…"
+  },
+  "Clear Menu": {
+    "pt-BR": "Limpar Menu",
+    "de": "Einträge löschen",
+    "es": "Vaciar menú",
+    "fr": "Effacer le menu",
+    "ja": "メニューを消去",
+    "zh-Hans": "清除菜单"
+  },
+  "Close": {
+    "pt-BR": "Fechar",
+    "de": "Schließen",
+    "es": "Cerrar",
+    "fr": "Fermer",
+    "ja": "閉じる",
+    "zh-Hans": "关闭"
+  },
+  "Close %@": {
+    "pt-BR": "Fechar %@",
+    "de": "%@ schließen",
+    "es": "Cerrar %@",
+    "fr": "Fermer %@",
+    "ja": "%@を閉じる",
+    "zh-Hans": "关闭%@"
+  },
+  "Close %@, unsaved": {
+    "pt-BR": "Fechar %@, não salvo",
+    "de": "%@ schließen, nicht gesichert",
+    "es": "Cerrar %@, sin guardar",
+    "fr": "Fermer %@, non enregistré",
+    "ja": "%@を閉じる、未保存",
+    "zh-Hans": "关闭%@，未存储"
+  },
+  "Close (Esc)": {
+    "pt-BR": "Fechar (Esc)",
+    "de": "Schließen (Esc)",
+    "es": "Cerrar (Esc)",
+    "fr": "Fermer (Échap)",
+    "ja": "閉じる（Esc）",
+    "zh-Hans": "关闭 (Esc)"
+  },
+  "Couldn't add the image to the document's folder": {
+    "de": "Das Bild konnte nicht zum Ordner des Dokuments hinzugefügt werden",
+    "es": "No se ha podido añadir la imagen a la carpeta del documento",
+    "fr": "Impossible d’ajouter l’image au dossier du document",
+    "ja": "画像を書類のフォルダに追加できませんでした",
+    "pt-BR": "Não foi possível adicionar a imagem à pasta do documento",
+    "zh-Hans": "无法将图像添加到文稿所在的文件夹"
+  },
+  "Dark": {
+    "pt-BR": "Escuro",
+    "de": "Dunkel",
+    "es": "Oscuro",
+    "fr": "Sombre",
+    "ja": "ダーク",
+    "zh-Hans": "深色"
+  },
+  "Document outline": {
+    "pt-BR": "Sumário do documento",
+    "de": "Gliederung des Dokuments",
+    "es": "Índice del documento",
+    "fr": "Table des matières du document",
+    "ja": "書類の目次",
+    "zh-Hans": "文稿目录"
+  },
+  "Duplicate": {
+    "pt-BR": "Duplicar",
+    "de": "Duplizieren",
+    "es": "Duplicar",
+    "fr": "Dupliquer",
+    "ja": "複製",
+    "zh-Hans": "复制"
+  },
+  "Editing…": {
+    "pt-BR": "Editando…",
+    "de": "Wird bearbeitet …",
+    "es": "Editando…",
+    "fr": "Modification en cours…",
+    "ja": "編集中…",
+    "zh-Hans": "正在编辑…"
+  },
+  "Editor": {
+    "pt-BR": "Editor",
+    "de": "Editor",
+    "es": "Editor",
+    "fr": "Éditeur",
+    "ja": "エディタ",
+    "zh-Hans": "编辑器"
+  },
+  "Editor Only": {
+    "pt-BR": "Somente Editor",
+    "de": "Nur Editor",
+    "es": "Solo editor",
+    "fr": "Éditeur uniquement",
+    "ja": "エディタのみ",
+    "zh-Hans": "仅编辑器"
+  },
+  "Editor and Preview": {
+    "pt-BR": "Editor e Visualização",
+    "de": "Editor und Vorschau",
+    "es": "Editor y vista previa",
+    "fr": "Éditeur et aperçu",
+    "ja": "エディタとプレビュー",
+    "zh-Hans": "编辑器和预览"
+  },
+  "Export as HTML…": {
+    "pt-BR": "Exportar como HTML…",
+    "de": "Als HTML exportieren …",
+    "es": "Exportar como HTML…",
+    "fr": "Exporter au format HTML…",
+    "ja": "HTMLとして書き出す…",
+    "zh-Hans": "导出为 HTML…"
+  },
+  "Export as PDF…": {
+    "pt-BR": "Exportar como PDF…",
+    "de": "Als PDF exportieren …",
+    "es": "Exportar como PDF…",
+    "fr": "Exporter au format PDF…",
+    "ja": "PDFとして書き出す…",
+    "zh-Hans": "导出为 PDF…"
+  },
+  "Find": {
+    "pt-BR": "Localizar",
+    "de": "Suchen",
+    "es": "Buscar",
+    "fr": "Rechercher",
+    "ja": "検索",
+    "zh-Hans": "查找"
+  },
+  "Find Next": {
+    "pt-BR": "Localizar Seguinte",
+    "de": "Weitersuchen",
+    "es": "Buscar siguiente",
+    "fr": "Rechercher le suivant",
+    "ja": "次を検索",
+    "zh-Hans": "查找下一个"
+  },
+  "Find Previous": {
+    "pt-BR": "Localizar Anterior",
+    "de": "Rückwärts suchen",
+    "es": "Buscar anterior",
+    "fr": "Rechercher le précédent",
+    "ja": "前を検索",
+    "zh-Hans": "查找上一个"
+  },
+  "Find and Replace…": {
+    "pt-BR": "Localizar e Substituir…",
+    "de": "Suchen und ersetzen …",
+    "es": "Buscar y reemplazar…",
+    "fr": "Rechercher et remplacer…",
+    "ja": "検索と置換…",
+    "zh-Hans": "查找并替换…"
+  },
+  "Find…": {
+    "pt-BR": "Localizar…",
+    "de": "Suchen …",
+    "es": "Buscar…",
+    "fr": "Rechercher…",
+    "ja": "検索…",
+    "zh-Hans": "查找…"
+  },
+  "Font": {
+    "pt-BR": "Fonte",
+    "de": "Schrift",
+    "es": "Tipo de letra",
+    "fr": "Police",
+    "ja": "フォント",
+    "zh-Hans": "字体"
+  },
+  "Format": {
+    "pt-BR": "Formatar",
+    "de": "Format",
+    "es": "Formato",
+    "fr": "Format",
+    "ja": "フォーマット",
+    "zh-Hans": "格式"
+  },
+  "General": {
+    "pt-BR": "Geral",
+    "de": "Allgemein",
+    "es": "General",
+    "fr": "Général",
+    "ja": "一般",
+    "zh-Hans": "通用"
+  },
+  "Images are copied to the document's folder, so save the file before adding images.": {
+    "pt-BR": "As imagens são copiadas para a pasta do documento, então salve o arquivo antes de adicionar imagens.",
+    "de": "Bilder werden in den Ordner des Dokuments kopiert. Sichere daher die Datei, bevor du Bilder hinzufügst.",
+    "es": "Las imágenes se copian en la carpeta del documento, así que guarda el archivo antes de añadir imágenes.",
+    "fr": "Les images sont copiées dans le dossier du document : enregistrez donc le fichier avant d’ajouter des images.",
+    "ja": "画像は書類のフォルダにコピーされるため、画像を追加する前にファイルを保存してください。",
+    "zh-Hans": "图像会拷贝到文稿所在的文件夹，因此请先保存文件再添加图像。"
+  },
+  "Italic": {
+    "pt-BR": "Itálico",
+    "de": "Kursiv",
+    "es": "Cursiva",
+    "fr": "Italique",
+    "ja": "イタリック",
+    "zh-Hans": "斜体"
+  },
+  "Light": {
+    "pt-BR": "Claro",
+    "de": "Hell",
+    "es": "Claro",
+    "fr": "Clair",
+    "ja": "ライト",
+    "zh-Hans": "浅色"
+  },
+  "Line height": {
+    "pt-BR": "Entrelinha",
+    "de": "Zeilenabstand",
+    "es": "Interlineado",
+    "fr": "Interligne",
+    "ja": "行の高さ",
+    "zh-Hans": "行高"
+  },
+  "Medium": {
+    "pt-BR": "Médio",
+    "de": "Mittel",
+    "es": "Mediano",
+    "fr": "Moyenne",
+    "ja": "中",
+    "zh-Hans": "中等"
+  },
+  "Move To…": {
+    "pt-BR": "Mover Para…",
+    "de": "Bewegen …",
+    "es": "Trasladar a…",
+    "fr": "Déplacer vers…",
+    "ja": "移動…",
+    "zh-Hans": "移到…"
+  },
+  "New": {
+    "pt-BR": "Novo",
+    "de": "Neu",
+    "es": "Nuevo",
+    "fr": "Nouveau",
+    "ja": "新規",
+    "zh-Hans": "新建"
+  },
+  "Next (⌘G)": {
+    "pt-BR": "Seguinte (⌘G)",
+    "de": "Nächster (⌘G)",
+    "es": "Siguiente (⌘G)",
+    "fr": "Suivant (⌘G)",
+    "ja": "次へ（⌘G）",
+    "zh-Hans": "下一个 (⌘G)"
+  },
+  "No headings in the document": {
+    "pt-BR": "Nenhum título no documento",
+    "de": "Keine Überschriften im Dokument",
+    "es": "No hay títulos en el documento",
+    "fr": "Aucun titre dans le document",
+    "ja": "書類に見出しがありません",
+    "zh-Hans": "文稿中没有标题"
+  },
+  "Normal": {
+    "pt-BR": "Normal",
+    "de": "Normal",
+    "es": "Normal",
+    "fr": "Normale",
+    "ja": "標準",
+    "zh-Hans": "标准"
+  },
+  "Not saved yet": {
+    "pt-BR": "Ainda não salvo",
+    "de": "Noch nicht gesichert",
+    "es": "Aún sin guardar",
+    "fr": "Pas encore enregistré",
+    "ja": "未保存",
+    "zh-Hans": "尚未保存"
+  },
+  "Open Recent": {
+    "pt-BR": "Abrir Recente",
+    "de": "Benutzte Dokumente",
+    "es": "Abrir recientes",
+    "fr": "Ouvrir l’élément récent",
+    "ja": "最近使った項目を開く",
+    "zh-Hans": "打开最近使用"
+  },
+  "Open…": {
+    "pt-BR": "Abrir…",
+    "de": "Öffnen …",
+    "es": "Abrir…",
+    "fr": "Ouvrir…",
+    "ja": "開く…",
+    "zh-Hans": "打开…"
+  },
+  "Outline": {
+    "pt-BR": "Sumário",
+    "de": "Gliederung",
+    "es": "Índice",
+    "fr": "Table des matières",
+    "ja": "目次",
+    "zh-Hans": "目录"
+  },
+  "Preview": {
+    "pt-BR": "Visualização",
+    "de": "Vorschau",
+    "es": "Vista previa",
+    "fr": "Aperçu",
+    "ja": "プレビュー",
+    "zh-Hans": "预览"
+  },
+  "Preview Only": {
+    "pt-BR": "Somente Visualização",
+    "de": "Nur Vorschau",
+    "es": "Solo vista previa",
+    "fr": "Aperçu uniquement",
+    "ja": "プレビューのみ",
+    "zh-Hans": "仅预览"
+  },
+  "Previous (⇧⌘G)": {
+    "pt-BR": "Anterior (⇧⌘G)",
+    "de": "Vorheriger (⇧⌘G)",
+    "es": "Anterior (⇧⌘G)",
+    "fr": "Précédent (⇧⌘G)",
+    "ja": "前へ（⇧⌘G）",
+    "zh-Hans": "上一个 (⇧⌘G)"
+  },
+  "Rename…": {
+    "pt-BR": "Renomear…",
+    "de": "Umbenennen …",
+    "es": "Renombrar…",
+    "fr": "Renommer…",
+    "ja": "名称変更…",
+    "zh-Hans": "重新命名…"
+  },
+  "Restore Defaults": {
+    "pt-BR": "Restaurar padrões",
+    "de": "Standardwerte wiederherstellen",
+    "es": "Restaurar valores predeterminados",
+    "fr": "Rétablir les réglages par défaut",
+    "ja": "デフォルトに戻す",
+    "zh-Hans": "恢复默认设置"
+  },
+  "Revert to Saved": {
+    "pt-BR": "Reverter para o Salvo",
+    "de": "Zurück zur letzten Version",
+    "es": "Volver a la versión guardada",
+    "fr": "Revenir à la version enregistrée",
+    "ja": "保存した状態に戻す",
+    "zh-Hans": "复原到已存储版本"
+  },
+  "Save": {
+    "pt-BR": "Salvar",
+    "de": "Sichern",
+    "es": "Guardar",
+    "fr": "Enregistrer",
+    "ja": "保存",
+    "zh-Hans": "存储"
+  },
+  "Save the document first": {
+    "pt-BR": "Salve o documento primeiro",
+    "de": "Sichere zuerst das Dokument",
+    "es": "Primero guarda el documento",
+    "fr": "Enregistrez d’abord le document",
+    "ja": "先に書類を保存してください",
+    "zh-Hans": "请先保存文稿"
+  },
+  "Saved": {
+    "pt-BR": "Salvo",
+    "de": "Gesichert",
+    "es": "Guardado",
+    "fr": "Enregistré",
+    "ja": "保存済み",
+    "zh-Hans": "已保存"
+  },
+  "Saved · %@": {
+    "pt-BR": "Salvo · %@",
+    "de": "Gesichert · %@",
+    "es": "Guardado · %@",
+    "fr": "Enregistré · %@",
+    "ja": "保存済み · %@",
+    "zh-Hans": "已保存 · %@"
+  },
+  "Show Next Tab": {
+    "pt-BR": "Mostrar Próxima Aba",
+    "de": "Nächsten Tab anzeigen",
+    "es": "Mostrar pestaña siguiente",
+    "fr": "Afficher l’onglet suivant",
+    "ja": "次のタブを表示",
+    "zh-Hans": "显示下一个标签页"
+  },
+  "Show Previous Tab": {
+    "pt-BR": "Mostrar Aba Anterior",
+    "de": "Vorherigen Tab anzeigen",
+    "es": "Mostrar pestaña anterior",
+    "fr": "Afficher l’onglet précédent",
+    "ja": "前のタブを表示",
+    "zh-Hans": "显示上一个标签页"
+  },
+  "Size": {
+    "pt-BR": "Tamanho",
+    "de": "Größe",
+    "es": "Tamaño",
+    "fr": "Taille",
+    "ja": "サイズ",
+    "zh-Hans": "大小"
+  },
+  "Strict line breaks": {
+    "pt-BR": "Quebras de linha estritas",
+    "de": "Strikte Zeilenumbrüche",
+    "es": "Saltos de línea estrictos",
+    "fr": "Sauts de ligne stricts",
+    "ja": "厳密な改行",
+    "zh-Hans": "严格换行"
+  },
+  "System (Mono)": {
+    "pt-BR": "Sistema (Mono)",
+    "de": "System (Mono)",
+    "es": "Sistema (Mono)",
+    "fr": "Système (Mono)",
+    "ja": "システム (Mono)",
+    "zh-Hans": "系统 (Mono)"
+  },
+  "System (Sans)": {
+    "pt-BR": "Sistema (Sans)",
+    "de": "System (Sans)",
+    "es": "Sistema (Sans)",
+    "fr": "Système (Sans)",
+    "ja": "システム (Sans)",
+    "zh-Hans": "系统 (Sans)"
+  },
+  "System (Serif)": {
+    "pt-BR": "Sistema (Serif)",
+    "de": "System (Serif)",
+    "es": "Sistema (Serif)",
+    "fr": "Système (Serif)",
+    "ja": "システム (Serif)",
+    "zh-Hans": "系统 (Serif)"
+  },
+  "Text width: %@": {
+    "pt-BR": "Largura do texto: %@",
+    "de": "Textbreite: %@",
+    "es": "Ancho del texto: %@",
+    "fr": "Largeur du texte : %@",
+    "ja": "テキストの幅：%@",
+    "zh-Hans": "文本宽度：%@"
+  },
+  "Text width: %@. Next: %@": {
+    "pt-BR": "Largura do texto: %@. Próxima: %@",
+    "de": "Textbreite: %@. Nächste: %@",
+    "es": "Ancho del texto: %@. Siguiente: %@",
+    "fr": "Largeur du texte : %@. Suivante : %@",
+    "ja": "テキストの幅：%@。次：%@",
+    "zh-Hans": "文本宽度：%@。下一个：%@"
+  },
+  "Untitled": {
+    "pt-BR": "Sem título",
+    "de": "Ohne Titel",
+    "es": "Sin título",
+    "fr": "Sans titre",
+    "ja": "名称未設定",
+    "zh-Hans": "未命名"
+  },
+  "View Mode": {
+    "pt-BR": "Modo de exibição",
+    "de": "Ansichtsmodus",
+    "es": "Modo de visualización",
+    "fr": "Mode d’affichage",
+    "ja": "表示モード",
+    "zh-Hans": "显示模式"
+  },
+  "Welcome": {
+    "pt-BR": "Boas-vindas",
+    "de": "Willkommen",
+    "es": "Bienvenida",
+    "fr": "Bienvenue",
+    "ja": "ようこそ",
+    "zh-Hans": "欢迎"
+  },
+  "Welcome Guide": {
+    "pt-BR": "Guia de Boas-Vindas",
+    "de": "Einführung",
+    "es": "Guía de bienvenida",
+    "fr": "Guide de bienvenue",
+    "ja": "ようこそガイド",
+    "zh-Hans": "欢迎指南"
+  },
+  "Wide": {
+    "pt-BR": "Amplo",
+    "de": "Breit",
+    "es": "Ancho",
+    "fr": "Large",
+    "ja": "広い",
+    "zh-Hans": "宽"
+  },
+  "image-%@.png": {
+    "pt-BR": "imagem-%@.png",
+    "de": "bild-%@.png",
+    "es": "imagen-%@.png",
+    "fr": "image-%@.png",
+    "ja": "image-%@.png",
+    "zh-Hans": "image-%@.png"
+  },
+  "less than 1 min read": {
+    "pt-BR": "menos de 1 min de leitura",
+    "de": "unter 1 Min. Lesezeit",
+    "es": "menos de 1 min de lectura",
+    "fr": "moins d’1 min de lecture",
+    "ja": "1分未満で読めます",
+    "zh-Hans": "阅读时间不到 1 分钟"
+  },
+  "macOS saves automatically; ⌘S saves right away.": {
+    "pt-BR": "O macOS salva automaticamente; ⌘S salva na hora.",
+    "de": "macOS sichert automatisch; ⌘S sichert sofort.",
+    "es": "macOS guarda automáticamente; ⌘S guarda al instante.",
+    "fr": "macOS enregistre automatiquement ; ⌘S enregistre immédiatement.",
+    "ja": "macOSは自動的に保存します。⌘Sですぐに保存できます。",
+    "zh-Hans": "macOS 会自动保存；按 ⌘S 可立即保存。"
+  },
+  "~%lld min read": {
+    "pt-BR": "~%lld min de leitura",
+    "de": "~%lld Min. Lesezeit",
+    "es": "~%lld min de lectura",
+    "fr": "~%lld min de lecture",
+    "ja": "約%lld分で読めます",
+    "zh-Hans": "阅读约 %lld 分钟"
+  }
+}

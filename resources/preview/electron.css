@@ -1,0 +1,26 @@
+/* Additions for Chromium, after the native app's preview.css (which comes
+   from the native repository and isn't edited here). WebKit draws a task
+   list's disabled checkbox in the accent colour; Chromium greys it out, so
+   the box is drawn here as WebKit shows it. */
+li.task input[type="checkbox"] {
+    appearance: none;
+    width: 0.75em;
+    height: 0.75em;
+    border-radius: 0.2em;
+    border: 1px solid rgba(0, 0, 0, 0.22);
+    background: #ffffff no-repeat center / 100%;
+}
+li.task input[type="checkbox"]:checked {
+    border-color: transparent;
+    background-color: color-mix(in srgb, var(--link) 50%, #ffffff);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.7 8.3l2.9 2.9L12.3 5.2' fill='none' stroke='%23fff' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) {
+    li.task input[type="checkbox"] {
+        border-color: rgba(255, 255, 255, 0.25);
+        background-color: rgba(255, 255, 255, 0.06);
+    }
+    li.task input[type="checkbox"]:checked {
+        background-color: color-mix(in srgb, var(--link) 55%, #1e1e21);
+    }
+}

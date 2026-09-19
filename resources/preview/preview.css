@@ -1,0 +1,162 @@
+:root {
+    --pfont: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    --psize: 16px;
+    --plh: 1.65;
+
+    --bg: #ffffff;
+    --fg: #1d1d1f;
+    --muted: #57606a;
+    --faint: #6e6e73;
+    --rule-strong: #e8e8ed;
+    --rule-soft: #efeff4;
+    --border: #d8dee4;
+    --code-bg: #f6f8fa;
+    --code-border: #eaeef2;
+    --link: #0969da;
+    --selection: #b6d7ff;
+    --row-even: #fbfcfd;
+    --quote-border: #d0d7de;
+    --hl-kw: #cf222e;
+    --hl-str: #0a3069;
+    --hl-com: #6e7781;
+    --hl-num: #0550ae;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #1e1e21;
+        --fg: #e6e6e9;
+        --muted: #a0a5ad;
+        --faint: #86868b;
+        --rule-strong: #333338;
+        --rule-soft: #2b2b30;
+        --border: #3a3a41;
+        --code-bg: #2a2a30;
+        --code-border: #35353c;
+        --link: #6cb2ff;
+        --selection: #3b5b80;
+        --row-even: #232327;
+        --quote-border: #47474f;
+        --hl-kw: #ff7b72;
+        --hl-str: #a5d6ff;
+        --hl-com: #8b949e;
+        --hl-num: #79c0ff;
+    }
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+    margin: 0;
+    background: var(--bg);
+    font-family: var(--pfont);
+    font-size: var(--psize);
+    line-height: var(--plh);
+    color: var(--fg);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    word-wrap: break-word;
+}
+article {
+    max-width: var(--article-max, 46rem);
+    margin: 0 auto;
+    padding: 3rem 2.75rem 6rem;
+    transition: max-width 0.25s ease;
+}
+h1, h2, h3, h4, h5, h6 {
+    line-height: 1.25;
+    font-weight: 700;
+    margin: 1.75em 0 0.6em;
+    letter-spacing: -0.015em;
+}
+h1 { font-size: 2em; margin-top: 0.5em; padding-bottom: 0.35em; border-bottom: 1px solid var(--rule-strong); }
+h2 { font-size: 1.5em; padding-bottom: 0.25em; border-bottom: 1px solid var(--rule-soft); }
+h3 { font-size: 1.2em; }
+h4 { font-size: 1.05em; }
+h5, h6 { font-size: 1em; }
+h6 { color: var(--faint); }
+p { margin: 0.9em 0; }
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+strong { font-weight: 650; }
+code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.875em;
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+}
+pre {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    line-height: 1.5;
+}
+pre code { background: none; padding: 0; font-size: 0.85em; }
+.hl-kw { color: var(--hl-kw); }
+.hl-str { color: var(--hl-str); }
+.hl-com { color: var(--hl-com); font-style: italic; }
+.hl-num { color: var(--hl-num); }
+blockquote {
+    margin: 1.2em 0;
+    padding: 0.1em 1.25em;
+    border-left: 3px solid var(--quote-border);
+    color: var(--muted);
+}
+ul, ol { padding-left: 1.6em; margin: 0.9em 0; }
+li { margin: 0.25em 0; }
+li > p { margin: 0.35em 0; }
+li.task { list-style: none; margin-left: -1.4em; }
+li.task input[type="checkbox"] { margin-right: 0.45em; vertical-align: -0.1em; accent-color: var(--link); }
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1.2em 0;
+    font-size: 0.95em;
+}
+th, td { border: 1px solid var(--border); padding: 0.45em 0.8em; }
+th { background: var(--code-bg); font-weight: 650; }
+tbody tr:nth-child(even) { background: var(--row-even); }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem auto; }
+img { max-width: 100%; border-radius: 6px; }
+::selection { background: var(--selection); }
+mark.find-hit { background: rgba(255, 214, 10, 0.30); color: inherit; border-radius: 2px; padding: 0; }
+mark.find-hit.current { background: #ff9f0a; color: #1d1d1f; }
+/* The app's name as drawn in its icon, wherever a document wraps it in
+   <span class="wordmark"> (the welcome guide does). The embedded face only
+   has the letters of "Lauda"; anything else falls back to Georgia. */
+.wordmark {
+    font-family: "Lauda Wordmark", Georgia, serif;
+    font-weight: 600;
+}
+
+/* Set for an instant while the preview reflows and puts the top line back
+   (preview.js); the width transition would otherwise move the text again. */
+.reflowing, .reflowing * {
+    transition: none !important;
+}
+
+@media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    article { max-width: none; padding: 0; }
+    pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-x: visible;
+        orphans: 3;
+        widows: 3;
+        -webkit-box-decoration-break: clone;
+        box-decoration-break: clone;
+    }
+    pre.keep, table, blockquote, img { break-inside: avoid; }
+    h1, h2, h3, h4 { break-after: avoid; }
+    p { orphans: 3; widows: 3; }
+    /* Keep-with-next: headings travel with what follows. Before ordinary
+       text, a probe reserves ~2.5 lines (the negative margin gives the
+       space back); before an unbreakable block (pre/table/quote) the
+       wrapper contains the whole block instead. */
+    .keep-with-next { break-inside: avoid; }
+    .keep-pad { margin-bottom: -4rem; }
+    .keep-probe { height: 4rem; }
+    a { color: inherit; text-decoration: underline; }
+}

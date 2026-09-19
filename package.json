@@ -1,0 +1,125 @@
+{
+  "name": "lauda",
+  "productName": "Lauda",
+  "version": "1.0.0",
+  "description": "A Markdown editor with a live, side-by-side preview",
+  "author": "Leandro Carneiro <cleite.leandro@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "node scripts/build.mjs && electron .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "e2e": "node scripts/build.mjs && playwright test",
+    "sync-native": "node scripts/sync-native.mjs",
+    "dist:linux": "node scripts/build.mjs --production && electron-builder --linux",
+    "dist:win": "node scripts/build.mjs --production && electron-builder --win",
+    "dist:mac": "node scripts/build.mjs --production && electron-builder --mac --config.appId=com.carneirolabs.lauda.electron --config.productName=\"Lauda Electron\""
+  },
+  "devDependencies": {
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/search": "^6.7.2",
+    "@codemirror/state": "^6.7.5",
+    "@codemirror/view": "^6.43.12",
+    "@lezer/highlight": "^1.2.3",
+    "@lezer/markdown": "^1.7.2",
+    "@playwright/test": "^1.63.0",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^26.6.2",
+    "electron": "^44.4.3",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
+    "jsdom": "^30.1.0",
+    "mdast-util-from-markdown": "^2.0.3",
+    "mdast-util-gfm": "^3.1.0",
+    "micromark-extension-gfm": "^3.0.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  },
+  "build": {
+    "appId": "com.carneirolabs.lauda",
+    "productName": "Lauda",
+    "copyright": "© 2026 Leandro Carneiro",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "!dist/**/*.map",
+      "package.json"
+    ],
+    "asar": true,
+    "fileAssociations": [
+      {
+        "ext": [
+          "md",
+          "markdown",
+          "mdown",
+          "mkd",
+          "mkdn",
+          "mdwn"
+        ],
+        "name": "Markdown Document",
+        "role": "Editor",
+        "mimeType": "text/markdown"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "executableName": "lauda",
+      "icon": "build/icons",
+      "category": "Office",
+      "synopsis": "A Markdown editor with a live, side-by-side preview",
+      "desktop": {
+        "entry": {
+          "MimeType": "text/markdown;text/x-markdown;",
+          "Keywords": "markdown;editor;writing;",
+          "StartupWMClass": "Lauda"
+        }
+      }
+    },
+    "deb": {
+      "afterInstall": "build/linux/after-install.sh",
+      "afterRemove": "build/linux/after-remove.sh"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png",
+      "identity": null
+    }
+  }
+}

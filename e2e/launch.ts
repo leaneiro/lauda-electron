@@ -23,10 +23,13 @@ export async function launch(options: { files?: Record<string, string>; settings
     writeFileSync(path, text);
     return path;
   });
+  // LAUDA_EXECUTABLE runs the tests against a packaged app instead.
+  const executablePath = process.env.LAUDA_EXECUTABLE;
   const app = await electron.launch({
     // The app's own theme, not an emulated one.
     colorScheme: null,
-    args: [".", ...paths],
+    executablePath,
+    args: executablePath ? paths : [".", ...paths],
     env: { ...process.env, LAUDA_USER_DATA: userData, LAUDA_LOCALE: options.locale ?? "en" },
   });
   const window = await app.firstWindow();

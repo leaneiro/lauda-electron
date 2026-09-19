@@ -1,10 +1,12 @@
 {
   "name": "lauda",
   "productName": "Lauda",
+  "desktopName": "lauda.desktop",
   "version": "1.0.0",
   "description": "A Markdown editor with a live, side-by-side preview",
   "author": "Leandro Carneiro <cleite.leandro@gmail.com>",
   "license": "MIT",
+  "homepage": "https://github.com/leaneiro/lauda",
   "private": true,
   "main": "dist/main.js",
   "scripts": {
@@ -104,10 +106,10 @@
       "desktop": {
         "entry": {
           "MimeType": "text/markdown;text/x-markdown;",
-          "Keywords": "markdown;editor;writing;",
-          "StartupWMClass": "Lauda"
+          "Keywords": "markdown;editor;writing;"
         }
-      }
+      },
+      "syncDesktopName": true
     },
     "deb": {
       "afterInstall": "build/linux/after-install.sh",
@@ -119,7 +121,8 @@
       ],
       "category": "public.app-category.productivity",
       "icon": "build/icon.png",
-      "identity": null
+      "identity": "-",
+      "hardenedRuntime": false
     }
   }
 }

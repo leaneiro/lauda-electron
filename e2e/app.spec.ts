@@ -79,6 +79,32 @@ test("view modes, tabs and the outline", async () => {
   await app.close();
 });
 
+/// A click from a test is handed to the page; a click from the mouse reaches
+/// it only where the window's drag region leaves off. The region is
+/// inherited, so a control under anything still in it, its own glass capsule
+/// included, is dead to the mouse however well it answers these clicks.
+test("no control in the title bar sits in the window's drag region", async () => {
+  const { app, window } = await launch({ files: { "a.md": "# One\n", "b.md": "# Other\n" } });
+  await expect(window.locator(".tab")).toHaveCount(2);
+  const inTheRegion = await window.evaluate(() => {
+    const found: string[] = [];
+    for (const element of document.querySelectorAll("#titlebar button, #titlebar .tab, #titlebar .glass, #titlebar input")) {
+      for (const pseudo of [undefined, "::before", "::after"]) {
+        if (getComputedStyle(element, pseudo).getPropertyValue("-webkit-app-region") === "drag") {
+          found.push(`${element.tagName.toLowerCase()}.${element.className}${pseudo ?? ""}`);
+        }
+      }
+    }
+    return found;
+  });
+  expect(inTheRegion).toEqual([]);
+  // The bar itself still carries the window: what stays in the region is its
+  // empty room, which is what the reader drags.
+  const bar = await window.evaluate(() => getComputedStyle(document.getElementById("titlebar")!).getPropertyValue("-webkit-app-region"));
+  expect(bar).toBe("drag");
+  await app.close();
+});
+
 test("find counts matches in the editor and in the preview", async () => {
   const { app, window } = await launch({ files: { "find.md": "apple banana apple\n\nApple pie\n" } });
   await previewFrame(window);

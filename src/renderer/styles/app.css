@@ -28,6 +28,10 @@
   --glass-fill: rgba(255, 255, 255, 0.72);
   --glass-clear: rgba(255, 255, 255, 0.28);
   --glass-rim: rgba(0, 0, 0, 0.09);
+  --tab-fill: #ffffff;
+  --tab-rim: rgba(0, 0, 0, 0.14);
+  --tab-hover: rgba(0, 0, 0, 0.045);
+  --tab-shadow: 0 1px 2px rgba(0, 0, 0, 0.07), 0 4px 12px rgba(0, 0, 0, 0.06);
   --glass-highlight: rgba(255, 255, 255, 0.9);
   --glass-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.05), 0 3px 12px rgba(0, 0, 0, 0.05);
   --pill-selected: rgba(0, 0, 0, 0.1);
@@ -69,6 +73,10 @@
   --glass-fill: rgba(60, 60, 60, 0.62);
   --glass-clear: rgba(60, 60, 60, 0.24);
   --glass-rim: rgba(255, 255, 255, 0.12);
+  --tab-fill: rgba(255, 255, 255, 0.11);
+  --tab-rim: rgba(255, 255, 255, 0.18);
+  --tab-hover: rgba(255, 255, 255, 0.05);
+  --tab-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.3);
   --glass-highlight: rgba(255, 255, 255, 0.14);
   --glass-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.3), 0 3px 12px rgba(0, 0, 0, 0.25);
   --pill-selected: rgba(255, 255, 255, 0.14);
@@ -125,6 +133,11 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 body.fullscreen #titlebar { padding-left: 20px; }
 body.platform-win32 #titlebar,
 body.platform-linux #titlebar { padding-left: 8px; }
+/* The bar drags the window, its controls don't. The region is inherited, so
+   a glass capsule that holds buttons has to leave the region as well: its
+   sheen covers the buttons, and a sheen still in the region puts them back
+   under it, where the system takes their clicks. */
+#titlebar .glass,
 #titlebar button,
 #titlebar .tab,
 #titlebar input { -webkit-app-region: no-drag; }
@@ -183,7 +196,13 @@ body.platform-darwin .window-title { margin-left: 12px; }
   overflow: hidden;
   transition: transform 0.18s cubic-bezier(0.3, 1.4, 0.6, 1), background-color 0.2s;
 }
-.glass.clear { background: var(--glass-clear); }
+/* The clear kind carries neither rim nor shadow, so next to it the solid
+   one plainly stands out, which on a screen without the real material is
+   what tells the two apart. */
+.glass.clear {
+  background: var(--glass-clear);
+  box-shadow: none;
+}
 /* The interactive kind answers the pointer: a soft light follows it and a
    press gives a little. */
 .glass::after {
@@ -281,7 +300,14 @@ body.platform-darwin .window-title { margin-left: 12px; }
   color: var(--text-secondary);
   transition: opacity 0.2s ease-out, transform 0.2s ease-out, max-width 0.2s ease-out, min-width 0.2s ease-out, background-color 0.2s;
 }
-.tab.is-selected { color: var(--text); }
+/* The tab showing is the solid one: a capsule with its own rim and shadow,
+   over names in the quieter colour. */
+.tab.is-selected {
+  color: var(--text);
+  background: var(--tab-fill);
+  box-shadow: var(--tab-shadow), inset 0 0 0 1px var(--tab-rim), inset 0 1px 0 var(--glass-highlight);
+}
+.tab.clear:hover { background: var(--tab-hover); }
 .tab.is-entering, .tab.is-leaving {
   opacity: 0;
   transform: scale(0.85);

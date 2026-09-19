@@ -135,8 +135,10 @@ export class TitleBar {
     const present = new Set<string>(documents.map((d) => d.id));
 
     for (const [id, tab] of this.tabs) {
-      if (present.has(id) || tab.classList.contains("is-leaving")) continue;
-      tab.classList.add("is-leaving");
+      if (present.has(id) || tab.classList.contains("is-leaving") || tab.classList.contains("is-fading")) continue;
+      // A tab closed with others still open leaves its room to them; the last
+      // two go together, and fade where they stand as the strip goes with them.
+      tab.classList.add(documents.length === 0 ? "is-fading" : "is-leaving");
       window.setTimeout(() => tab.remove(), tabAnimation);
       this.tabs.delete(id);
     }

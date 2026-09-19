@@ -192,10 +192,12 @@ export class Workspace {
         this.changed();
       }, titleBarSettling);
     } else {
-      this.tabsAreIn = false;
+      // The strip itself holds still: its tabs are what fades, and the bar
+      // changes its layout once they have.
       window.setTimeout(() => {
         if (this.documents.length >= 2) return;
         this.showsTabs = false;
+        this.tabsAreIn = false;
         this.changed();
       }, tabAnimation);
     }

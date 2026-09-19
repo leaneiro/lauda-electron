@@ -300,6 +300,7 @@ body.platform-darwin .window-title { margin-left: 12px; }
   padding: 0 26px;
   font-size: 13px;
   color: var(--text-secondary);
+  transform-origin: left center;
   transition: opacity 0.2s ease-out, transform 0.2s ease-out, max-width 0.2s ease-out, min-width 0.2s ease-out, background-color 0.2s;
 }
 /* The tab showing is the solid one: a capsule with its own rim and shadow,
@@ -313,10 +314,14 @@ body.platform-darwin .window-title { margin-left: 12px; }
    and answer the pointer with a touch more of it. */
 .tab.clear { background: var(--tab-quiet); }
 .tab.clear:hover { background: var(--tab-hover); }
-.tab.is-entering, .tab.is-leaving {
+.tab.is-entering, .tab.is-leaving, .tab.is-fading {
   opacity: 0;
   transform: scale(0.85);
 }
+/* Leaving room behind is for a tab the others outlive; the last ones keep
+   their shape while they go. Either way a tab on its way out is past
+   answering the pointer. */
+.tab.is-leaving, .tab.is-fading { pointer-events: none; }
 .tab.is-leaving { min-width: 0; max-width: 0; padding: 0; margin-right: -6px; }
 .tab-title {
   overflow: hidden;

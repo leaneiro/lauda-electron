@@ -140,10 +140,11 @@ test("duplicate, revert, rename and move", async () => {
   await expect.poll(() => existsSync(join(elsewhere, "final.md"))).toBe(true);
   expect(existsSync(renamed)).toBe(false);
 
-  const recent = await app.evaluate(({ Menu }) =>
-    Menu.getApplicationMenu()!.items.find((item) => item.label === "File")!.submenu!.items.find((item) => item.label === "Open Recent")!.submenu!.items.map((item) => item.label),
-  );
-  expect(recent[0]).toBe("final.md");
+  // The menu is built again once the move is noted, a beat after the file
+  // lands, so the list is waited for rather than read the moment it does.
+  await expect.poll(() => app.evaluate(({ Menu }) =>
+    Menu.getApplicationMenu()!.items.find((item) => item.label === "File")!.submenu!.items.find((item) => item.label === "Open Recent")!.submenu!.items.map((item) => item.label)[0],
+  )).toBe("final.md");
   await forceQuit(app);
 });
 

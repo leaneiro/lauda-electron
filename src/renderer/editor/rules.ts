@@ -78,7 +78,11 @@ export function linkPaste(text: string, selection: Range, clipboard: string | nu
 
 /// ⌘B and ⌘I: the marker around the selection, or the word under the caret.
 export function toggleMarker(marker: string, text: string, selection: Range, wordRange: Range): Edit {
-  return fromTextEdit(editing.toggle(marker, text, toTextRange(selection), toTextRange(wordRange)));
+  return togglePair(marker, marker, text, selection, wordRange);
+}
+
+export function togglePair(opening: string, closing: string, text: string, selection: Range, wordRange: Range): Edit {
+  return fromTextEdit(editing.togglePair(opening, closing, text, toTextRange(selection), toTextRange(wordRange)));
 }
 
 /// ⌘K: `[selection](url)`, the URL taken from the clipboard when it holds one.

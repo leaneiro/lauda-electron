@@ -138,6 +138,8 @@ export type MenuCommand =
   | { name: "find-replace" }
   | { name: "bold" }
   | { name: "italic" }
+  | { name: "underline" }
+  | { name: "strikethrough" }
   | { name: "link" }
   | { name: "view-mode"; mode: ViewMode }
   | { name: "next-tab" }

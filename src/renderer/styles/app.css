@@ -465,6 +465,9 @@ body.platform-darwin .window-title { margin-left: 12px; }
 
 .md-bold { font-weight: 700; }
 .md-italic { font-style: italic; }
+.md-struck { text-decoration: line-through; }
+.md-underlined { text-decoration: underline; }
+.md-struck.md-underlined { text-decoration: line-through underline; }
 .md-indigo { color: var(--indigo); }
 .md-secondary { color: var(--text-secondary); }
 .md-link { color: var(--link); }

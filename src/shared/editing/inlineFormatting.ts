@@ -2,31 +2,48 @@ import { trimmingWhitespacesAndNewlines } from "./characters";
 import { isLikelyURL } from "./links";
 import { maxRange, substring, type TextEdit, type TextRange } from "./textEdit";
 
-// ⌘B / ⌘I (markers) and ⌘K (links) as plain text rules. The native editor
-// applies each edit in one go, as an undo step of its own, apart from the
-// typing around it.
+// ⌘B / ⌘I / ⌘U / ⇧⌘X (markers) and ⌘K (links) as plain text rules. The
+// native editor applies each edit in one go, as an undo step of its own,
+// apart from the typing around it.
 
 /// The marker ⌘B toggles.
 export const boldMarker = "**";
 /// The marker ⌘I toggles.
 export const italicMarker = "*";
+/// The marker ⇧⌘X toggles.
+export const strikethroughMarker = "~~";
+/// Markdown has no underline of its own, so ⌘U writes the tags the preview
+/// lets through, the way other Markdown editors write it.
+export const underlineTags = ["<u>", "</u>"] as const;
 
-/// Toggles `marker` (e.g. "**") around the selection. With nothing selected
+/// Toggles `marker` (e.g. "**") around the selection.
+export function toggle(marker: string, text: string, selection: TextRange, wordRange: TextRange): TextEdit {
+  return togglePair(marker, marker, text, selection, wordRange);
+}
+
+/// Toggles `opening` … `closing` around the selection. With nothing selected
 /// it applies to `wordRange`, the word under the caret, as a double click
 /// would select it (the caller works it out; an empty range or whitespace
 /// when the caret isn't in a word); outside a word it inserts an empty pair
 /// with the caret inside.
-export function toggle(marker: string, text: string, selection: TextRange, wordRange: TextRange): TextEdit {
+export function togglePair(
+  opening: string,
+  closing: string,
+  text: string,
+  selection: TextRange,
+  wordRange: TextRange,
+): TextEdit {
   let range = selection;
-  const markerLength = marker.length;
+  const openingLength = opening.length;
+  const closingLength = closing.length;
 
   if (range.length === 0) {
     const word = wordRange.length > 0 ? substring(text, wordRange) : "";
     if (trimmingWhitespacesAndNewlines(word) === "") {
       return {
         range,
-        replacement: marker + marker,
-        selection: { location: range.location + markerLength, length: 0 },
+        replacement: opening + closing,
+        selection: { location: range.location + openingLength, length: 0 },
       };
     }
     range = wordRange;
@@ -35,8 +52,12 @@ export function toggle(marker: string, text: string, selection: TextRange, wordR
   const selected = substring(text, range);
 
   // Unwrap when the markers are inside the selection…
-  if (selected.startsWith(marker) && selected.endsWith(marker) && selected.length >= markerLength * 2 + 1) {
-    const inner = selected.slice(markerLength, selected.length - markerLength);
+  if (
+    selected.startsWith(opening) &&
+    selected.endsWith(closing) &&
+    selected.length >= openingLength + closingLength + 1
+  ) {
+    const inner = selected.slice(openingLength, selected.length - closingLength);
     return {
       range,
       replacement: inner,
@@ -44,16 +65,16 @@ export function toggle(marker: string, text: string, selection: TextRange, wordR
     };
   }
   // …or just outside it.
-  const before = { location: range.location - markerLength, length: markerLength };
-  const after = { location: maxRange(range), length: markerLength };
+  const before = { location: range.location - openingLength, length: openingLength };
+  const after = { location: maxRange(range), length: closingLength };
   if (
     before.location >= 0 &&
     maxRange(after) <= text.length &&
-    substring(text, before) === marker &&
-    substring(text, after) === marker
+    substring(text, before) === opening &&
+    substring(text, after) === closing
   ) {
     return {
-      range: { location: before.location, length: range.length + markerLength * 2 },
+      range: { location: before.location, length: range.length + openingLength + closingLength },
       replacement: selected,
       selection: { location: before.location, length: range.length },
     };
@@ -61,8 +82,8 @@ export function toggle(marker: string, text: string, selection: TextRange, wordR
   // Otherwise wrap.
   return {
     range,
-    replacement: marker + selected + marker,
-    selection: { location: range.location + markerLength, length: range.length },
+    replacement: opening + selected + closing,
+    selection: { location: range.location + openingLength, length: range.length },
   };
 }
 

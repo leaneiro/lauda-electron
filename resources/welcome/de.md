@@ -6,7 +6,7 @@ Dies ist ein unbenanntes Dokument, probier also ruhig alles aus. Wenn du es beha
 
 ## Schreiben
 
-Text kann **fett** (⌘B), *kursiv* (⌘I) oder `Code` sein. Markiere Text und drücke ⌘K, um daraus einen [Link](https://daringfireball.net/projects/markdown/) zu machen, oder füge eine URL über der Auswahl ein.
+Text kann **fett** (⌘B), *kursiv* (⌘I), <u>unterstrichen</u> (⌘U), ~~durchgestrichen~~ (⇧⌘X) oder `Code` sein. Markiere Text und drücke ⌘K, um daraus einen [Link](https://daringfireball.net/projects/markdown/) zu machen, oder füge eine URL über der Auswahl ein.
 
 Tippe außerhalb von Code `->` oder `<-`, und daraus wird → bzw. ←.
 

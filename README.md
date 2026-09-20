@@ -22,11 +22,11 @@ the same cases.
 - **Tabs**: every document opens as a tab of one window, and the files you
   leave open come back when you open Lauda again. Ctrl+Tab and
   Ctrl+Shift+Tab switch tabs; Ctrl+W or a middle click closes one.
-- **Writing**: Ctrl+B, Ctrl+I and Ctrl+K; Return continues lists; Tab and
-  Shift+Tab indent items; brackets, quotes and the `*`, `_` and `` ` ``
-  markers close themselves, and typed over a selection they wrap it;
-  `->` and `<-` become → and ← outside code; pasting a URL over a selection
-  makes a link.
+- **Writing**: Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Shift+X and Ctrl+K; Return
+  continues lists; Tab and Shift+Tab indent items; brackets, quotes and the
+  `*`, `_` and `` ` `` markers close themselves, and typed over a selection
+  they wrap it; `->` and `<-` become → and ← outside code; pasting a URL
+  over a selection makes a link.
 - **Images**: drag an image into the editor or paste a screenshot; it is
   copied next to the document and the Markdown link is written for you.
 - **Outline**, **Find** (in every view mode, with a match counter) and

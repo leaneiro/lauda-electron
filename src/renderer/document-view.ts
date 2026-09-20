@@ -1,4 +1,5 @@
 import { Editor } from "./editor/editor";
+import { strikethroughMarker, underlineTags } from "../shared/editing";
 import { PreviewPane } from "./preview/preview-pane";
 import { FindSession } from "./find";
 import { StatusBar } from "./status-bar";
@@ -192,6 +193,12 @@ export class DocumentView {
         return;
       case "italic":
         if (this.mode !== "previewOnly") this.editor.toggleMarker("*");
+        return;
+      case "underline":
+        if (this.mode !== "previewOnly") this.editor.togglePair(underlineTags[0], underlineTags[1]);
+        return;
+      case "strikethrough":
+        if (this.mode !== "previewOnly") this.editor.toggleMarker(strikethroughMarker);
         return;
       case "link":
         if (this.mode !== "previewOnly") void this.editor.insertLink();

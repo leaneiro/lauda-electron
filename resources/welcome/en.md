@@ -6,7 +6,7 @@ This is an untitled document, so feel free to experiment. To keep it, save it wi
 
 ## Writing
 
-Text can be **bold** (⌘B), *italic* (⌘I), or `code`. Select some text and press ⌘K to turn it into a [link](https://daringfireball.net/projects/markdown/), or paste a URL over the selection.
+Text can be **bold** (⌘B), *italic* (⌘I), <u>underlined</u> (⌘U), ~~struck through~~ (⇧⌘X), or `code`. Select some text and press ⌘K to turn it into a [link](https://daringfireball.net/projects/markdown/), or paste a URL over the selection.
 
 Type `->` or `<-` outside code and they become → and ←.
 

@@ -521,6 +521,14 @@
     "ja": "厳密な改行",
     "zh-Hans": "严格换行"
   },
+  "Strikethrough": {
+    "pt-BR": "Tachado",
+    "de": "Durchgestrichen",
+    "es": "Tachado",
+    "fr": "Barré",
+    "ja": "取り消し線",
+    "zh-Hans": "删除线"
+  },
   "System (Mono)": {
     "pt-BR": "Sistema (Mono)",
     "de": "System (Mono)",
@@ -560,6 +568,14 @@
     "fr": "Largeur du texte : %@. Suivante : %@",
     "ja": "テキストの幅：%@。次：%@",
     "zh-Hans": "文本宽度：%@。下一个：%@"
+  },
+  "Underline": {
+    "pt-BR": "Sublinhado",
+    "de": "Unterstrichen",
+    "es": "Subrayado",
+    "fr": "Souligné",
+    "ja": "下線",
+    "zh-Hans": "下划线"
   },
   "Untitled": {
     "pt-BR": "Sem título",

@@ -105,6 +105,40 @@ test("no control in the title bar sits in the window's drag region", async () =>
   await app.close();
 });
 
+/// The Format menu's four: two Markdown markers, and the tags underline is
+/// written with, each shown in the preview as the reader will see it.
+test("bold, italic, underline and strikethrough from the Format menu", async () => {
+  const { app, window } = await launch({ files: { "format.md": "one two three four\n" } });
+  const preview = await previewFrame(window);
+  const editor = window.locator(".cm-content");
+  await editor.click();
+
+  // Each turn reads the line as it stands, since the markers before a word
+  // move it along.
+  const wrap = async (word: string, item: string) => {
+    const index = (await editor.innerText()).indexOf(word);
+    await window.keyboard.press(`${mod}+Home`);
+    for (let i = 0; i < index; i++) await window.keyboard.press("ArrowRight");
+    for (let i = 0; i < word.length; i++) await window.keyboard.press("Shift+ArrowRight");
+    await clickMenu(app, "Format", item);
+  };
+  await wrap("one", "Bold");
+  await wrap("two", "Italic");
+  await wrap("three", "Underline");
+  await wrap("four", "Strikethrough");
+
+  await expect(editor).toHaveText("**one** *two* <u>three</u> ~~four~~");
+  await expect(preview.locator("strong")).toHaveText("one");
+  await expect(preview.locator("em")).toHaveText("two");
+  await expect(preview.locator("u")).toHaveText("three");
+  await expect(preview.locator("del")).toHaveText("four");
+
+  // The same item again takes the formatting off.
+  await wrap("three", "Underline");
+  await expect(editor).toHaveText("**one** *two* three ~~four~~");
+  await app.close();
+});
+
 test("find counts matches in the editor and in the preview", async () => {
   const { app, window } = await launch({ files: { "find.md": "apple banana apple\n\nApple pie\n" } });
   await previewFrame(window);

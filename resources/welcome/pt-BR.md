@@ -6,7 +6,7 @@ Este é um documento sem nome, então fique à vontade para experimentar. Para g
 
 ## Escrevendo
 
-O texto pode ficar em **negrito** (⌘B), *itálico* (⌘I) ou virar `código`. Selecione um trecho e use ⌘K para transformá-lo em [link](https://daringfireball.net/projects/markdown/), ou cole uma URL sobre a seleção.
+O texto pode ficar em **negrito** (⌘B), *itálico* (⌘I), <u>sublinhado</u> (⌘U), ~~tachado~~ (⇧⌘X) ou virar `código`. Selecione um trecho e use ⌘K para transformá-lo em [link](https://daringfireball.net/projects/markdown/), ou cole uma URL sobre a seleção.
 
 Digite `->` ou `<-` fora de código e eles viram → e ←.
 

@@ -6,7 +6,7 @@
 
 ## 书写
 
-文本可以设为**粗体**（⌘B）、*斜体*（⌘I）或 `代码`。选中文本后按 ⌘K 可将其变成[链接](https://daringfireball.net/projects/markdown/)，也可以直接在选中的文本上粘贴 URL。
+文本可以设为**粗体**（⌘B）、*斜体*（⌘I）、<u>下划线</u>（⌘U）、~~删除线~~（⇧⌘X）或 `代码`。选中文本后按 ⌘K 可将其变成[链接](https://daringfireball.net/projects/markdown/)，也可以直接在选中的文本上粘贴 URL。
 
 在代码之外输入 `->` 或 `<-`，它们会变成 → 和 ←。
 

@@ -6,7 +6,7 @@ Ce document est sans titre, alors n’hésitez pas à faire des essais. Pour le 
 
 ## Écrire
 
-Le texte peut être en **gras** (⌘B), en *italique* (⌘I) ou en `code`. Sélectionnez du texte et appuyez sur ⌘K pour en faire un [lien](https://daringfireball.net/projects/markdown/), ou collez une URL sur la sélection.
+Le texte peut être en **gras** (⌘B), en *italique* (⌘I), <u>souligné</u> (⌘U), ~~barré~~ (⇧⌘X) ou en `code`. Sélectionnez du texte et appuyez sur ⌘K pour en faire un [lien](https://daringfireball.net/projects/markdown/), ou collez une URL sur la sélection.
 
 Tapez `->` ou `<-` en dehors du code et ils deviennent → et ←.
 

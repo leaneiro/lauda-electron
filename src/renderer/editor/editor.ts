@@ -104,11 +104,15 @@ export class Editor implements EditorFinding {
   /// Toggles a marker around the selection; with nothing selected it
   /// applies to the word under the caret.
   toggleMarker(marker: string): void {
+    this.togglePair(marker, marker);
+  }
+
+  togglePair(opening: string, closing: string): void {
     const state = this.view.state;
     const selection = state.selection.main;
     const word = selection.empty ? state.wordAt(selection.head) : null;
     const wordRange = word ? { from: word.from, to: word.to } : { from: selection.from, to: selection.to };
-    const edit = rules.toggleMarker(marker, state.doc.toString(), { from: selection.from, to: selection.to }, wordRange);
+    const edit = rules.togglePair(opening, closing, state.doc.toString(), { from: selection.from, to: selection.to }, wordRange);
     programmaticEdit(this.view, edit);
     this.view.focus();
   }

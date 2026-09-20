@@ -6,7 +6,7 @@ Este es un documento sin título, así que experimenta con libertad. Si quieres 
 
 ## Escribir
 
-El texto puede ir en **negrita** (⌘B), *cursiva* (⌘I) o como `código`. Selecciona un texto y pulsa ⌘K para convertirlo en un [enlace](https://daringfireball.net/projects/markdown/), o pega una URL sobre la selección.
+El texto puede ir en **negrita** (⌘B), *cursiva* (⌘I), <u>subrayado</u> (⌘U), ~~tachado~~ (⇧⌘X) o como `código`. Selecciona un texto y pulsa ⌘K para convertirlo en un [enlace](https://daringfireball.net/projects/markdown/), o pega una URL sobre la selección.
 
 Escribe `->` o `<-` fuera del código y se convertirán en → y ←.
 

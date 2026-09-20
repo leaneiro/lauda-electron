@@ -96,6 +96,8 @@ export function buildMenu(context: MenuContext): Menu {
     submenu: [
       { label: t("Bold"), accelerator: "CmdOrCtrl+B", click: command("bold"), enabled: hasDocument },
       { label: t("Italic"), accelerator: "CmdOrCtrl+I", click: command("italic"), enabled: hasDocument },
+      { label: t("Underline"), accelerator: "CmdOrCtrl+U", click: command("underline"), enabled: hasDocument },
+      { label: t("Strikethrough"), accelerator: "CmdOrCtrl+Shift+X", click: command("strikethrough"), enabled: hasDocument },
       { type: "separator" },
       { label: t("Add Link"), accelerator: "CmdOrCtrl+K", click: command("link"), enabled: hasDocument },
     ],

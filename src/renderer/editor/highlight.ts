@@ -15,6 +15,9 @@ const listMarkerRegex = /^[ \t]*(?:[-*+]|\d{1,3}[.)])[ \t]/gmu;
 const blockquoteRegex = /^[ \t]*>.*$/gmu;
 const boldRegex = /(?:\*\*[^*\n]+\*\*|__[^_\n]+__)/gu;
 const italicRegex = new RegExp(String.raw`(?<![${word}*])\*(?!\*)[^*\n]+\*(?!\*)|(?<![${word}_])_(?!_)[^_\n]+_(?!_)`, "gu");
+const strikethroughRegex = /~~[^~\n]+~~/gu;
+/// Underline is written as tags, so the editor shows it the same way.
+const underlineRegex = /<u>[^<\n]*<\/u>/giu;
 const linkRegex = /\[([^\]\n]*)\]\(([^)\n]*)\)/dgu;
 const inlineCodeRegex = /`[^`\n]+`/gu;
 const fenceLineRegex = /^[ \t]{0,3}(?:`{3,}|~{3,})/u;
@@ -25,6 +28,8 @@ interface Style {
   color: Color | null;
   bold: boolean;
   italic: boolean;
+  struck: boolean;
+  underlined: boolean;
   fence: boolean;
 }
 
@@ -53,13 +58,15 @@ function classes(style: Style): string {
   const names: string[] = [];
   if (style.bold) names.push("md-bold");
   if (style.italic) names.push("md-italic");
+  if (style.struck) names.push("md-struck");
+  if (style.underlined) names.push("md-underlined");
   if (style.color) names.push(`md-${style.color}`);
   return names.join(" ");
 }
 
 /// Styles one line of text, `offset` being where it starts in the document.
 function styleLine(text: string, fences: { from: number; to: number }[], offset: number): Style[] {
-  const styles: Style[] = Array.from({ length: text.length }, () => ({ color: null, bold: false, italic: false, fence: false }));
+  const styles: Style[] = Array.from({ length: text.length }, () => ({ color: null, bold: false, italic: false, struck: false, underlined: false, fence: false }));
   const paint = (regex: RegExp, apply: (style: Style) => void, group?: number) => {
     regex.lastIndex = 0;
     for (const match of text.matchAll(regex)) {
@@ -73,6 +80,8 @@ function styleLine(text: string, fences: { from: number; to: number }[], offset:
   paint(blockquoteRegex, (s) => (s.color = "secondary"));
   paint(boldRegex, (s) => (s.bold = true));
   paint(italicRegex, (s) => (s.italic = true));
+  paint(strikethroughRegex, (s) => (s.struck = true));
+  paint(underlineRegex, (s) => (s.underlined = true));
   paint(linkRegex, (s) => (s.color = "link"), 1);
   paint(linkRegex, (s) => (s.color = "tertiary"), 2);
   paint(headingRegex, (s) => {
@@ -84,7 +93,7 @@ function styleLine(text: string, fences: { from: number; to: number }[], offset:
   for (const fence of fences) {
     const start = Math.max(fence.from - offset, 0);
     const end = Math.min(fence.to - offset, text.length);
-    for (let i = start; i < end; i++) styles[i] = { color: "purple", bold: false, italic: false, fence: true };
+    for (let i = start; i < end; i++) styles[i] = { color: "purple", bold: false, italic: false, struck: false, underlined: false, fence: true };
   }
   return styles;
 }

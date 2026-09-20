@@ -30,6 +30,20 @@ const installed: KeyBinding[] = [
 ];
 
 describe("menu shortcuts", () => {
+  /// Electron reads CmdOrCtrl as ⌘ on a Mac and as Ctrl on Windows and
+  /// Linux, which is how every shortcut the three systems share is written.
+  /// One written as Cmd is the Mac's alone, and belongs where only the Mac
+  /// reads it: after an isMac, in the line or in the menu it opens.
+  it("are written so Windows and Linux get Ctrl", () => {
+    const lines = readFileSync(join(process.cwd(), "src/main/menu.ts"), "utf8").split("\n");
+    const macOnly = lines.filter((line, index) => {
+      if (!/accelerator: .*"(Cmd|Command|Meta)\+/.test(line)) return false;
+      const above = lines.slice(Math.max(index - 12, 0), index + 1);
+      return !above.some((earlier) => earlier.includes("isMac"));
+    });
+    expect(macOnly).toEqual([]);
+  });
+
   it("are left alone by the editor's own bindings", () => {
     const menu = readFileSync(join(process.cwd(), "src/main/menu.ts"), "utf8");
     const accelerators = [...menu.matchAll(/accelerator: "([^"]+)"/g)].map((match) => match[1]);

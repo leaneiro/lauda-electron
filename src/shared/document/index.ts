@@ -3,3 +3,4 @@
 export * from "./wordCount";
 export * from "./saveStatus";
 export * from "./imageImporter";
+export * from "./shortcutKeys";

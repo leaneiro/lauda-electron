@@ -4,6 +4,7 @@ import { copyFile, rename, rm } from "node:fs/promises";
 import { basename, dirname, extname, join } from "node:path";
 import { pickLocale, Strings } from "../shared/i18n";
 import type { Events, MenuCommand, MenuState, OpenDocument, Requests, RequestChannel } from "../shared/ipc";
+import { withCtrlShortcuts } from "../shared/document";
 import { allowedLinkSchemes } from "../shared/markdown";
 import type { AppearanceMode } from "../shared/settings";
 import { exportHTML, exportPDF } from "./export";
@@ -115,6 +116,12 @@ async function showOpenDialog(): Promise<void> {
   if (!result.canceled) await openFiles(result.filePaths);
 }
 
+/// The system the app is dressed for. LAUDA_PLATFORM stands in for another
+/// one while developing, to see what it will look like there.
+function targetPlatform(): "darwin" | "win32" | "linux" {
+  return (process.env.LAUDA_PLATFORM ?? process.platform) as "darwin" | "win32" | "linux";
+}
+
 function welcomeGuideText(): string {
   const tryRead = (language: string) => {
     try {
@@ -123,7 +130,10 @@ function welcomeGuideText(): string {
       return null;
     }
   };
-  return tryRead(strings.locale) ?? tryRead("en") ?? "";
+  const guide = tryRead(strings.locale) ?? tryRead("en") ?? "";
+  // The guide comes from the native app, written with the Mac's keys; here
+  // it is read with the keys of the menus around it.
+  return targetPlatform() === "darwin" ? guide : withCtrlShortcuts(guide);
 }
 
 /// The guide opens as an untitled document holding its text, so people can
@@ -371,7 +381,7 @@ function registerRequests(): void {
     }
     // LAUDA_PLATFORM lays the window out as on another system, to look at
     // its title bar while developing; the menus and dialogs stay this one's.
-    const platform = (process.env.LAUDA_PLATFORM ?? process.platform) as "darwin" | "win32" | "linux";
+    const platform = targetPlatform();
     return {
       platform,
       locale: strings.locale,

@@ -30,6 +30,25 @@ test("the welcome guide opens on the first launch", async () => {
   await expect(preview.locator("h1")).toContainText("Boas-vindas ao Lauda");
   await expect(preview.locator("h1 .wordmark")).toHaveText("Lauda");
   await expect(window.locator(".save-status")).toHaveAttribute("data-status", "notSavedYet");
+  // On a Mac it reads with the Mac's keys, as the menus around it do.
+  await expect(window.locator(".cm-content")).toContainText("⌘B");
+  await forceQuit(app);
+});
+
+/// Windows and Linux read the same guide with their own keys: it comes from
+/// the native app, written with the Mac's.
+test("the welcome guide speaks the system's shortcuts", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "lauda-first-"));
+  const app = await electron.launch({
+    colorScheme: null,
+    args: ["."],
+    env: { ...process.env, LAUDA_USER_DATA: folder, LAUDA_LOCALE: "pt-BR", LAUDA_PLATFORM: "win32" },
+  });
+  const window = await app.firstWindow();
+  const guide = window.locator(".cm-content");
+  await expect(guide).toContainText("Ctrl+B");
+  await expect(guide).toContainText("Ctrl+Shift+X");
+  expect(await guide.innerText()).not.toContain("⌘");
   await forceQuit(app);
 });
 

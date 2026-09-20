@@ -1,6 +1,6 @@
 import { Annotation, EditorSelection, type Extension, Transaction } from "@codemirror/state";
-import { EditorView, keymap, ViewPlugin, type ViewUpdate } from "@codemirror/view";
-import { history, historyKeymap, insertNewline, insertTab, isolateHistory, redo, undo } from "@codemirror/commands";
+import { EditorView, keymap, ViewPlugin, type ViewUpdate, type KeyBinding } from "@codemirror/view";
+import { history, historyKeymap, insertNewline, insertTab, isolateHistory, redo, redoSelection, undo, undoSelection } from "@codemirror/commands";
 import { lauda } from "../api";
 import type { LaudaDocument } from "../document";
 import * as rules from "./rules";
@@ -29,14 +29,20 @@ function startsNewWord(transaction: Transaction): boolean {
   return whitespace;
 }
 
+/// Undo and redo, and the rest of the history's own bindings less the two
+/// for undoing a selection: the native editor has no such command, and they
+/// sit on ⌘U and ⇧⌘U, where they would swallow the Format menu's shortcut
+/// before the menu ever sees it.
+export const historyBindings: KeyBinding[] = [
+  { key: "Mod-z", run: undo, preventDefault: true },
+  { key: "Mod-Shift-z", run: redo, preventDefault: true },
+  { key: "Mod-y", run: redo, preventDefault: true },
+  ...historyKeymap.filter((binding) => binding.run !== undoSelection && binding.run !== redoSelection),
+];
+
 export const wordUndo: Extension = [
   history({ newGroupDelay: 60_000, joinToEvent: (transaction, isAdjacent) => isAdjacent && !startsNewWord(transaction) }),
-  keymap.of([
-    { key: "Mod-z", run: undo, preventDefault: true },
-    { key: "Mod-Shift-z", run: redo, preventDefault: true },
-    { key: "Mod-y", run: redo, preventDefault: true },
-    ...historyKeymap,
-  ]),
+  keymap.of(historyBindings),
 ];
 
 // MARK: - Pairs
@@ -169,12 +175,14 @@ function deleteBackward(view: EditorView): boolean {
   return true;
 }
 
-const keys = keymap.of([
+export const editorBindings: KeyBinding[] = [
   { key: "Enter", run: newline },
   { key: "Tab", run: indent },
   { key: "Shift-Tab", run: outdent },
   { key: "Backspace", run: deleteBackward },
-]);
+];
+
+const keys = keymap.of(editorBindings);
 
 // MARK: - Paste and drop
 

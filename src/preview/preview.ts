@@ -48,6 +48,7 @@ function post(message: FromPreview): void {
 // policy blocks inline handlers as well.
 function setContent(html: string, lines: number[], lineCount: number): void {
   suppressScrollEventsUntil = Date.now() + echoWindow;
+  anchorsMoved();
   anchorLines = lines;
   totalLines = Math.max(lineCount, 1);
   const parsed = createElement("div");
@@ -88,6 +89,7 @@ function reflowing(change: () => void): void {
   change();
   // Lays out the new text now.
   body.getBoundingClientRect();
+  anchorsMoved();
   realign();
   root.classList.remove("reflowing");
 }
@@ -138,11 +140,39 @@ function anchorElements(): Element[] {
   return elements;
 }
 
+// The anchors as they were last measured. Measuring walks every block, and
+// every list item and table row inside it, reading each one's position, so
+// it is done once and kept until something moves the text: new content, a
+// reflow, a resize, or an image that finishes loading (the observer below
+// catches the last two). Scroll events then cost a lookup rather than a
+// pass over the page, which is what a long list made expensive.
+let measuredAnchors: { points: [number, number][] | null; shape: string } | null = null;
+
+function anchorsMoved(): void {
+  measuredAnchors = null;
+}
+
+// What the anchors were measured against. A reflow the app didn't ask for
+// (a late image, a stylesheet) changes one of these, and the anchors are
+// measured again before they are read, rather than waiting for the
+// observer's turn, which comes after the reader may have scrolled.
+function contentShape(): string {
+  return `${content.clientWidth}x${root.scrollHeight}`;
+}
+
 // [sourceLine, y] anchors: the top padding (line -1 at y 0), each mapped
 // element and the document end. null when the DOM and the line map disagree
 // (raw HTML can make the parser split a block); callers then fall back to
 // proportional sync.
 function lineAnchors(): [number, number][] | null {
+  const shape = contentShape();
+  if (measuredAnchors?.shape === shape) return measuredAnchors.points;
+  const points = measureLineAnchors();
+  measuredAnchors = { points, shape };
+  return points;
+}
+
+function measureLineAnchors(): [number, number][] | null {
   const elements = anchorElements();
   if (anchorLines.length === 0 || elements.length !== anchorLines.length) return null;
   let last: [number, number] = [-1, 0];
@@ -260,25 +290,37 @@ function findRun(query: string, forward: boolean, restart: boolean): { current: 
 // scrolling.
 window.addEventListener("resize", () => {
   suppressScrollEventsUntil = Date.now() + reflowEchoWindow;
+  anchorsMoved();
   realign();
 });
+
+// Where the page is, for the editor to follow. The anchors are measured
+// once (lineAnchors), so an event costs a lookup and the message itself.
+function reportScrolled(): void {
+  const max = maxScroll();
+  const y = window.scrollY;
+  const fraction = max > 0 ? Math.min(Math.max(y / max, 0), 1) : 0;
+  const toEndDistance = Math.max(max - y, 0);
+  const points = lineAnchors();
+  const line = points ? interpolate(points, y, 1, 0) : null;
+  const endLine = points ? interpolate(points, max, 1, 0) : null;
+  lastPosition = max > 0 && y >= max - 1 ? "end" : ownPosition(line, fraction);
+  post({ type: "previewScrolled", line, endLine, fraction, toEndDistance });
+}
 
 window.addEventListener(
   "scroll",
   () => {
     if (Date.now() < suppressScrollEventsUntil) return;
-    const max = maxScroll();
-    const y = window.scrollY;
-    const fraction = max > 0 ? Math.min(Math.max(y / max, 0), 1) : 0;
-    const toEndDistance = Math.max(max - y, 0);
-    const points = lineAnchors();
-    const line = points ? interpolate(points, y, 1, 0) : null;
-    const endLine = points ? interpolate(points, max, 1, 0) : null;
-    lastPosition = max > 0 && y >= max - 1 ? "end" : ownPosition(line, fraction);
-    post({ type: "previewScrolled", line, endLine, fraction, toEndDistance });
+    reportScrolled();
   },
   { passive: true },
 );
+
+// The content grows on its own when an image finishes loading, and the
+// anchors below it move with it. Watching its box catches that, and the
+// reflows a stylesheet can cause without any of the calls above.
+new ResizeObserver(() => anchorsMoved()).observe(content);
 
 // Links open in the browser, as a click on one does in the native preview;
 // the window decides which schemes may leave the app.

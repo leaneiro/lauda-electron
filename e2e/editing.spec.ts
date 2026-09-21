@@ -136,6 +136,44 @@ test("scrolling the editor brings the preview to the same block", async () => {
   await app.close();
 });
 
+/// Where each block and list item sits is measured once and kept until the
+/// text moves, not again on every scroll event: a long list made each event
+/// a pass over the page.
+test("scrolling the preview reads the anchors it measured", async () => {
+  const items = Array.from({ length: 300 }, (_, i) => `- item ${i + 1}`).join("\n");
+  const { app, window } = await launch({ files: { "list.md": `# List\n\n${items}\n` } });
+  const preview = await previewFrame(window);
+  await expect(preview.locator("li")).toHaveCount(300);
+  // Past the moment after the content arrived, when scroll events are echoes.
+  await window.waitForTimeout(400);
+  type Counted = typeof globalThis & { previewScrolls?: number };
+  await window.evaluate(() => {
+    const page = globalThis as Counted;
+    page.previewScrolls = 0;
+    page.addEventListener("message", (event: MessageEvent) => {
+      if (event.data?.type === "previewScrolled") page.previewScrolls = (page.previewScrolls ?? 0) + 1;
+    });
+  });
+  const measured = await preview.evaluate(async () => {
+    let count = 0;
+    const measure = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = function (this: Element) {
+      count += 1;
+      return measure.call(this);
+    };
+    for (let step = 1; step <= 10; step++) {
+      globalThis.scrollTo(0, step * 120);
+      await new Promise((resolve) => setTimeout(resolve, 30));
+    }
+    Element.prototype.getBoundingClientRect = measure;
+    return count;
+  });
+  await expect.poll(() => window.evaluate(() => (globalThis as Counted).previewScrolls)).toBeGreaterThan(5);
+  // The heading, the list and its 300 items, measured at most once.
+  expect(measured).toBeLessThanOrEqual(302);
+  await app.close();
+});
+
 test("dropping a Markdown file on the window opens it as a tab", async () => {
   const { app, window, folder } = await launch({ files: { "first.md": "# First\n" } });
   const second = join(folder, "second.md");

@@ -75,6 +75,13 @@ export class Workspace {
     this.add(document);
   }
 
+  /// Brings the tab of an open file forward. A file without a tab stays
+  /// without one: this never opens anything.
+  selectFile(filePath: string): void {
+    const document = this.documents.find((candidate) => candidate.filePath === filePath);
+    if (document) this.select(document);
+  }
+
   newDocument(): void {
     this.add(new LaudaDocument({ filePath: null, text: "", title: this.nextUntitledTitle() }));
   }

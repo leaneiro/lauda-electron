@@ -13,6 +13,7 @@ async function start(): Promise<void> {
   new TitleBar(document.getElementById("titlebar") as HTMLElement, workspace);
 
   lauda.on("workspace:open", (request) => workspace.open(request));
+  lauda.on("workspace:select", ({ filePath }) => workspace.selectFile(filePath));
   lauda.on("menu:command", (command) => void workspace.perform(command));
   lauda.on("settings:changed", (settings) => workspace.applySettings(settings));
   lauda.on("doc:changed-on-disk", ({ filePath, text }) => workspace.fileChangedOnDisk(filePath, text));

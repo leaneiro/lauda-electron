@@ -1,13 +1,15 @@
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeTheme, shell, systemPreferences, type IpcMainInvokeEvent } from "electron";
+import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeTheme, session, shell, systemPreferences, type IpcMainInvokeEvent } from "electron";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { copyFile, rename, rm } from "node:fs/promises";
 import { basename, dirname, extname, join } from "node:path";
 import { pickLocale, Strings } from "../shared/i18n";
 import type { Events, MenuCommand, MenuState, OpenDocument, Requests, RequestChannel } from "../shared/ipc";
 import { withCtrlShortcuts } from "../shared/document";
+import { isImagePath } from "../shared/markdown/content-policy";
 import { allowedLinkSchemes } from "../shared/markdown";
 import type { AppearanceMode } from "../shared/settings";
 import { exportHTML, exportPDF } from "./export";
+import { GrantedFiles, isOpenableByPath } from "./granted-files";
 import { DocumentWatcher, readText, writeText } from "./files";
 import { installedFontFamilies } from "./fonts";
 import { importImages, savePastedImage, uniqueDestination } from "./images";
@@ -31,6 +33,10 @@ if (process.env.LAUDA_USER_DATA) app.setPath("userData", process.env.LAUDA_USER_
 else if (isMac) app.setPath("userData", join(app.getPath("appData"), "Lauda Electron"));
 app.setName("Lauda");
 registerSchemes();
+
+// Every page the app opens runs sandboxed, whatever its window says; the
+// windows say so too, but a new one can't forget.
+app.enableSandbox();
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -60,6 +66,9 @@ let closeIsConfirmed = false;
 let menuState: MenuState = { hasDocument: false, hasFile: false, documentCount: 0, viewMode: "split" };
 
 const watcher = new DocumentWatcher((filePath, text) => send("doc:changed-on-disk", { filePath, text }));
+/// The files this process has handed the window, the only ones it may
+/// write to, move or watch (see GrantedFiles).
+const granted = new GrantedFiles();
 
 function send<C extends keyof Events>(channel: C, payload: Events[C]): void {
   workspaceWindow?.webContents.send(channel, payload);
@@ -85,6 +94,7 @@ async function openFiles(paths: string[], select?: string | null): Promise<void>
     try {
       const text = await readText(filePath);
       recentFiles.note(filePath);
+      granted.grant(filePath);
       withWindow(() => send("workspace:open", { filePath, text }));
     } catch (error) {
       recentFiles.forget(filePath);
@@ -96,8 +106,11 @@ async function openFiles(paths: string[], select?: string | null): Promise<void>
       });
     }
   }
+  // Its own event, not an open with no text: a file that failed to open
+  // above has no tab, and an empty document tied to its path would be
+  // written over it at the first key.
   if (select && paths.includes(select)) {
-    withWindow(() => send("workspace:open", { filePath: select, text: "" }));
+    withWindow(() => send("workspace:select", { filePath: select }));
   }
 }
 
@@ -339,18 +352,40 @@ function refreshMenu(): void {
   }, 30);
 }
 
+/// The app asks the web for no permission at all (the clipboard, files and
+/// fonts go through this process), and the preview shows frames and images
+/// from the network, which may ask. Electron grants what nobody decides
+/// on, so the decision is written down: no.
+function denyWebPermissions(): void {
+  session.defaultSession.setPermissionRequestHandler((_contents, _permission, answer) => answer(false));
+  session.defaultSession.setPermissionCheckHandler(() => false);
+}
+
 function applyAppearance(mode: AppearanceMode): void {
   nativeTheme.themeSource = mode === "auto" ? "system" : mode;
 }
 
 // MARK: - Requests from the window
 
+/// Requests come from the app's own pages only: the window and Settings.
+/// The preview is a frame of another origin, with no bridge, and a page that
+/// somehow navigated elsewhere gets nothing either.
+function isFromTheApp(event: IpcMainInvokeEvent): boolean {
+  return event.senderFrame?.url.startsWith(`${appOrigin}/`) ?? false;
+}
+
 function handle<C extends RequestChannel>(
   channel: C,
   handler: (event: IpcMainInvokeEvent, ...args: Requests[C]["args"]) => Promise<Requests[C]["result"]> | Requests[C]["result"],
 ): void {
-  ipcMain.handle(channel, (event, ...args) => handler(event, ...(args as Requests[C]["args"])));
+  ipcMain.handle(channel, (event, ...args) => {
+    if (!isFromTheApp(event)) throw new Error(`${channel} refused: not asked by the app`);
+    return handler(event, ...(args as Requests[C]["args"]));
+  });
 }
+
+/// What a request about a file the window wasn't handed gets back.
+const notGranted = { ok: false as const, error: "Not a file this window opened" };
 
 function windowFor(event: IpcMainInvokeEvent): BrowserWindow {
   return BrowserWindow.fromWebContents(event.sender) ?? ensureWindow();
@@ -391,7 +426,6 @@ function registerRequests(): void {
       windowControlsWidth: platform === "darwin" ? 0 : platform === "win32" ? 138 : 104,
     };
   });
-  handle("app:show-settings", () => showSettings());
   handle("app:open-external", (_event, url) => {
     try {
       const scheme = new URL(url).protocol.replace(/:$/, "").toLowerCase();
@@ -400,7 +434,9 @@ function registerRequests(): void {
   });
   handle("app:list-fonts", () => installedFontFamilies());
   handle("app:read-clipboard", () => clipboard.readText());
-  handle("app:open-files", (_event, paths) => openFiles(paths.filter((path) => typeof path === "string")));
+  handle("app:open-files", (_event, paths) =>
+    openFiles(paths.filter((path) => isOpenableByPath(path, markdownExtensions))),
+  );
 
   handle("window:set-document", (event, info) => {
     const window = windowFor(event);
@@ -429,17 +465,11 @@ function registerRequests(): void {
   });
 
   handle("doc:register-folder", (_event, documentId, filePath) =>
-    registerDocumentFolder(documentId, filePath ? dirname(filePath) : null),
+    registerDocumentFolder(documentId, granted.has(filePath) ? dirname(filePath) : null),
   );
   handle("doc:forget-folder", (_event, documentId) => forgetDocumentFolder(documentId));
-  handle("doc:read", async (_event, filePath) => {
-    try {
-      return { ok: true, text: await readText(filePath) };
-    } catch (error) {
-      return { ok: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  });
   handle("doc:write", async (_event, filePath, text) => {
+    if (!granted.has(filePath)) return notGranted;
     try {
       watcher.noteWritten(filePath, text);
       await writeText(filePath, text);
@@ -461,6 +491,7 @@ function registerRequests(): void {
       watcher.noteWritten(result.filePath, request.text);
       await writeText(result.filePath, request.text);
       recentFiles.note(result.filePath);
+      granted.grant(result.filePath);
       return result.filePath;
     } catch (error) {
       await showError(window, strings.t("Couldn't save “%@”", basename(result.filePath)), error);
@@ -468,6 +499,7 @@ function registerRequests(): void {
     }
   });
   handle("doc:rename", async (event, filePath) => {
+    if (!granted.has(filePath)) return null;
     const window = windowFor(event);
     const result = await dialog.showSaveDialog(window, {
       title: strings.t("Rename"),
@@ -480,6 +512,8 @@ function registerRequests(): void {
       await moveFile(filePath, result.filePath);
       recentFiles.forget(filePath);
       recentFiles.note(result.filePath);
+      granted.revoke(filePath);
+      granted.grant(result.filePath);
       return result.filePath;
     } catch (error) {
       await showError(window, strings.t("Couldn't rename “%@”", basename(filePath)), error);
@@ -487,6 +521,7 @@ function registerRequests(): void {
     }
   });
   handle("doc:move", async (event, filePath) => {
+    if (!granted.has(filePath)) return null;
     const window = windowFor(event);
     const result = await dialog.showOpenDialog(window, {
       title: strings.t("Move To…").replace(/…$/, ""),
@@ -501,6 +536,8 @@ function registerRequests(): void {
       await moveFile(filePath, destination);
       recentFiles.forget(filePath);
       recentFiles.note(destination);
+      granted.revoke(filePath);
+      granted.grant(destination);
       return destination;
     } catch (error) {
       await showError(window, strings.t("Couldn't move “%@”", basename(filePath)), error);
@@ -529,7 +566,9 @@ function registerRequests(): void {
     });
     return result.response === 0;
   });
-  handle("doc:watch", (_event, filePath) => watcher.watch(filePath));
+  handle("doc:watch", (_event, filePath) => {
+    if (granted.has(filePath)) watcher.watch(filePath);
+  });
   handle("doc:unwatch", (_event, filePath) => watcher.unwatch(filePath));
   handle("doc:show-error", async (event, message, detail) => {
     await dialog.showMessageBox(windowFor(event), { type: "warning", message, detail, buttons: [strings.t("OK")] });
@@ -537,8 +576,14 @@ function registerRequests(): void {
 
   handle("session:store", (_event, session) => sessionFile.write(session));
 
-  handle("images:import", (_event, documentPath, files) => importImages(documentPath, files));
-  handle("images:save-pasted", (_event, documentPath, png) => savePastedImage(documentPath, png, strings));
+  handle("images:import", (_event, documentPath, files) => {
+    if (!granted.has(documentPath)) return { paths: [], error: notGranted.error };
+    return importImages(documentPath, files.filter((file) => typeof file === "string" && isImagePath(file)));
+  });
+  handle("images:save-pasted", (_event, documentPath, png) => {
+    if (!granted.has(documentPath)) return { paths: [], error: notGranted.error };
+    return savePastedImage(documentPath, png, strings);
+  });
   handle("images:ask-save-first", async (event) => {
     await dialog.showMessageBox(windowFor(event), {
       type: "info",
@@ -654,6 +699,7 @@ app.whenReady().then(async () => {
   const languages = process.env.LAUDA_LOCALE ? [process.env.LAUDA_LOCALE] : app.getPreferredSystemLanguages();
   strings = new Strings(pickLocale(languages), isMac);
   handleProtocols(strings.locale);
+  denyWebPermissions();
   applyAppearance(settings.value.appearanceMode);
   settings.onChange((value) => {
     applyAppearance(value.appearanceMode);

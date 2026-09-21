@@ -112,7 +112,13 @@ export function handleProtocols(locale: string): void {
   protocol.handle(appScheme, async (request) => {
     const url = new URL(request.url);
     if (url.host !== "app") return new Response(null, { status: 404 });
-    const file = resolve(distDirectory, "." + decodeURIComponent(url.pathname));
+    let pathname: string;
+    try {
+      pathname = decodeURIComponent(url.pathname);
+    } catch {
+      return new Response(null, { status: 400 });
+    }
+    const file = resolve(distDirectory, "." + pathname);
     if (!file.startsWith(distDirectory + sep)) return new Response(null, { status: 403 });
     try {
       const body = await readFile(file);

@@ -5,7 +5,6 @@ import type { Settings, ViewMode } from "./settings";
 /// arguments each request takes and what it answers.
 export interface Requests {
   "app:init": { args: []; result: InitialState };
-  "app:show-settings": { args: []; result: void };
   "settings:fit-window": { args: [height: number]; result: void };
   "app:open-external": { args: [url: string]; result: void };
   "app:list-fonts": { args: []; result: string[] };
@@ -17,7 +16,6 @@ export interface Requests {
   "window:closed-everything": { args: [ok: boolean]; result: void };
   "doc:register-folder": { args: [documentId: string, filePath: string | null]; result: string };
   "doc:forget-folder": { args: [documentId: string]; result: void };
-  "doc:read": { args: [filePath: string]; result: ReadResult };
   "doc:write": { args: [filePath: string, text: string]; result: WriteResult };
   "doc:save-as": { args: [request: SaveAsRequest]; result: string | null };
   "doc:rename": { args: [filePath: string]; result: string | null };
@@ -42,6 +40,8 @@ export interface Requests {
 export interface Events {
   "menu:command": MenuCommand;
   "workspace:open": OpenDocument;
+  /// Brings an open file's tab forward; a file with no tab is left alone.
+  "workspace:select": { filePath: string };
   "workspace:close-everything": { reason: "window" | "quit" };
   "settings:changed": Settings;
   "doc:changed-on-disk": { filePath: string; text: string };
@@ -73,12 +73,6 @@ export interface OpenDocument {
   title?: string;
   /// Marks the text as the reader's own change, as a duplicate's is.
   edited?: boolean;
-}
-
-export interface ReadResult {
-  ok: boolean;
-  text?: string;
-  error?: string;
 }
 
 export interface WriteResult {

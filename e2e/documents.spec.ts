@@ -163,3 +163,28 @@ test("the text width button cycles in preview-only mode", async () => {
   await clickMenu(app, "View", "Editor and Preview");
   await app.close();
 });
+
+/// The window names files by path. One it wasn't handed can't be written,
+/// moved, watched or have images copied beside it, however it asks: a page
+/// taken over by a bug must not reach the rest of the disk.
+test("the window can only write the files it was handed", async () => {
+  const { app, window, folder } = await launch({ files: { "mine.md": "# Mine\n" } });
+  await expect(window.locator(".window-title")).toHaveText("mine.md");
+  const elsewhere = join(folder, "not-opened.md");
+  const answer = await window.evaluate(
+    (path) => (globalThis as unknown as { lauda: { invoke: (c: string, ...a: unknown[]) => Promise<unknown> } }).lauda.invoke("doc:write", path, "written anyway"),
+    elsewhere,
+  );
+  expect(answer).toMatchObject({ ok: false });
+  expect(existsSync(elsewhere)).toBe(false);
+
+  // The file it opened is still its to write.
+  const opened = join(folder, "mine.md");
+  const allowed = await window.evaluate(
+    (path) => (globalThis as unknown as { lauda: { invoke: (c: string, ...a: unknown[]) => Promise<unknown> } }).lauda.invoke("doc:write", path, "# Mine, again\n"),
+    opened,
+  );
+  expect(allowed).toMatchObject({ ok: true });
+  expect(readFileSync(opened, "utf8")).toBe("# Mine, again\n");
+  await forceQuit(app);
+});

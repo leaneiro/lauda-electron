@@ -24,3 +24,21 @@ li.task input[type="checkbox"]:checked {
         background-color: color-mix(in srgb, var(--link) 55%, #1e1e21);
     }
 }
+
+/* Windows' contrast themes paint over the fills a found word is marked
+   with, so the marks take the system's own colours instead, and drop the
+   image a drawn task box shows its check with, so the system's own box,
+   which keeps it, comes back. */
+@media (forced-colors: active) {
+    li.task input[type="checkbox"] {
+        appearance: auto;
+    }
+    mark.find-hit {
+        outline: 1px solid CanvasText;
+    }
+    mark.find-hit.current {
+        forced-color-adjust: none;
+        background: Highlight;
+        color: HighlightText;
+    }
+}

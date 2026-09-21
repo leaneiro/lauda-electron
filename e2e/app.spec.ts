@@ -126,6 +126,28 @@ test("the tabs can be read and walked with the keyboard", async () => {
   await app.close();
 });
 
+/// Windows' contrast themes drop translucent fills and shadows, which is all
+/// the glass is made of: the capsules keep an outline, and the selected tab
+/// and view mode take the system's highlight.
+test("high contrast keeps the controls and the selected tab visible", async () => {
+  const { app, window } = await launch({ files: { "a.md": "# A\n", "b.md": "# B\n" } });
+  await expect(window.getByRole("tab")).toHaveCount(2);
+  await window.emulateMedia({ forcedColors: "active" });
+  const highlight = await window.evaluate(() => {
+    const probe = document.createElement("div");
+    probe.style.backgroundColor = "Highlight";
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return colour;
+  });
+  await expect(window.getByRole("tab", { selected: true })).toHaveCSS("background-color", highlight);
+  await expect(window.getByRole("tab", { selected: false })).toHaveCSS("border-top-width", "1px");
+  await expect(window.locator(".view-modes")).toHaveCSS("border-top-width", "1px");
+  await expect(window.locator(".toolbar-right .glass-button").last()).toHaveCSS("border-top-width", "1px");
+  await app.close();
+});
+
 /// A click from a test is handed to the page; a click from the mouse reaches
 /// it only where the window's drag region leaves off. The region is
 /// inherited, so a control under anything still in it, its own glass capsule

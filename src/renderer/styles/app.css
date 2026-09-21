@@ -817,3 +817,42 @@ body.platform-darwin .window-title {
     animation: none;
   }
 }
+
+/* Windows' contrast themes paint with a few system colours and drop
+   translucent fills and shadows, which is all the glass is made of. The
+   capsules get an outline instead, and what is selected or pressed takes
+   the system's highlight. */
+@media (forced-colors: active) {
+  .glass,
+  .find-bar,
+  .popover {
+    border: 1px solid ButtonText;
+  }
+  .glass::after {
+    display: none;
+  }
+  /* Painted with the system's own highlight colours, so the system leaves
+     them as they are, and draws no backplate behind their text. */
+  .tab.is-selected,
+  .view-modes button[aria-pressed="true"] {
+    forced-color-adjust: none;
+    color: HighlightText;
+  }
+  .tab.is-selected,
+  .view-modes button[aria-pressed="true"]::before {
+    background: Highlight;
+  }
+  .divider {
+    background: CanvasText;
+  }
+  /* What Find found is marked with fills as well. The selection needs
+     nothing: the system paints the text's own selection over the editor's. */
+  .editor-pane .cm-searchMatch {
+    outline: 1px solid CanvasText;
+  }
+  .editor-pane .cm-searchMatch-selected {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+}

@@ -248,6 +248,27 @@ test("duplicate, revert, rename and move", async () => {
   await forceQuit(app);
 });
 
+/// A screen that was unplugged would leave the window out of reach. macOS
+/// brings such a window back by itself; Windows and Linux leave it where it
+/// is told, which is what this checks there (placement.test.ts has the rule).
+test("a window last seen on a screen that is gone opens where it can be reached", async () => {
+  const { app } = await launch({
+    files: { "a.md": "# A\n" },
+    windowState: { x: 20000, y: 20000, width: 900, height: 600, maximized: false },
+  });
+  const reachable = await app.evaluate(({ BrowserWindow, screen }) => {
+    const bounds = BrowserWindow.getAllWindows()[0]?.getBounds();
+    if (!bounds) return false;
+    return screen.getAllDisplays().some(({ workArea: area }) => {
+      return (
+        bounds.x >= area.x && bounds.y >= area.y && bounds.x < area.x + area.width && bounds.y < area.y + area.height
+      );
+    });
+  });
+  expect(reachable).toBe(true);
+  await app.close();
+});
+
 test("the text width button cycles in preview-only mode", async () => {
   const { app, window } = await launch({ files: { "wide.md": "# Wide\n\ntext\n" } });
   const preview = await previewFrame(window);

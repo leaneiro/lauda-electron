@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type ElectronApplication, _electron as electron, type Page } from "@playwright/test";
@@ -10,16 +10,18 @@ export interface Launched {
 }
 
 /// Starts the built app with a data folder of its own (so nothing the
-/// reader has is touched) and, optionally, files to open.
+/// reader has is touched) and, optionally, files to open and where the
+/// window was left.
 export async function launch(
-  options: { files?: Record<string, string>; settings?: object; locale?: string } = {},
+  options: { files?: Record<string, string>; settings?: object; locale?: string; windowState?: object } = {},
 ): Promise<Launched> {
   const folder = mkdtempSync(join(tmpdir(), "lauda-e2e-"));
   const userData = join(folder, "user-data");
   const documents = join(folder, "docs");
-  require("node:fs").mkdirSync(documents, { recursive: true });
-  require("node:fs").mkdirSync(userData, { recursive: true });
+  mkdirSync(documents, { recursive: true });
+  mkdirSync(userData, { recursive: true });
   writeFileSync(join(userData, "settings.json"), JSON.stringify({ hasShownWelcomeGuide: true, ...options.settings }));
+  if (options.windowState) writeFileSync(join(userData, "window-state.json"), JSON.stringify(options.windowState));
   const paths = Object.entries(options.files ?? {}).map(([name, text]) => {
     const path = join(documents, name);
     writeFileSync(path, text);

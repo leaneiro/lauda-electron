@@ -1,6 +1,7 @@
 import { join } from "node:path";
-import { app, BrowserWindow, nativeTheme, type WebContents } from "electron";
+import { app, BrowserWindow, nativeTheme, screen, type WebContents } from "electron";
 import type { Events } from "../shared/ipc";
+import { placeWindow } from "./placement";
 import { appOrigin, distDirectory } from "./protocols";
 import { readWindowState, windowStateFile } from "./store";
 
@@ -114,11 +115,12 @@ export class DocumentWindow {
   ensure(): BrowserWindow {
     if (this.window) return this.window;
     const state = readWindowState();
+    const place = placeWindow(
+      state,
+      [screen.getPrimaryDisplay(), ...screen.getAllDisplays()].map((display) => display.workArea),
+    );
     const window = new BrowserWindow({
-      width: state?.width ?? 1200,
-      height: state?.height ?? 800,
-      x: state?.x,
-      y: state?.y,
+      ...place,
       minWidth: 700,
       minHeight: 500,
       show: false,

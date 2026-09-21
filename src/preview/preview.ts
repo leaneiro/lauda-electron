@@ -5,6 +5,16 @@
 
 const appOrigin = "lauda-app://app";
 
+// The page's own elements and the document methods the script calls, taken
+// before any document's HTML enters the page: an element named after one of
+// them (an <img name="createElement">) would take its place on `document`.
+const root = document.documentElement;
+const body = document.body;
+const content = document.getElementById("content") as HTMLElement;
+const createElement = document.createElement.bind(document);
+const createTextNode = document.createTextNode.bind(document);
+const createTreeWalker = document.createTreeWalker.bind(document);
+
 // Timestamp of the last programmatic change; scroll events shortly after
 // one are echoes (or reflows), not the reader scrolling the preview.
 let suppressScrollEventsUntil = 0;
@@ -31,8 +41,6 @@ let lastPosition: Position | { atEnd: true } | null = null;
 let anchorLines: number[] = [];
 let totalLines = 1;
 
-const content = () => document.getElementById("content") as HTMLElement;
-
 function post(message: unknown): void {
   window.parent.postMessage(message, appOrigin);
 }
@@ -45,33 +53,31 @@ function setContent(html: string, lines: number[], lineCount: number): void {
   suppressScrollEventsUntil = Date.now() + 200;
   anchorLines = lines || [];
   totalLines = Math.max(lineCount || 1, 1);
-  const container = content();
-  const parsed = document.createElement("div");
+  const parsed = createElement("div");
   parsed.innerHTML = html;
 
-  const oldBlocks = Array.from(container.children);
+  const oldBlocks = Array.from(content.children);
   const newBlocks = Array.from(parsed.children);
   const common = Math.min(oldBlocks.length, newBlocks.length);
   oldBlocks.slice(0, common).forEach((oldBlock, i) => {
     const newBlock = newBlocks[i];
-    if (newBlock && !oldBlock.isEqualNode(newBlock)) container.replaceChild(newBlock, oldBlock);
+    if (newBlock && !oldBlock.isEqualNode(newBlock)) content.replaceChild(newBlock, oldBlock);
   });
-  for (const block of oldBlocks.slice(common)) container.removeChild(block);
-  for (const block of newBlocks.slice(common)) container.appendChild(block);
+  for (const block of oldBlocks.slice(common)) content.removeChild(block);
+  for (const block of newBlocks.slice(common)) content.appendChild(block);
 }
 
 function setStyle(family: string, size: number, lineHeight: number): void {
   reflowing(() => {
-    const style = document.documentElement.style;
-    style.setProperty("--pfont", family);
-    style.setProperty("--psize", `${size}px`);
-    style.setProperty("--plh", String(lineHeight));
+    root.style.setProperty("--pfont", family);
+    root.style.setProperty("--psize", `${size}px`);
+    root.style.setProperty("--plh", String(lineHeight));
   });
 }
 
 function setContentWidth(rem: number): void {
   reflowing(() => {
-    document.documentElement.style.setProperty("--article-max", `${rem}rem`);
+    root.style.setProperty("--article-max", `${rem}rem`);
   });
 }
 
@@ -81,10 +87,10 @@ function setContentWidth(rem: number): void {
 function reflowing(change: () => void): void {
   if (!lastPosition) rememberTopOfPage();
   suppressScrollEventsUntil = Date.now() + 300;
-  const root = document.documentElement;
   root.classList.add("reflowing");
   change();
-  document.body.getBoundingClientRect();
+  // Lays out the new text now.
+  body.getBoundingClientRect();
   realign();
   root.classList.remove("reflowing");
 }
@@ -121,7 +127,7 @@ function realign(): void {
 }
 
 function maxScroll(): number {
-  return Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
+  return Math.max(root.scrollHeight - window.innerHeight, 0);
 }
 
 // Elements the line map names, in its order: every top-level block, then the
@@ -129,7 +135,7 @@ function maxScroll(): number {
 // ours, so nothing inside it is an anchor.
 function anchorElements(): Element[] {
   const elements: Element[] = [];
-  for (const block of Array.from(content().children)) {
+  for (const block of Array.from(content.children)) {
     elements.push(block);
     if (block.classList.contains("raw")) continue;
     for (const inner of Array.from(block.querySelectorAll("li, tr"))) elements.push(inner);
@@ -155,7 +161,7 @@ function lineAnchors(): [number, number][] | null {
       points.push(last);
     }
   });
-  const endY = document.documentElement.scrollHeight;
+  const endY = root.scrollHeight;
   if (totalLines > last[0] && endY >= last[1]) points.push([totalLines, endY]);
   return points;
 }
@@ -215,7 +221,7 @@ function findClear(): void {
   for (const mark of findState.marks) {
     const parent = mark.parentNode;
     if (parent) {
-      parent.replaceChild(document.createTextNode(mark.textContent ?? ""), mark);
+      parent.replaceChild(createTextNode(mark.textContent ?? ""), mark);
       parent.normalize();
     }
   }
@@ -228,7 +234,7 @@ function findRun(query: string, forward: boolean, restart: boolean): [number, nu
     findState.query = query;
     if (!query) return [0, 0];
     const lowered = query.toLowerCase();
-    const walker = document.createTreeWalker(content(), NodeFilter.SHOW_TEXT);
+    const walker = createTreeWalker(content, NodeFilter.SHOW_TEXT);
     const nodes: Text[] = [];
     while (walker.nextNode()) nodes.push(walker.currentNode as Text);
     for (const node of nodes) {
@@ -238,7 +244,7 @@ function findRun(query: string, forward: boolean, restart: boolean): [number, nu
       while ((position = (current.textContent ?? "").toLowerCase().indexOf(lowered)) !== -1) {
         const match = current.splitText(position);
         const rest = match.splitText(query.length);
-        const mark = document.createElement("mark");
+        const mark = createElement("mark");
         mark.className = "find-hit";
         match.parentNode?.replaceChild(mark, match);
         mark.appendChild(match);
@@ -372,8 +378,8 @@ window.addEventListener("message", (event: MessageEvent<Message>) => {
       break;
     case "focus":
       window.focus();
-      document.documentElement.tabIndex = -1;
-      document.documentElement.focus({ preventScroll: true });
+      root.tabIndex = -1;
+      root.focus({ preventScroll: true });
       break;
   }
 });

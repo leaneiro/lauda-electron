@@ -15,6 +15,21 @@ test("opens a file and renders its preview", async () => {
   await app.close();
 });
 
+/// An element the document names after a method of the page's takes that
+/// method's place on `document`; the preview's script keeps its own.
+test("elements named like the page's methods leave the preview working", async () => {
+  const { app, window } = await launch({
+    files: { "named.md": '<img name="createElement" alt=""><form name="getElementById"></form>\n\n# Title\n' },
+  });
+  const preview = await previewFrame(window);
+  await expect(preview.locator("h1")).toHaveText("Title");
+  await window.locator(".cm-content").click();
+  await window.keyboard.press(`${mod}+End`);
+  await window.keyboard.type("\nStill updating");
+  await expect(preview.locator("p").last()).toHaveText("Still updating");
+  await app.close();
+});
+
 test("typing updates the preview and autosaves the file", async () => {
   const { app, window, folder } = await launch({ files: { "notes.md": "# Title\n" } });
   const preview = await previewFrame(window);

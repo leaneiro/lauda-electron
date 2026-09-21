@@ -24,3 +24,9 @@ export function clampSplit(fraction: number, totalWidth: number): number {
   const min = minPaneWidth / totalWidth;
   return Math.min(Math.max(fraction, min), 1 - min);
 }
+
+/// How long a change of layout takes, in milliseconds: the panes, the
+/// toolbar's controls, the title and the tabs animate side by side, so they
+/// share it. The stylesheet has the same figure as --mode-change (app.css),
+/// and a change to one is a change to both (ModeChange.duration natively).
+export const modeChangeMs = 200;

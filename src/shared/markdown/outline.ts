@@ -1,3 +1,4 @@
+import { trimmingWhitespaces } from "../editing/characters";
 // The document outline (Outline.swift): the headings the toolbar's popover
 // lists, with the source line picking one scrolls both panes to.
 
@@ -61,8 +62,3 @@ function isInline(markup: Markup): markup is Parameters<typeof plainText>[0] {
   }
 }
 
-/// Foundation's `trimmingCharacters(in: .whitespaces)`: tabs, the space
-/// separators and, by old habit, the zero width space. Line breaks stay.
-function trimmingWhitespaces(text: string): string {
-  return text.replace(/^[\t\p{Zs}​]+|[\t\p{Zs}​]+$/gu, "");
-}

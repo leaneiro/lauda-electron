@@ -1,3 +1,4 @@
+import { showError } from "./dialogs";
 import { app, BrowserWindow, dialog } from "electron";
 import { writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -81,10 +82,5 @@ export async function exportPDF(window: BrowserWindow, request: ExportRequest, s
 }
 
 async function showExportError(window: BrowserWindow, request: ExportRequest, error: unknown, strings: Strings) {
-  await dialog.showMessageBox(window, {
-    type: "warning",
-    message: strings.t("Couldn't export “%@”", request.title),
-    detail: error instanceof Error ? error.message : String(error),
-    buttons: [strings.t("OK")],
-  });
+  await showError(window, strings.t("Couldn't export “%@”", request.title), error, strings);
 }

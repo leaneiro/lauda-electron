@@ -21,35 +21,55 @@ export function isInsideCode(
   return backticks % 2 === 1;
 }
 
-// A line that opens or closes a fence: up to three spaces or tabs, then three
-// or more backticks or tildes. Sticky, so each line is tested where it starts.
-const fenceLine = /[ \t]{0,3}(?:`{3,}|~{3,})/y;
+/// Whether a line opens or closes a fence: up to three spaces or tabs, then
+/// three or more backticks or tildes.
+export function isFenceLine(line: string): boolean {
+  return /^[ \t]{0,3}(?:`{3,}|~{3,})/.test(line);
+}
+
+/// A line as the fence pairing reads it: where it starts, where the next
+/// one starts (past its break), and its text without the break.
+export interface FenceLine {
+  start: number;
+  next: number;
+  text: string;
+}
 
 /// The fenced code blocks, each from its opening line's start to past its
 /// closing line's break. A single linear pass pairs fence lines as they come
-/// (any fence closes any other), and an unclosed fence runs to the end of the
-/// text; that spares the pathological backtracking a multiline pattern has on
+/// (any fence closes any other), and an unclosed fence runs to `end`; that
+/// spares the pathological backtracking a multiline pattern has on
 /// documents with orphan fences. The native highlighter's fencedBlockRanges.
-export function fencedBlockRanges(text: string): TextRange[] {
+/// The lines come from whoever holds the text: a string here, the editor's
+/// own document in the window.
+export function pairFences(lines: Iterable<FenceLine>, end: number): TextRange[] {
   const ranges: TextRange[] = [];
   let openLocation: number | null = null;
-  let location = 0;
-  while (location < text.length) {
-    const newline = text.indexOf("\n", location);
-    const lineEnd = newline === -1 ? text.length : newline + 1;
-    fenceLine.lastIndex = location;
-    if (fenceLine.test(text)) {
-      if (openLocation === null) {
-        openLocation = location;
-      } else {
-        ranges.push({ location: openLocation, length: lineEnd - openLocation });
-        openLocation = null;
-      }
+  for (const line of lines) {
+    if (!isFenceLine(line.text)) continue;
+    if (openLocation === null) {
+      openLocation = line.start;
+    } else {
+      ranges.push({ location: openLocation, length: line.next - openLocation });
+      openLocation = null;
     }
-    location = lineEnd;
   }
-  if (openLocation !== null) {
-    ranges.push({ location: openLocation, length: text.length - openLocation });
-  }
+  if (openLocation !== null) ranges.push({ location: openLocation, length: end - openLocation });
   return ranges;
+}
+
+function* linesOf(text: string): Generator<FenceLine> {
+  let start = 0;
+  while (start < text.length) {
+    const newline = text.indexOf("\n", start);
+    const lineEnd = newline === -1 ? text.length : newline;
+    const next = newline === -1 ? text.length : newline + 1;
+    yield { start, next, text: text.slice(start, lineEnd) };
+    start = next;
+  }
+}
+
+/// The fenced code blocks of a text (pairFences over its lines).
+export function fencedBlockRanges(text: string): TextRange[] {
+  return pairFences(linesOf(text), text.length);
 }

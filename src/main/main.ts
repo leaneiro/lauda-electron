@@ -8,11 +8,12 @@ import { withCtrlShortcuts } from "../shared/document";
 import { isImagePath } from "../shared/markdown/content-policy";
 import { allowedLinkSchemes } from "../shared/markdown";
 import type { AppearanceMode } from "../shared/settings";
+import { messageOf, showError, showWarning } from "./dialogs";
 import { exportHTML, exportPDF } from "./export";
 import { GrantedFiles, isOpenableByPath } from "./granted-files";
 import { DocumentWatcher, readText, writeText } from "./files";
 import { installedFontFamilies } from "./fonts";
-import { importImages, savePastedImage, uniqueDestination } from "./images";
+import { freePathIn, importImages, savePastedImage } from "./images";
 import { buildMenu } from "./menu";
 import {
   appOrigin,
@@ -80,7 +81,19 @@ function sendCommand(command: MenuCommand): void {
 
 // MARK: - Opening
 
-const markdownExtensions = ["md", "markdown", "mdown", "mkd", "mkdn", "mdwn", "mdtxt", "mdtext", "text", "txt"];
+/// What File > Open offers as Markdown, what a drop may open, and what the
+/// app claims on the system (package.json's fileAssociations lists the
+/// same first six, the ones that only Markdown uses).
+const markdownOnlyExtensions = ["md", "markdown", "mdown", "mkd", "mkdn", "mdwn", "mdtxt", "mdtext"];
+const plainTextExtensions = ["txt", "text"];
+const markdownExtensions = [...markdownOnlyExtensions, ...plainTextExtensions];
+
+/// The windows' background before their pages draw, the page's own colour
+/// (--window-bg in app.css; Settings is the lighter grey of a sheet).
+function windowBackground(kind: "document" | "settings" = "document"): string {
+  if (nativeTheme.shouldUseDarkColors) return "#1e1e1e";
+  return kind === "settings" ? "#f5f5f7" : "#ffffff";
+}
 
 /// Opens the files one after another, so their tabs keep this order
 /// whatever each one takes to read. A file already open comes forward.
@@ -98,12 +111,7 @@ async function openFiles(paths: string[], select?: string | null): Promise<void>
       withWindow(() => send("workspace:open", { filePath, text }));
     } catch (error) {
       recentFiles.forget(filePath);
-      await dialog.showMessageBox(window, {
-        type: "warning",
-        message: strings.t("Couldn't open “%@”", basename(filePath)),
-        detail: error instanceof Error ? error.message : String(error),
-        buttons: [strings.t("OK")],
-      });
+      await showError(window, strings.t("Couldn't open “%@”", basename(filePath)), error, strings);
     }
   }
   // Its own event, not an open with no text: a file that failed to open
@@ -118,8 +126,8 @@ async function showOpenDialog(): Promise<void> {
   const options: Electron.OpenDialogOptions = {
     properties: ["openFile", "multiSelections"],
     filters: [
-      { name: strings.t("Markdown Document"), extensions: markdownExtensions.slice(0, 8) },
-      { name: strings.t("Plain Text"), extensions: ["txt", "text"] },
+      { name: strings.t("Markdown Document"), extensions: markdownOnlyExtensions },
+      { name: strings.t("Plain Text"), extensions: plainTextExtensions },
       { name: strings.t("All Files"), extensions: ["*"] },
     ],
   };
@@ -195,7 +203,7 @@ function filesInArguments(argv: string[]): string[] {
 
 function titleBarOverlay(): Electron.TitleBarOverlayOptions {
   const dark = nativeTheme.shouldUseDarkColors;
-  return { color: dark ? "#1e1e1e" : "#ffffff", symbolColor: dark ? "#e6e6e9" : "#1d1d1f", height: 52 };
+  return { color: windowBackground(), symbolColor: dark ? "#e6e6e9" : "#1d1d1f", height: 52 };
 }
 
 function ensureWindow(): BrowserWindow {
@@ -210,7 +218,7 @@ function ensureWindow(): BrowserWindow {
     minHeight: 500,
     show: false,
     title: "Lauda",
-    backgroundColor: nativeTheme.shouldUseDarkColors ? "#1e1e1e" : "#ffffff",
+    backgroundColor: windowBackground(),
     titleBarStyle: "hidden",
     ...(isMac ? { trafficLightPosition: { x: 19, y: 19 } } : { titleBarOverlay: titleBarOverlay() }),
     ...(process.platform === "linux" ? { icon: join(distDirectory, "resources/icons/AppIcon-512.png") } : {}),
@@ -292,7 +300,7 @@ function showSettings(): void {
     show: false,
     title: strings.t("Settings"),
     parent: workspaceWindow ?? undefined,
-    backgroundColor: nativeTheme.shouldUseDarkColors ? "#1e1e1e" : "#f5f5f7",
+    backgroundColor: windowBackground("settings"),
     webPreferences: {
       preload: join(__dirname, "preload.js"),
       sandbox: true,
@@ -475,7 +483,7 @@ function registerRequests(): void {
       await writeText(filePath, text);
       return { ok: true };
     } catch (error) {
-      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+      return { ok: false, error: messageOf(error) };
     }
   });
   handle("doc:save-as", async (event, request) => {
@@ -494,7 +502,7 @@ function registerRequests(): void {
       granted.grant(result.filePath);
       return result.filePath;
     } catch (error) {
-      await showError(window, strings.t("Couldn't save “%@”", basename(result.filePath)), error);
+      await showError(window, strings.t("Couldn't save “%@”", basename(result.filePath)), error, strings);
       return null;
     }
   });
@@ -516,7 +524,7 @@ function registerRequests(): void {
       granted.grant(result.filePath);
       return result.filePath;
     } catch (error) {
-      await showError(window, strings.t("Couldn't rename “%@”", basename(filePath)), error);
+      await showError(window, strings.t("Couldn't rename “%@”", basename(filePath)), error, strings);
       return null;
     }
   });
@@ -531,7 +539,7 @@ function registerRequests(): void {
     });
     const folder = result.filePaths[0];
     if (result.canceled || !folder || folder === dirname(filePath)) return null;
-    const destination = uniqueDestination(basename(filePath), folder);
+    const destination = freePathIn(folder, basename(filePath));
     try {
       await moveFile(filePath, destination);
       recentFiles.forget(filePath);
@@ -540,7 +548,7 @@ function registerRequests(): void {
       granted.grant(destination);
       return destination;
     } catch (error) {
-      await showError(window, strings.t("Couldn't move “%@”", basename(filePath)), error);
+      await showError(window, strings.t("Couldn't move “%@”", basename(filePath)), error, strings);
       return null;
     }
   });
@@ -571,7 +579,7 @@ function registerRequests(): void {
   });
   handle("doc:unwatch", (_event, filePath) => watcher.unwatch(filePath));
   handle("doc:show-error", async (event, message, detail) => {
-    await dialog.showMessageBox(windowFor(event), { type: "warning", message, detail, buttons: [strings.t("OK")] });
+    await showWarning(windowFor(event), message, detail, strings);
   });
 
   handle("session:store", (_event, session) => sessionFile.write(session));
@@ -606,15 +614,6 @@ function registerRequests(): void {
   handle("menu:set-state", (_event, state) => {
     menuState = state;
     refreshMenu();
-  });
-}
-
-async function showError(window: BrowserWindow, message: string, error: unknown): Promise<void> {
-  await dialog.showMessageBox(window, {
-    type: "warning",
-    message,
-    detail: error instanceof Error ? error.message : String(error),
-    buttons: [strings.t("OK")],
   });
 }
 
@@ -708,7 +707,7 @@ app.whenReady().then(async () => {
   recentFiles.onChange(refreshMenu);
   nativeTheme.on("updated", () => {
     if (!workspaceWindow) return;
-    workspaceWindow.setBackgroundColor(nativeTheme.shouldUseDarkColors ? "#1e1e1e" : "#ffffff");
+    workspaceWindow.setBackgroundColor(windowBackground());
     if (!isMac) workspaceWindow.setTitleBarOverlay(titleBarOverlay());
   });
   app.setAboutPanelOptions({

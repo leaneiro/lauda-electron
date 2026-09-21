@@ -1,5 +1,6 @@
 import { RangeSetBuilder, type Text } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from "@codemirror/view";
+import { type FenceLine, pairFences } from "../../shared/editing/code";
 
 /// Light regex-based Markdown highlighting for the editor pane, the native
 /// MarkdownHighlighter's rules in its order: later rules win where they
@@ -20,7 +21,6 @@ const strikethroughRegex = /~~[^~\n]+~~/gu;
 const underlineRegex = /<u>[^<\n]*<\/u>/giu;
 const linkRegex = /\[([^\]\n]*)\]\(([^)\n]*)\)/dgu;
 const inlineCodeRegex = /`[^`\n]+`/gu;
-const fenceLineRegex = /^[ \t]{0,3}(?:`{3,}|~{3,})/u;
 
 type Color = "indigo" | "secondary" | "link" | "tertiary" | "purple";
 
@@ -33,25 +33,17 @@ interface Style {
   fence: boolean;
 }
 
-/// Single linear pass pairing ```/~~~ fence lines; an unclosed fence runs to
-/// the end of the document. Also tells the editor where code is, so typing
-/// substitutions and marker pairing stay out of it.
+/// The fenced blocks, found by the same rule as everywhere else
+/// (pairFences), over the editor's own lines. Also tells the editor where
+/// code is, so typing substitutions and marker pairing stay out of it.
 export function fencedBlockRanges(doc: Text): { from: number; to: number }[] {
-  const ranges: { from: number; to: number }[] = [];
-  let open: number | null = null;
-  for (let number = 1; number <= doc.lines; number++) {
-    const line = doc.line(number);
-    if (fenceLineRegex.test(line.text)) {
-      if (open === null) {
-        open = line.from;
-      } else {
-        ranges.push({ from: open, to: Math.min(line.to + 1, doc.length) });
-        open = null;
-      }
+  function* lines(): Generator<FenceLine> {
+    for (let number = 1; number <= doc.lines; number++) {
+      const line = doc.line(number);
+      yield { start: line.from, next: Math.min(line.to + 1, doc.length), text: line.text };
     }
   }
-  if (open !== null) ranges.push({ from: open, to: doc.length });
-  return ranges;
+  return pairFences(lines(), doc.length).map((range) => ({ from: range.location, to: range.location + range.length }));
 }
 
 function classes(style: Style): string {

@@ -7,7 +7,7 @@ import { basename, dirname, join } from "node:path";
 /// MarkdownDocument.decode).
 export function decodeText(data: Uint8Array): string {
   try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(data).replace(/^﻿/, "");
+    return new TextDecoder("utf-8", { fatal: true }).decode(data).replace(/^\uFEFF/, "");
   } catch {
     return new TextDecoder("latin1").decode(data);
   }

@@ -1,7 +1,7 @@
 import { lauda } from "../api";
 import type { LaudaDocument } from "../document";
 import type { FindCounts, PreviewFinding } from "../find";
-import { differs, endConvergence, type ScrollSync } from "../scroll-sync";
+import { differs, endConvergence, type ScrollSync, startingScroll } from "../scroll-sync";
 
 interface RenderedContent {
   html: string;
@@ -50,7 +50,7 @@ export class PreviewPane implements PreviewFinding {
   private pendingContent: RenderedContent | null = null;
   private lastStyle: { family: string; size: number; lineHeight: number } | null = null;
   private lastWidth: number | null = null;
-  private lastScroll: ScrollSync = { line: null, fraction: 0, endLine: null, toEndDistance: 100_000, source: "editor" };
+  private lastScroll: ScrollSync = startingScroll();
   private pendingScroll: ScrollSync | null = null;
   private nextRequest = 1;
   private readonly waiting = new Map<number, (value: unknown) => void>();

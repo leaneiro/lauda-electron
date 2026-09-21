@@ -196,7 +196,7 @@ function isWordBoundary(text: string, position: number): boolean {
   return currentIsWord !== previousIsWord;
 }
 
-const wordCharacter = /^[\p{Alphabetic}\p{M}\p{Nd}\p{Pc}‌‍]$/u;
+const wordCharacter = /^[\p{Alphabetic}\p{M}\p{Nd}\p{Pc}\u200C\u200D]$/u;
 const combining = /^[\p{Grapheme_Extend}\p{Cf}]$/u;
 const digit = /^\p{Nd}$/u;
 

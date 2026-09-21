@@ -1,3 +1,4 @@
+import { modeChangeMs } from "../shared/layout";
 import { lauda, t } from "./api";
 import { LaudaDocument } from "./document";
 import { DocumentView } from "./document-view";
@@ -6,10 +7,17 @@ import { nextPreviewWidthLevel, previewWidthShowing, type Settings, type ViewMod
 
 type Listener = () => void;
 
-/// How long a tab takes to come or go, which the title bar waits for.
-export const tabAnimation = 200;
+/// How long a tab takes to come or go, which the title bar waits for: the
+/// same as a change of layout, since the two often run together.
+export const tabAnimation = modeChangeMs;
 /// How long the title bar takes to change its layout before the tabs show.
 const titleBarSettling = 120;
+
+/// A file name without its extension, the way a copy or an export is named
+/// after the document ("notes.md" becomes "notes").
+function withoutExtension(title: string): string {
+  return title.replace(/\.[^.]+$/, "");
+}
 
 /// The window's documents and the tabs they show as (Workspace.swift): each
 /// document keeps panes of its own, and selecting a tab brings its panes
@@ -271,7 +279,7 @@ export class Workspace {
         await document.save();
         return;
       case "duplicate":
-        this.open({ filePath: null, text: document.text, title: t("%@ copy", document.title.replace(/\.[^.]+$/, "")), edited: true });
+        this.open({ filePath: null, text: document.text, title: t("%@ copy", withoutExtension(document.title)), edited: true });
         return;
       case "rename":
       case "move": {
@@ -295,7 +303,7 @@ export class Workspace {
       case "export-pdf":
       case "export-html":
         await lauda.invoke(command.name === "export-pdf" ? "export:pdf" : "export:html", {
-          title: document.title.replace(/\.[^.]+$/, ""),
+          title: withoutExtension(document.title),
           markdown: document.text,
           filePath: document.filePath,
         });

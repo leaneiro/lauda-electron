@@ -1,14 +1,14 @@
 import { Editor } from "./editor/editor";
-import { strikethroughMarker, underlineTags } from "../shared/editing";
+import { boldMarker, italicMarker, strikethroughMarker, underlineTags } from "../shared/editing";
 import { PreviewPane } from "./preview/preview-pane";
 import { FindSession } from "./find";
 import { StatusBar } from "./status-bar";
 import type { LaudaDocument } from "./document";
 import type { Workspace } from "./workspace";
-import type { ScrollSync } from "./scroll-sync";
+import { type ScrollSync, farFromTheEnd } from "./scroll-sync";
 import type { MenuCommand } from "../shared/ipc";
 import { cssEditorFontFamily, cssFontFamily, type Settings, type ViewMode } from "../shared/settings";
-import { clampSplit, isSmoothModeChange } from "../shared/layout";
+import { clampSplit, isSmoothModeChange, modeChangeMs } from "../shared/layout";
 
 /// One document's part of the window: its editor and preview side by side,
 /// the find bar over them and the status bar under them. Each open document
@@ -98,7 +98,8 @@ export class DocumentView {
       this.editor.restoreScroll();
       this.preview.realign();
     };
-    if (animates) this.awayTimer = window.setTimeout(settle, 220);
+    // A frame's margin past the animation, so the panes have arrived.
+    if (animates) this.awayTimer = window.setTimeout(settle, modeChangeMs + 20);
     else settle();
     this.preview.setContentWidth(this.workspace.previewWidth.rem);
     this.find.modeChanged(mode);
@@ -150,7 +151,7 @@ export class DocumentView {
   /// caret follows when the editor is showing (OutlineJump).
   jumpToLine(line: number): void {
     const lineCount = Math.max(this.document.text.split("\n").length, 1);
-    this.publishScroll({ line, fraction: line / lineCount, endLine: null, toEndDistance: 100_000, source: "navigation" });
+    this.publishScroll({ line, fraction: line / lineCount, endLine: null, toEndDistance: farFromTheEnd, source: "navigation" });
     if (this.mode !== "previewOnly") this.editor.placeCaret(line);
   }
 
@@ -189,10 +190,10 @@ export class DocumentView {
         this.find.replace();
         return;
       case "bold":
-        if (this.mode !== "previewOnly") this.editor.toggleMarker("**");
+        if (this.mode !== "previewOnly") this.editor.toggleMarker(boldMarker);
         return;
       case "italic":
-        if (this.mode !== "previewOnly") this.editor.toggleMarker("*");
+        if (this.mode !== "previewOnly") this.editor.toggleMarker(italicMarker);
         return;
       case "underline":
         if (this.mode !== "previewOnly") this.editor.togglePair(underlineTags[0], underlineTags[1]);

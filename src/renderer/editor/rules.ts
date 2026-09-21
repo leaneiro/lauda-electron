@@ -1,5 +1,5 @@
 import * as editing from "../../shared/editing";
-import { imageMarkdown as markdownForImages, isImageFile } from "../../shared/document";
+import * as documents from "../../shared/document";
 import { t } from "../api";
 
 /// The native editing rules (src/shared/editing, ported from Swift with
@@ -90,12 +90,23 @@ export function linkEdit(text: string, selection: Range, clipboard: string | nul
   return fromTextEdit(editing.link(text, toTextRange(selection), clipboard));
 }
 
-export function imageMarkdown(paths: readonly string[]): string {
-  return markdownForImages(paths);
+/// The images' Markdown in place of `range`, the caret after it.
+export function imageInsertion(paths: readonly string[], range: Range): Edit {
+  return fromTextEdit(documents.imageInsertion(paths, toTextRange(range)));
 }
 
 export function isImageName(name: string): boolean {
-  return isImageFile(name);
+  return documents.isImageFile(name);
+}
+
+/// What a paste of these files and this text is (pasteIntent). A dropped or
+/// pasted file with a path is on the disk: the system handed it over.
+export function pastesImages(imagePaths: readonly string[], hasRawImages: boolean, text: string): boolean {
+  const intent = documents.pasteIntent(
+    { files: imagePaths, hasText: text !== "", hasImageData: hasRawImages },
+    () => true,
+  );
+  return intent.kind !== "notAnImage";
 }
 
 export function imageErrorTitle(): string {

@@ -214,11 +214,8 @@ async function insertImages(view: EditorView, document: LaudaDocument, files: Fi
         return png ? lauda.invoke("images:save-pasted", document.filePath as string, png) : { paths: [], error: "" };
       })();
   if (result.paths.length > 0) {
-    const markdown = rules.imageMarkdown(result.paths);
     const selection = view.state.selection.main;
-    const from = at ?? selection.from;
-    const to = at ?? selection.to;
-    programmaticEdit(view, { from, to, insert: markdown, selection: { from: from + markdown.length, to: from + markdown.length } });
+    programmaticEdit(view, rules.imageInsertion(result.paths, { from: at ?? selection.from, to: at ?? selection.to }));
   }
   if (result.error) {
     await lauda.invoke("doc:show-error", rules.imageErrorTitle(), result.error);
@@ -237,10 +234,10 @@ function pasteAndDrop(document: LaudaDocument): Extension {
       const images = imageFiles(data.files);
       // A file copied in a file manager arrives as the file plus its name as
       // text: the file wins. Raw image data only counts without any text,
-      // so rich web content still pastes as text.
-      const hasFilePaths = images.some((file) => lauda.pathForFile(file));
+      // so rich web content still pastes as text (pasteIntent).
+      const paths = images.map((file) => lauda.pathForFile(file)).filter((path) => path !== "");
       const text = data.getData("text/plain");
-      if (images.length > 0 && (hasFilePaths || !text)) {
+      if (rules.pastesImages(paths, paths.length < images.length, text)) {
         event.preventDefault();
         void insertImages(view, document, images, null);
         return true;

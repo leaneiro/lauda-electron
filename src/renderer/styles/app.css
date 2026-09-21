@@ -60,6 +60,7 @@
   --editor-size: 14px;
   --editor-line-height: 1.51;
 
+  /* modeChangeMs in shared/layout.ts, which the script times itself by. */
   --mode-change: 0.2s;
   color-scheme: light;
 }
@@ -186,7 +187,7 @@ body.platform-darwin .window-title { margin-left: 12px; }
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 30%;
-  transition: opacity 0.2s ease-out;
+  transition: opacity var(--mode-change) ease-out;
 }
 .window-title.is-hidden { opacity: 0; }
 
@@ -279,7 +280,7 @@ body.platform-darwin .window-title { margin-left: 12px; }
 .view-modes svg { position: relative; }
 
 .width-button {
-  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+  transition: opacity var(--mode-change) ease-in-out, transform var(--mode-change) ease-in-out;
 }
 .width-button.is-out {
   opacity: 0;
@@ -298,7 +299,7 @@ body.platform-darwin .window-title { margin-left: 12px; }
   height: 28px;
   flex: 1 1 auto;
   min-width: 0;
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  transition: opacity var(--mode-change) ease-out, transform var(--mode-change) ease-out;
   transform-origin: left center;
 }
 .tab-strip.is-out {
@@ -320,7 +321,7 @@ body.platform-darwin .window-title { margin-left: 12px; }
   font-size: 13px;
   color: var(--text-secondary);
   transform-origin: left center;
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out, max-width 0.2s ease-out, min-width 0.2s ease-out, background-color 0.2s;
+  transition: opacity var(--mode-change) ease-out, transform var(--mode-change) ease-out, max-width var(--mode-change) ease-out, min-width var(--mode-change) ease-out, background-color 0.2s;
 }
 /* The tab showing is the solid one: a capsule with its own rim and shadow,
    over names in the quieter colour. */
@@ -492,9 +493,9 @@ body.platform-darwin .window-title { margin-left: 12px; }
 }
 .status-bar .spacer { flex: 1; }
 .save-status { display: flex; align-items: center; gap: 5px; }
-.save-status[data-status="saved"] svg { color: var(--green); }
-.save-status[data-status="editing"] svg { color: var(--orange); }
-.save-status[data-status="notSavedYet"] svg { color: var(--text-secondary); }
+.save-status[data-color="green"] svg { color: var(--green); }
+.save-status[data-color="orange"] svg { color: var(--orange); }
+.save-status[data-color="secondary"] svg { color: var(--text-secondary); }
 
 /* MARK: - Find bar */
 

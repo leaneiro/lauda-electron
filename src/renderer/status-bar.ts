@@ -2,6 +2,14 @@ import { isMac, shortcut, strings, t } from "./api";
 import { icons } from "./icons";
 import { characterCount, readingTimeLabel, saveStatusOf, wordCount } from "./document-info";
 import type { LaudaDocument } from "./document";
+import { saveStatusColor, saveStatusIcon, type SaveStatusIcon } from "../shared/document";
+
+/// The native app's symbols for a save status, drawn here as their SVGs.
+const drawnIcons: Record<SaveStatusIcon, string> = {
+  "circle.dotted": icons.notSaved,
+  "checkmark.circle.fill": icons.saved,
+  "ellipsis.circle.fill": icons.editing,
+};
 
 /// Counting walks the whole text; while typing it waits for a pause.
 const countingPause = 300;
@@ -54,11 +62,11 @@ export class StatusBar {
   }
 
   private renderSave(): void {
-    const status = saveStatusOf(this.document);
+    const { status, label } = saveStatusOf(this.document);
     this.save.dataset.status = status.kind;
-    const icon = status.kind === "saved" ? icons.saved : status.kind === "editing" ? icons.editing : icons.notSaved;
-    this.save.innerHTML = `${icon}<span></span>`;
-    (this.save.lastElementChild as HTMLElement).textContent = status.label;
+    this.save.dataset.color = saveStatusColor(status);
+    this.save.innerHTML = `${drawnIcons[saveStatusIcon(status)]}<span></span>`;
+    (this.save.lastElementChild as HTMLElement).textContent = label;
   }
 
   destroy(): void {

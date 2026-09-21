@@ -16,7 +16,7 @@ export {
 export { escapeHTML } from "./escape";
 export { highlightCode } from "./code-highlighter";
 export { outlineItems, outlineTitle, type OutlineItem } from "./outline";
-export { sourceLineCount, sourceLineStarts, sourceLineContaining } from "./source-lines";
+export { sourceLineCount } from "./source-lines";
 export {
   previewContentSecurityPolicy,
   exportContentSecurityPolicy,

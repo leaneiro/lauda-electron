@@ -1,10 +1,10 @@
 import { trimmingWhitespaces, trimmingWhitespacesAndNewlines } from "./characters";
+import { allowedLinkSchemes as allowedSchemes } from "../markdown/content-policy";
 import { substring, type TextEdit, type TextRange } from "./textEdit";
 
-/// Link schemes allowed to leave the app: the renderer keeps them, clicks in
-/// the preview open them in the browser, and pasting one over a selection
-/// makes a link (ExternalLinks.allowedSchemes).
-export const allowedSchemes: ReadonlySet<string> = new Set(["http", "https", "mailto"]);
+/// The link schemes allowed to leave the app are the content policy's, the
+/// same the renderer keeps and the preview opens.
+export { allowedSchemes };
 
 /// Whether clipboard text is a link to make one of: a single token with an
 /// allowed scheme, and a host unless it's mailto.

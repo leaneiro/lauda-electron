@@ -1,4 +1,5 @@
 import type { TextEdit, TextRange } from "../editing/textEdit";
+import { isImagePath } from "../markdown/content-policy";
 
 // Images dropped or pasted into a document are brought into its folder, so
 // they can be referenced with relative Markdown paths, which the preview and
@@ -8,27 +9,14 @@ import type { TextEdit, TextRange } from "../editing/textEdit";
 // A paste asks pasteIntent first, then smartLinkPaste, then pastes as usual.
 // Paths may use "/" or, on Windows, "\" between folders.
 
-/// File extensions the app treats as images: dropped or pasted into the
-/// editor, and served to the preview from the document's folder
-/// (ImageFileTypes.extensions).
-export const imageFileExtensions: ReadonlySet<string> = new Set([
-  "png",
-  "jpg",
-  "jpeg",
-  "gif",
-  "webp",
-  "bmp",
-  "tiff",
-  "tif",
-  "heic",
-  "avif",
-  "svg",
-  "ico",
-]);
+/// The extensions the app treats as images, and the test by extension, are
+/// the content policy's: one list for what is imported and what the preview
+/// is served (ContentPolicy.swift has the native one).
+export { imageFileExtensions } from "../markdown/content-policy";
 
 /// Whether a path, file URL or file name has an image's extension, in any case.
 export function isImageFile(path: string): boolean {
-  return imageFileExtensions.has(splitExtension(lastPathComponent(path)).extension.toLowerCase());
+  return isImagePath(path);
 }
 
 /// The clipboard's flavors that decide what a paste is, as the caller read them.

@@ -21,10 +21,23 @@ export interface ScrollSync {
 /// end, in pixels: about two lines, as in the native app.
 export const endConvergence = 60;
 
+/// A distance to the end that no pane is near: the bottom plays no part in
+/// where a pane that starts here, or jumps to a heading, is put.
+export const farFromTheEnd = 100_000;
+
+/// Where a pane starts: at the top, before anything was scrolled.
+export function startingScroll(): ScrollSync {
+  return { line: null, fraction: 0, endLine: null, toEndDistance: farFromTheEnd, source: "editor" };
+}
+
+/// Whether two positions differ enough to move a pane. A pane without a line
+/// counts as above the top, below the padding's own -1, so a line appearing
+/// or going always makes a difference.
 export function differs(a: ScrollSync, b: ScrollSync): boolean {
+  const noLine = -2;
   return (
     Math.abs(a.fraction - b.fraction) > 0.001 ||
     Math.abs(a.toEndDistance - b.toEndDistance) > 1 ||
-    Math.abs((a.line ?? -2) - (b.line ?? -2)) > 0.005
+    Math.abs((a.line ?? noLine) - (b.line ?? noLine)) > 0.005
   );
 }

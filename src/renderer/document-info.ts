@@ -1,4 +1,10 @@
-import { characterCount as countCharacters, readingTime, saveStatus, wordCount as countWords } from "../shared/document";
+import {
+  characterCount as countCharacters,
+  readingTime,
+  type SaveStatus,
+  saveStatus,
+  wordCount as countWords,
+} from "../shared/document";
 import { outlineItems as headings } from "../shared/markdown";
 import { strings, t } from "./api";
 import type { LaudaDocument } from "./document";
@@ -21,7 +27,8 @@ export function readingTimeLabel(words: number): string | null {
   return time.kind === "lessThanOneMinute" ? t("less than 1 min read") : t("~%lld min read", time.minutes);
 }
 
-export function saveStatusOf(document: LaudaDocument): { kind: "notSavedYet" | "saved" | "editing"; label: string } {
+/// The document's save status, and the words the status bar says it with.
+export function saveStatusOf(document: LaudaDocument): { status: SaveStatus; label: string } {
   // A document that has no file yet was never saved, whatever text it
   // started with (the welcome guide starts with some).
   const status = saveStatus({
@@ -32,13 +39,13 @@ export function saveStatusOf(document: LaudaDocument): { kind: "notSavedYet" | "
   });
   switch (status.kind) {
     case "notSavedYet":
-      return { kind: status.kind, label: t("Not saved yet") };
+      return { status, label: t("Not saved yet") };
     case "editing":
-      return { kind: status.kind, label: t("Editing…") };
+      return { status, label: t("Editing…") };
     case "saved": {
-      if (!status.date) return { kind: status.kind, label: t("Saved") };
+      if (!status.date) return { status, label: t("Saved") };
       const time = new Intl.DateTimeFormat(strings().locale, { timeStyle: "short" }).format(status.date);
-      return { kind: status.kind, label: t("Saved · %@", time) };
+      return { status, label: t("Saved · %@", time) };
     }
   }
 }

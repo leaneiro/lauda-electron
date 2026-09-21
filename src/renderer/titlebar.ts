@@ -1,5 +1,5 @@
 import { isMac, lauda, t } from "./api";
-import { icons, widthLevelIcon } from "./icons";
+import { icons, widthColumn, widthLevelIcon } from "./icons";
 import { OutlinePopover } from "./outline";
 import { tabAnimation, type Workspace } from "./workspace";
 import type { LaudaDocument } from "./document";
@@ -122,7 +122,7 @@ export class TitleBar {
     this.widthButton.setAttribute("aria-label", t("Text width: %@", t(width.key)));
     const column = this.widthButton.querySelector<SVGRectElement>(".width-column");
     if (column) {
-      const size = [6, 10, 14][width.level] ?? 6;
+      const size = widthColumn(width.level);
       column.style.width = `${size}px`;
       column.style.x = `${11 - size / 2}px`;
     }

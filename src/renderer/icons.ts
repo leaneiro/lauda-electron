@@ -31,9 +31,15 @@ export const icons = {
   notSaved: `<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="0.1 2.6" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/></svg>`,
 };
 
+/// How wide the text column is drawn at each width level.
+const widthColumns = [6, 10, 14];
+export function widthColumn(level: number): number {
+  return widthColumns[level] ?? widthColumns[0] ?? 6;
+}
+
 /// The preview width level: a page outline whose inner text column grows
 /// with the level (WidthLevelIcon.swift).
 export function widthLevelIcon(level: number): string {
-  const column = [6, 10, 14][level] ?? 6;
+  const column = widthColumn(level);
   return `<svg viewBox="0 0 22 16" width="22" height="16" aria-hidden="true"><rect x="1.6" y="1.6" width="18.8" height="12.8" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/><rect class="width-column" x="${11 - column / 2}" y="4" width="${column}" height="8" rx="1.5" fill="currentColor"/></svg>`;
 }

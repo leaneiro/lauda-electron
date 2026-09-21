@@ -77,8 +77,8 @@ export function standalone(options: StandaloneOptions): string {
     options.styles,
     ":root {",
     `    --pfont: ${options.fontFamily};`,
-    `    --psize: ${swiftDescription(options.fontSize)}px;`,
-    `    --plh: ${swiftDescription(options.lineHeight)};`,
+    `    --psize: ${options.fontSize}px;`,
+    `    --plh: ${options.lineHeight};`,
     "}",
     "</style>",
     "</head>",
@@ -89,27 +89,4 @@ export function standalone(options: StandaloneOptions): string {
     "</body>",
     "</html>",
   ].join("\n");
-}
-
-/// How Swift prints a Double, which the native page interpolates: always a
-/// fraction digit ("18.0"), and exponent notation beyond 2^53 and below
-/// 1e-4 ("1e+16", "1e-05"). Both languages print the shortest digits that
-/// read back as the same number.
-export function swiftDescription(value: number): string {
-  if (Number.isNaN(value)) return "nan";
-  if (!Number.isFinite(value)) return value > 0 ? "inf" : "-inf";
-  if (value === 0) return Object.is(value, -0) ? "-0.0" : "0.0";
-  const sign = value < 0 ? "-" : "";
-  const magnitude = Math.abs(value);
-  const [mantissa = "0", exponentText = "0"] = magnitude.toExponential().split("e");
-  const exponent = Number(exponentText);
-  if (magnitude > 2 ** 53 || exponent < -4) {
-    const digits = String(Math.abs(exponent)).padStart(2, "0");
-    return `${sign}${mantissa}e${exponent < 0 ? "-" : "+"}${digits}`;
-  }
-  const digits = mantissa.replace(".", "");
-  if (exponent < 0) return `${sign}0.${"0".repeat(-exponent - 1)}${digits}`;
-  const integerDigits = exponent + 1;
-  if (digits.length <= integerDigits) return `${sign}${digits.padEnd(integerDigits, "0")}.0`;
-  return `${sign}${digits.slice(0, integerDigits)}.${digits.slice(integerDigits)}`;
 }

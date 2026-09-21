@@ -3,7 +3,6 @@
 // with the print rules plays that part.
 import { describe, expect, it } from "vitest";
 import { previewStyles, render, renderForPrint, standalone, wordmarkFontFace } from "../../src/shared/markdown";
-import { swiftDescription } from "../../src/shared/markdown/template";
 
 const stylesheet = "article { margin: auto; }\n@media print { .keep { break-inside: avoid; } }";
 
@@ -22,7 +21,8 @@ describe("export", () => {
     expect(html).toContain("<h1>Title</h1>");
     expect(html).toContain("<strong>text</strong>");
     expect(html).toContain("--pfont: Georgia, serif;");
-    expect(html).toContain("--psize: 18.0px;");
+    expect(html).toContain("--psize: 18px;");
+    expect(html).toContain("--plh: 1.7;");
     // The print CSS comes along.
     expect(html).toContain("@media print");
     // The exported document has no JS.
@@ -92,7 +92,7 @@ describe("export", () => {
       lineHeight: 1.5,
     });
     expect(html).toContain("<li>item</li>");
-    expect(html).toContain("--psize: 19.0px;");
+    expect(html).toContain("--psize: 19px;");
   });
 
   // Beyond the Swift tests: the page, line for line.
@@ -120,7 +120,7 @@ describe("export", () => {
         ":root {",
         "    --pfont: F;",
         "    --psize: 16.5px;",
-        "    --plh: 2.0;",
+        "    --plh: 2;",
         "}",
         "</style>",
         "</head>",
@@ -132,24 +132,5 @@ describe("export", () => {
         "</html>",
       ].join("\n"),
     );
-  });
-
-  it.each([
-    [18, "18.0"],
-    [1.7, "1.7"],
-    [16.5, "16.5"],
-    [0, "0.0"],
-    [-2.5, "-2.5"],
-    [100, "100.0"],
-    [1e15, "1000000000000000.0"],
-    [2 ** 53, "9007199254740992.0"],
-    [1e16, "1e+16"],
-    [1.5e300, "1.5e+300"],
-    [0.001, "0.001"],
-    [0.0001, "0.0001"],
-    [0.00001, "1e-05"],
-    [0.1 + 0.2, "0.30000000000000004"],
-  ])("prints %d as Swift does: %s", (value, expected) => {
-    expect(swiftDescription(value)).toBe(expected);
   });
 });

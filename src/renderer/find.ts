@@ -1,5 +1,5 @@
 import type { ViewMode } from "../shared/settings";
-import { isMac, shortcut, t } from "./api";
+import type { WindowContext } from "./context";
 import { icons } from "./icons";
 
 export interface FindCounts {
@@ -38,11 +38,13 @@ export class FindSession {
   private total = 0;
 
   constructor(
+    context: WindowContext,
     host: HTMLElement,
     private readonly editor: EditorFinding,
     private readonly preview: PreviewFinding,
     private readonly mode: () => ViewMode,
   ) {
+    const { t } = context;
     this.bar.className = "find-bar";
     this.bar.hidden = true;
     const magnifier = document.createElement("span");
@@ -55,8 +57,8 @@ export class FindSession {
     this.count.className = "find-count";
     this.previous.innerHTML = icons.chevronLeft;
     this.next.innerHTML = icons.chevronRight;
-    this.previous.title = isMac() ? t("Previous (⇧⌘G)") : t("Previous (%@)", shortcut("G", true));
-    this.next.title = isMac() ? t("Next (⌘G)") : t("Next (%@)", shortcut("G"));
+    this.previous.title = context.isMac ? t("Previous (⇧⌘G)") : t("Previous (%@)", context.shortcut("G", true));
+    this.next.title = context.isMac ? t("Next (⌘G)") : t("Next (%@)", context.shortcut("G"));
     this.previous.setAttribute("aria-label", this.previous.title);
     this.next.setAttribute("aria-label", this.next.title);
     const close = document.createElement("button");

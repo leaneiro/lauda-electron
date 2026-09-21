@@ -2,7 +2,7 @@ import { standardKeymap } from "@codemirror/commands";
 import { openSearchPanel, search, searchKeymap } from "@codemirror/search";
 import { EditorSelection, EditorState, Transaction } from "@codemirror/state";
 import { drawSelection, EditorView, keymap } from "@codemirror/view";
-import { lauda } from "../api";
+import type { WindowContext } from "../context";
 import type { LaudaDocument } from "../document";
 import type { EditorFinding, FindCounts } from "../find";
 import type { ScrollSync } from "../scroll-sync";
@@ -24,6 +24,7 @@ export class Editor implements EditorFinding {
   private isReplacing = false;
 
   constructor(
+    private readonly context: WindowContext,
     private readonly host: HTMLElement,
     private readonly document: LaudaDocument,
     callbacks: { publishScroll: (sync: ScrollSync) => void; sharedPosition: () => ScrollSync },
@@ -33,7 +34,7 @@ export class Editor implements EditorFinding {
       state: EditorState.create({
         doc: document.text,
         extensions: [
-          behaviors(document),
+          behaviors(context, document),
           keymap.of(standardKeymap),
           drawSelection(),
           EditorView.lineWrapping,
@@ -129,7 +130,7 @@ export class Editor implements EditorFinding {
   }
 
   async insertLink(): Promise<void> {
-    const clipboard = await lauda.invoke("app:read-clipboard");
+    const clipboard = await this.context.lauda.invoke("app:read-clipboard");
     const state = this.view.state;
     const selection = state.selection.main;
     programmaticEdit(

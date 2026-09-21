@@ -1,5 +1,6 @@
+import type { LaudaAPI } from "../../preload/bridge";
 import type { FromPreview, PreviewReplies, ToPreview } from "../../shared/preview-protocol";
-import { lauda } from "../api";
+import type { WindowContext } from "../context";
 import type { LaudaDocument } from "../document";
 import type { FindCounts, PreviewFinding } from "../find";
 import { differs, endConvergence, type ScrollSync, startingScroll } from "../scroll-sync";
@@ -21,7 +22,7 @@ class RenderClient {
   private nextId = 1;
   private readonly waiting = new Map<number, (content: RenderedContent | null) => void>();
 
-  constructor() {
+  constructor(lauda: LaudaAPI) {
     this.worker.onmessage = (event: MessageEvent<RenderedContent & { id: number; error?: string }>) => {
       const { id, error, ...content } = event.data;
       const resolve = this.waiting.get(id);
@@ -41,7 +42,7 @@ class RenderClient {
 }
 
 let sharedClient: RenderClient | undefined;
-const renderer = () => (sharedClient ??= new RenderClient());
+const renderer = (lauda: LaudaAPI) => (sharedClient ??= new RenderClient(lauda));
 
 /// The rendered Markdown (PreviewWebView.swift): a page loaded once with the
 /// preview's stylesheet, then updated in place (no flicker, the scroll
@@ -63,6 +64,7 @@ export class PreviewPane implements PreviewFinding {
   private readonly onMessage = (event: MessageEvent<FromPreview>) => this.receive(event);
 
   constructor(
+    private readonly context: WindowContext,
     host: HTMLElement,
     private readonly document: LaudaDocument,
     private readonly callbacks: { publishScroll: (sync: ScrollSync) => void },
@@ -78,7 +80,7 @@ export class PreviewPane implements PreviewFinding {
   }
 
   private async load(): Promise<void> {
-    const token = await lauda.invoke("doc:register-folder", this.document.id, this.document.filePath);
+    const token = await this.context.lauda.invoke("doc:register-folder", this.document.id, this.document.filePath);
     this.isReady = false;
     this.frame.src = `lauda-doc://${token}/.lauda-preview`;
   }
@@ -102,7 +104,7 @@ export class PreviewPane implements PreviewFinding {
     if (!this.needsRender || this.isRendering || this.lastMarkdown === null) return;
     this.needsRender = false;
     this.isRendering = true;
-    void renderer()
+    void renderer(this.context.lauda)
       .render(this.lastMarkdown, this.lastStrict)
       .then(async (content) => {
         if (content) await this.pushContent(content);
@@ -251,14 +253,14 @@ export class PreviewPane implements PreviewFinding {
         break;
       }
       case "openLink":
-        void lauda.invoke("app:open-external", message.href);
+        void this.context.lauda.invoke("app:open-external", message.href);
         break;
     }
   }
 
   destroy(): void {
     window.removeEventListener("message", this.onMessage);
-    void lauda.invoke("doc:forget-folder", this.document.id);
+    void this.context.lauda.invoke("doc:forget-folder", this.document.id);
     this.frame.remove();
   }
 }

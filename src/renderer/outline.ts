@@ -1,5 +1,5 @@
-import { t } from "./api";
-import { outlineItems } from "./document-info";
+import { outlineItems } from "../shared/markdown";
+import type { WindowContext } from "./context";
 import type { Workspace } from "./workspace";
 
 /// The toolbar's outline popover: the document's headings, indented by
@@ -17,6 +17,7 @@ export class OutlinePopover {
   };
 
   constructor(
+    private readonly context: WindowContext,
     private readonly anchor: HTMLElement,
     private readonly workspace: Workspace,
   ) {}
@@ -33,12 +34,12 @@ export class OutlinePopover {
     const popover = window.document.createElement("div");
     popover.className = "popover";
     popover.setAttribute("role", "dialog");
-    popover.setAttribute("aria-label", t("Outline"));
+    popover.setAttribute("aria-label", this.context.t("Outline"));
 
     if (items.length === 0) {
       const empty = window.document.createElement("div");
       empty.className = "outline-empty";
-      empty.textContent = t("No headings in the document");
+      empty.textContent = this.context.t("No headings in the document");
       popover.append(empty);
     } else {
       const list = window.document.createElement("div");

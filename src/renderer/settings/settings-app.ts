@@ -1,5 +1,5 @@
 import { appearanceModes, limits, type Settings, specialFontOptions } from "../../shared/settings";
-import { configure, lauda, strings, t } from "../api";
+import { dressPage, WindowContext } from "../context";
 import { element } from "../dom";
 import { followTheme } from "../theme";
 
@@ -16,7 +16,12 @@ function row(label: string | HTMLElement, ...controls: HTMLElement[]): HTMLEleme
 }
 
 /// The special fonts first, then the system's, a line between them.
-function fontPicker(value: string, families: readonly string[], onChange: (font: string) => void): HTMLSelectElement {
+function fontPicker(
+  value: string,
+  families: readonly string[],
+  t: WindowContext["t"],
+  onChange: (font: string) => void,
+): HTMLSelectElement {
   const select = element("select");
   for (const option of specialFontOptions) select.append(new Option(t(option.key), option.id));
   select.append(element("hr"));
@@ -60,6 +65,7 @@ class SettingsForm {
   private fontFamilies: readonly string[] = [];
 
   constructor(
+    private readonly context: WindowContext,
     private readonly form: HTMLFormElement,
     private settings: Settings,
   ) {
@@ -84,10 +90,11 @@ class SettingsForm {
 
   private set(changes: Partial<Settings>): void {
     this.settings = { ...this.settings, ...changes };
-    void lauda.invoke("settings:set", changes);
+    void this.context.lauda.invoke("settings:set", changes);
   }
 
   private render(): void {
+    const { lauda, t, strings } = this.context;
     const current = this.settings;
     const appearance = element("div", "segmented");
     appearance.setAttribute("role", "group");
@@ -131,7 +138,7 @@ class SettingsForm {
       ...section(t("Editor"), [
         row(
           t("Font"),
-          fontPicker(current.editorFontName, families, (font) => this.set({ editorFontName: font })),
+          fontPicker(current.editorFontName, families, t, (font) => this.set({ editorFontName: font })),
         ),
         row(
           t("Size"),
@@ -143,7 +150,7 @@ class SettingsForm {
       ...section(t("Preview"), [
         row(
           t("Font"),
-          fontPicker(current.previewFontName, families, (font) => this.set({ previewFontName: font })),
+          fontPicker(current.previewFontName, families, t, (font) => this.set({ previewFontName: font })),
         ),
         row(
           t("Size"),
@@ -156,7 +163,7 @@ class SettingsForm {
           ...slider(
             current.previewLineHeight,
             limits.previewLineHeight,
-            (value) => formatLineHeight(value, strings().locale),
+            (value) => formatLineHeight(value, strings.locale),
             (value) => this.set({ previewLineHeight: value }),
           ),
         ),
@@ -169,11 +176,13 @@ class SettingsForm {
 }
 
 async function start(): Promise<void> {
+  const lauda = window.lauda;
   const state = await lauda.invoke("app:init");
-  configure(state);
+  const context = WindowContext.of(lauda, state);
+  dressPage(context);
   followTheme();
-  document.title = t("Settings");
-  const form = new SettingsForm(document.getElementById("settings") as HTMLFormElement, state.settings);
+  document.title = context.t("Settings");
+  const form = new SettingsForm(context, document.getElementById("settings") as HTMLFormElement, state.settings);
   lauda.on("settings:changed", (settings) => form.settingsChanged(settings));
   form.fontsListed(await lauda.invoke("app:list-fonts"));
 }

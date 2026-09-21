@@ -2,7 +2,7 @@ import type { MenuCommand, OpenDocument } from "../shared/ipc";
 import { modeChangeMs } from "../shared/layout";
 import { nextPreviewWidthLevel, previewWidthShowing, type Settings, type ViewMode } from "../shared/settings";
 import { TabList } from "../shared/tab-list";
-import { lauda, t } from "./api";
+import type { WindowContext } from "./context";
 import { LaudaDocument } from "./document";
 import { DocumentView } from "./document-view";
 
@@ -53,7 +53,11 @@ export class Workspace {
   private readonly container: HTMLElement;
   private sessionTimer: number | undefined;
 
-  constructor(container: HTMLElement, settings: Settings) {
+  constructor(
+    private readonly context: WindowContext,
+    container: HTMLElement,
+    settings: Settings,
+  ) {
     this.container = container;
     this.settings = settings;
     this.viewMode = settings.lastViewMode;
@@ -86,7 +90,7 @@ export class Workspace {
         return;
       }
     }
-    const document = new LaudaDocument({
+    const document = new LaudaDocument(this.context, {
       filePath: request.filePath,
       text: request.text,
       title: request.title ?? this.nextUntitledTitle(),
@@ -103,12 +107,12 @@ export class Workspace {
   }
 
   newDocument(): void {
-    this.add(new LaudaDocument({ filePath: null, text: "", title: this.nextUntitledTitle() }));
+    this.add(new LaudaDocument(this.context, { filePath: null, text: "", title: this.nextUntitledTitle() }));
   }
 
   /// "Untitled", then "Untitled 2" and on, as a document app names them.
   private nextUntitledTitle(): string {
-    const base = t("Untitled");
+    const base = this.context.t("Untitled");
     const taken = new Set(this.documents.filter((d) => !d.filePath).map((d) => d.title));
     if (!taken.has(base)) return base;
     for (let number = 2; ; number++) {
@@ -119,11 +123,11 @@ export class Workspace {
 
   add(document: LaudaDocument): void {
     this.tabs.add(document);
-    const view = new DocumentView(document, this);
+    const view = new DocumentView(this.context, document, this);
     this.views.set(document.id, view);
     this.container.append(view.element);
     document.onChange(() => this.changed());
-    if (document.filePath) void lauda.invoke("doc:watch", document.filePath);
+    if (document.filePath) void this.context.lauda.invoke("doc:watch", document.filePath);
     this.tabsChanged();
     this.showSelected();
   }
@@ -174,7 +178,7 @@ export class Workspace {
     if (!document.isEdited) return true;
     // Whether to keep the text is asked with its tab in front.
     this.select(document);
-    const answer = await lauda.invoke("doc:ask-save-changes", document.title);
+    const answer = await this.context.lauda.invoke("doc:ask-save-changes", document.title);
     if (answer === "cancel") return false;
     if (answer === "dontSave") return true;
     return document.saveAs();
@@ -185,7 +189,7 @@ export class Workspace {
     this.tabs.remove(document);
     this.views.get(document.id)?.destroy();
     this.views.delete(document.id);
-    if (document.filePath) void lauda.invoke("doc:unwatch", document.filePath);
+    if (document.filePath) void this.context.lauda.invoke("doc:unwatch", document.filePath);
     this.showSelected();
     this.tabsChanged();
   }
@@ -238,7 +242,7 @@ export class Workspace {
   setViewMode(mode: ViewMode): void {
     if (mode === this.viewMode) return;
     this.viewMode = mode;
-    void lauda.invoke("settings:set", { lastViewMode: mode });
+    void this.context.lauda.invoke("settings:set", { lastViewMode: mode });
     for (const [id, view] of this.views) {
       view.setViewMode(mode, id === this.selected?.id);
     }
@@ -248,7 +252,7 @@ export class Workspace {
 
   cycleWidth(): void {
     const level = nextPreviewWidthLevel(this.previewWidth.level);
-    void lauda.invoke("settings:set", { previewWidthLevel: level });
+    void this.context.lauda.invoke("settings:set", { previewWidthLevel: level });
   }
 
   setSplitFraction(fraction: number): void {
@@ -257,7 +261,7 @@ export class Workspace {
   }
 
   storeSplitFraction(): void {
-    void lauda.invoke("settings:set", { splitFraction: this.settings.splitFraction });
+    void this.context.lauda.invoke("settings:set", { splitFraction: this.settings.splitFraction });
   }
 
   applySettings(settings: Settings): void {
@@ -297,7 +301,7 @@ export class Workspace {
         this.open({
           filePath: null,
           text: document.text,
-          title: t("%@ copy", withoutExtension(document.title)),
+          title: this.context.t("%@ copy", withoutExtension(document.title)),
           edited: true,
         });
         return;
@@ -306,23 +310,23 @@ export class Workspace {
         if (!document.filePath) return;
         await document.autosave();
         const from = document.filePath;
-        const to = await lauda.invoke(command.name === "rename" ? "doc:rename" : "doc:move", from);
+        const to = await this.context.lauda.invoke(command.name === "rename" ? "doc:rename" : "doc:move", from);
         if (!to) return;
-        void lauda.invoke("doc:unwatch", from);
+        void this.context.lauda.invoke("doc:unwatch", from);
         document.moved(to);
-        void lauda.invoke("doc:watch", to);
+        void this.context.lauda.invoke("doc:watch", to);
         view.fileMoved();
         return;
       }
       case "revert":
         if (document.revertText === null || document.revertText === document.text) return;
-        if (!(await lauda.invoke("doc:ask-revert", document.title))) return;
+        if (!(await this.context.lauda.invoke("doc:ask-revert", document.title))) return;
         view.replaceText(document.revertText);
         await document.autosave();
         return;
       case "export-pdf":
       case "export-html":
-        await lauda.invoke(command.name === "export-pdf" ? "export:pdf" : "export:html", {
+        await this.context.lauda.invoke(command.name === "export-pdf" ? "export:pdf" : "export:html", {
           title: withoutExtension(document.title),
           markdown: document.text,
           filePath: document.filePath,
@@ -371,12 +375,12 @@ export class Workspace {
     const windowKey = JSON.stringify(windowInfo);
     if (windowKey !== this.reported.window) {
       this.reported.window = windowKey;
-      void lauda.invoke("window:set-document", windowInfo);
+      void this.context.lauda.invoke("window:set-document", windowInfo);
     }
     const menuKey = JSON.stringify(menu);
     if (menuKey !== this.reported.menu) {
       this.reported.menu = menuKey;
-      void lauda.invoke("menu:set-state", menu);
+      void this.context.lauda.invoke("menu:set-state", menu);
     }
     const sessionKey = JSON.stringify(session);
     if (this.remembersSession && sessionKey !== this.reported.session) {
@@ -384,7 +388,7 @@ export class Workspace {
       this.sessionTimer = window.setTimeout(() => {
         if (!this.remembersSession) return;
         this.reported.session = sessionKey;
-        void lauda.invoke("session:store", session);
+        void this.context.lauda.invoke("session:store", session);
       }, 150);
     }
   }

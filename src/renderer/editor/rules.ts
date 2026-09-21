@@ -1,6 +1,5 @@
 import * as documents from "../../shared/document";
 import * as editing from "../../shared/editing";
-import { t } from "../api";
 
 /// The native editing rules (src/shared/editing, ported from Swift with
 /// NSRange-like {location, length} ranges), in the {from, to} terms
@@ -111,8 +110,4 @@ export function pastesImages(imagePaths: readonly string[], hasRawImages: boolea
     () => true,
   );
   return intent.kind !== "notAnImage";
-}
-
-export function imageErrorTitle(): string {
-  return t("Couldn't add the image to the document's folder");
 }

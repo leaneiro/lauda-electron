@@ -1,5 +1,5 @@
 import { previewWidths, type ViewMode } from "../shared/settings";
-import { isMac, lauda, t } from "./api";
+import type { WindowContext } from "./context";
 import type { LaudaDocument } from "./document";
 import { element } from "./dom";
 import { icons, widthColumn, widthLevelIcon } from "./icons";
@@ -27,10 +27,12 @@ export class TitleBar {
   private readonly outline: OutlinePopover;
 
   constructor(
+    private readonly context: WindowContext,
     root: HTMLElement,
     private readonly workspace: Workspace,
   ) {
-    if (!isMac()) {
+    const { lauda, t } = context;
+    if (!context.isMac) {
       const menu = element("button", "menu-button");
       menu.innerHTML = icons.menu;
       menu.title = t("Menu");
@@ -60,7 +62,7 @@ export class TitleBar {
     this.outlineButton.innerHTML = icons.outline;
     this.outlineButton.title = t("Document outline");
     this.outlineButton.setAttribute("aria-label", t("Outline"));
-    this.outline = new OutlinePopover(this.outlineButton, workspace);
+    this.outline = new OutlinePopover(context, this.outlineButton, workspace);
     this.outlineButton.addEventListener("click", () => this.outline.toggle());
 
     root.append(this.title, this.strip, this.spacer, this.center, this.right);
@@ -75,7 +77,7 @@ export class TitleBar {
       glass.style.setProperty("--pointer-y", `${event.clientY - rect.top}px`);
     });
 
-    if (isMac()) {
+    if (context.isMac) {
       root.addEventListener("dblclick", (event) => {
         if (
           event.target === root ||
@@ -93,6 +95,7 @@ export class TitleBar {
   }
 
   render(): void {
+    const { t } = this.context;
     const workspace = this.workspace;
     const selected = workspace.selected;
 
@@ -192,6 +195,7 @@ export class TitleBar {
   }
 
   private updateTab(tab: HTMLElement, document: LaudaDocument): void {
+    const { t } = this.context;
     const isSelected = document === this.workspace.selected;
     tab.classList.toggle("is-selected", isSelected);
     tab.classList.toggle("clear", !isSelected);
@@ -218,7 +222,7 @@ export class TitleBar {
         };
       }
     ).windowControlsOverlay;
-    if (!overlay || isMac()) return;
+    if (!overlay || this.context.isMac) return;
     // Until the system reports where its buttons are, the room measured for
     // them on each system (set at startup) stands.
     const update = () => {

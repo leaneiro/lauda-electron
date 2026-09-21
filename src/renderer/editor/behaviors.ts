@@ -11,7 +11,7 @@ import {
 } from "@codemirror/commands";
 import { Annotation, EditorSelection, type Extension, Transaction } from "@codemirror/state";
 import { EditorView, type KeyBinding, keymap, ViewPlugin, type ViewUpdate } from "@codemirror/view";
-import { lauda } from "../api";
+import type { WindowContext } from "../context";
 import type { LaudaDocument } from "../document";
 import * as rules from "./rules";
 
@@ -233,6 +233,7 @@ async function pngBytes(file: File): Promise<Uint8Array | null> {
 /// Images are copied into the document's folder, so a document without
 /// one asks to be saved first.
 async function insertImages(
+  { lauda, t }: WindowContext,
   view: EditorView,
   document: LaudaDocument,
   files: File[],
@@ -259,7 +260,7 @@ async function insertImages(
     programmaticEdit(view, rules.imageInsertion(result.paths, { from: at ?? selection.from, to: at ?? selection.to }));
   }
   if (result.error) {
-    await lauda.invoke("doc:show-error", rules.imageErrorTitle(), result.error);
+    await lauda.invoke("doc:show-error", t("Couldn't add the image to the document's folder"), result.error);
   }
 }
 
@@ -267,7 +268,7 @@ function imageFiles(list: FileList | null | undefined): File[] {
   return Array.from(list ?? []).filter((file) => file.type.startsWith("image/") || rules.isImageName(file.name));
 }
 
-function pasteAndDrop(document: LaudaDocument): Extension {
+function pasteAndDrop(context: WindowContext, document: LaudaDocument): Extension {
   return EditorView.domEventHandlers({
     paste(event, view) {
       const data = event.clipboardData;
@@ -276,11 +277,11 @@ function pasteAndDrop(document: LaudaDocument): Extension {
       // A file copied in a file manager arrives as the file plus its name as
       // text: the file wins. Raw image data only counts without any text,
       // so rich web content still pastes as text (pasteIntent).
-      const paths = images.map((file) => lauda.pathForFile(file)).filter((path) => path !== "");
+      const paths = images.map((file) => context.lauda.pathForFile(file)).filter((path) => path !== "");
       const text = data.getData("text/plain");
       if (rules.pastesImages(paths, paths.length < images.length, text)) {
         event.preventDefault();
-        void insertImages(view, document, images, null);
+        void insertImages(context, view, document, images, null);
         return true;
       }
       // A URL pasted over a selection makes it a link.
@@ -300,7 +301,7 @@ function pasteAndDrop(document: LaudaDocument): Extension {
       if (images.length === 0) return false;
       event.preventDefault();
       const at = view.posAtCoords({ x: event.clientX, y: event.clientY });
-      void insertImages(view, document, images, at);
+      void insertImages(context, view, document, images, at);
       return true;
     },
     dragover(event) {
@@ -313,6 +314,6 @@ function pasteAndDrop(document: LaudaDocument): Extension {
   });
 }
 
-export function behaviors(document: LaudaDocument): Extension {
-  return [wordUndo, pairTracker, typing, composedPairs, keys, pasteAndDrop(document)];
+export function behaviors(context: WindowContext, document: LaudaDocument): Extension {
+  return [wordUndo, pairTracker, typing, composedPairs, keys, pasteAndDrop(context, document)];
 }

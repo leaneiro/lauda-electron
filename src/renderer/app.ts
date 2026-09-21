@@ -1,16 +1,18 @@
-import { configure, lauda } from "./api";
+import { dressPage, WindowContext } from "./context";
 import { followTheme } from "./theme";
 import { TitleBar } from "./titlebar";
 import { Workspace } from "./workspace";
 
 async function start(): Promise<void> {
+  const lauda = window.lauda;
   const state = await lauda.invoke("app:init");
-  configure(state);
+  const context = WindowContext.of(lauda, state);
+  dressPage(context);
   followTheme();
   document.documentElement.style.setProperty("--window-controls-room", `${state.windowControlsWidth}px`);
 
-  const workspace = new Workspace(document.getElementById("documents") as HTMLElement, state.settings);
-  new TitleBar(document.getElementById("titlebar") as HTMLElement, workspace);
+  const workspace = new Workspace(context, document.getElementById("documents") as HTMLElement, state.settings);
+  new TitleBar(context, document.getElementById("titlebar") as HTMLElement, workspace);
 
   lauda.on("workspace:open", (request) => workspace.open(request));
   lauda.on("workspace:select", ({ filePath }) => workspace.selectFile(filePath));

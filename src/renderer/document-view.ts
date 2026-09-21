@@ -2,6 +2,7 @@ import { boldMarker, italicMarker, strikethroughMarker, underlineTags } from "..
 import type { MenuCommand } from "../shared/ipc";
 import { clampSplit, isSmoothModeChange, modeChangeMs } from "../shared/layout";
 import { cssEditorFontFamily, cssFontFamily, type Settings, type ViewMode } from "../shared/settings";
+import type { WindowContext } from "./context";
 import type { LaudaDocument } from "./document";
 import { Editor } from "./editor/editor";
 import { FindSession } from "./find";
@@ -30,6 +31,7 @@ export class DocumentView {
   private readonly unsubscribe: () => void;
 
   constructor(
+    context: WindowContext,
     readonly document: LaudaDocument,
     private readonly workspace: Workspace,
   ) {
@@ -47,15 +49,15 @@ export class DocumentView {
     this.panes.append(this.editorPane, this.divider, this.previewPane);
     this.element.append(this.panes);
 
-    this.editor = new Editor(this.editorPane, document, {
+    this.editor = new Editor(context, this.editorPane, document, {
       publishScroll: (sync) => this.publishScroll(sync),
       sharedPosition: () => document.scrollSync,
     });
-    this.preview = new PreviewPane(this.previewPane, document, {
+    this.preview = new PreviewPane(context, this.previewPane, document, {
       publishScroll: (sync) => this.publishScroll(sync),
     });
-    this.find = new FindSession(this.panes, this.editor, this.preview, () => this.mode);
-    this.status = new StatusBar(document);
+    this.find = new FindSession(context, this.panes, this.editor, this.preview, () => this.mode);
+    this.status = new StatusBar(context, document);
     this.element.append(this.status.element);
 
     this.applySettings(workspace.settings, true);

@@ -1,7 +1,7 @@
-import { type SaveStatusIcon, saveStatusColor, saveStatusIcon } from "../shared/document";
-import { isMac, shortcut, strings, t } from "./api";
+import { characterCount, type SaveStatusIcon, saveStatusColor, saveStatusIcon, wordCount } from "../shared/document";
+import type { WindowContext } from "./context";
 import type { LaudaDocument } from "./document";
-import { characterCount, readingTimeLabel, saveStatusOf, wordCount } from "./document-info";
+import { readingTimeLabel, saveStatusOf } from "./document-info";
 import { icons } from "./icons";
 
 /// The native app's symbols for a save status, drawn here as their SVGs.
@@ -27,14 +27,18 @@ export class StatusBar {
   private readonly unsubscribe: () => void;
   private readonly clock: number;
 
-  constructor(private readonly document: LaudaDocument) {
+  constructor(
+    private readonly context: WindowContext,
+    private readonly document: LaudaDocument,
+  ) {
+    const { t } = context;
     this.element.className = "status-bar";
     const spacer = window.document.createElement("span");
     spacer.className = "spacer";
     this.save.className = "save-status";
-    this.save.title = isMac()
+    this.save.title = context.isMac
       ? t("macOS saves automatically; ⌘S saves right away.")
-      : t("Lauda saves automatically; %@ saves right away.", shortcut("S"));
+      : t("Lauda saves automatically; %@ saves right away.", context.shortcut("S"));
     this.element.append(this.words, this.characters, this.reading, spacer, this.save);
     this.unsubscribe = document.onChange(() => this.update(false));
     // "Saved · 10:42" names a time, which the clock can make stale only by
@@ -44,11 +48,11 @@ export class StatusBar {
   }
 
   private update(immediately: boolean): void {
-    this.characters.textContent = t("%lld characters", characterCount(this.document.text));
+    this.characters.textContent = this.context.t("%lld characters", characterCount(this.document.text));
     this.renderSave();
     window.clearTimeout(this.countTimer);
     const count = () => {
-      this.counted = wordCount(this.document.text, strings().locale);
+      this.counted = wordCount(this.document.text);
       this.renderWords();
     };
     if (immediately || this.counted === null) count();
@@ -57,14 +61,14 @@ export class StatusBar {
 
   private renderWords(): void {
     if (this.counted === null) return;
-    this.words.textContent = t("%lld words", this.counted);
-    const reading = readingTimeLabel(this.counted);
+    this.words.textContent = this.context.t("%lld words", this.counted);
+    const reading = readingTimeLabel(this.counted, this.context.strings);
     this.reading.textContent = reading ?? "";
     this.reading.hidden = reading === null;
   }
 
   private renderSave(): void {
-    const { status, label } = saveStatusOf(this.document);
+    const { status, label } = saveStatusOf(this.document, this.context.strings);
     this.save.dataset.status = status.kind;
     this.save.dataset.color = saveStatusColor(status);
     this.save.innerHTML = `${drawnIcons[saveStatusIcon(status)]}<span></span>`;

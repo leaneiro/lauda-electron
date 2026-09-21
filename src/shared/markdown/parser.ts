@@ -164,6 +164,12 @@ function top<T>(context: CompileContext): T {
 
 /// Handlers that replace from-markdown's own for a few tokens: each does
 /// what the original does and notes what `Provenance` keeps.
+///
+/// Doing what the original does means leaning on its insides (this.data's
+/// atHardBreak, this.config's canContainEols), which a minor release may
+/// change without a word. That is why package.json pins micromark,
+/// mdast-util-from-markdown and the GFM extensions to exact versions: an
+/// update is a deliberate step, taken with the cmark compatibility tests.
 function provenanceExtension(provenance: Provenance): Extension {
   return {
     exit: {

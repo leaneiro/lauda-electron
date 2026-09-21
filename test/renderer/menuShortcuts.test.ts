@@ -46,7 +46,7 @@ describe("menu shortcuts", () => {
 
   it("are left alone by the editor's own bindings", () => {
     const menu = readFileSync(join(process.cwd(), "src/main/menu.ts"), "utf8");
-    const accelerators = [...menu.matchAll(/accelerator: "([^"]+)"/g)].map((match) => match[1]);
+    const accelerators = [...menu.matchAll(/accelerator: "([^"]+)"/g)].map((match) => match[1] ?? "");
     expect(accelerators.length).toBeGreaterThan(10);
     const wanted = new Set(accelerators.map(asBinding));
     // Select All is the one the editor shares with the menu, and does the

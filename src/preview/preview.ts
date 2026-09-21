@@ -52,11 +52,12 @@ function setContent(html: string, lines: number[], lineCount: number): void {
   const oldBlocks = Array.from(container.children);
   const newBlocks = Array.from(parsed.children);
   const common = Math.min(oldBlocks.length, newBlocks.length);
-  for (let i = 0; i < common; i++) {
-    if (!oldBlocks[i].isEqualNode(newBlocks[i])) container.replaceChild(newBlocks[i], oldBlocks[i]);
-  }
-  for (let i = oldBlocks.length - 1; i >= common; i--) container.removeChild(oldBlocks[i]);
-  for (let i = common; i < newBlocks.length; i++) container.appendChild(newBlocks[i]);
+  oldBlocks.slice(0, common).forEach((oldBlock, i) => {
+    const newBlock = newBlocks[i];
+    if (newBlock && !oldBlock.isEqualNode(newBlock)) container.replaceChild(newBlock, oldBlock);
+  });
+  for (const block of oldBlocks.slice(common)) container.removeChild(block);
+  for (const block of newBlocks.slice(common)) container.appendChild(block);
 }
 
 function setStyle(family: string, size: number, lineHeight: number): void {
@@ -138,13 +139,17 @@ function anchorElements(): Element[] {
 function lineAnchors(): [number, number][] | null {
   const elements = anchorElements();
   if (anchorLines.length === 0 || elements.length !== anchorLines.length) return null;
-  const points: [number, number][] = [[-1, 0]];
-  for (let i = 0; i < elements.length; i++) {
-    const y = elements[i].getBoundingClientRect().top + window.scrollY;
-    const prev = points[points.length - 1];
-    if (anchorLines[i] > prev[0] && y >= prev[1]) points.push([anchorLines[i], y]);
-  }
-  const last = points[points.length - 1];
+  let last: [number, number] = [-1, 0];
+  const points: [number, number][] = [last];
+  elements.forEach((element, i) => {
+    const line = anchorLines[i];
+    if (line === undefined) return;
+    const y = element.getBoundingClientRect().top + window.scrollY;
+    if (line > last[0] && y >= last[1]) {
+      last = [line, y];
+      points.push(last);
+    }
+  });
   const endY = document.documentElement.scrollHeight;
   if (totalLines > last[0] && endY >= last[1]) points.push([totalLines, endY]);
   return points;
@@ -152,16 +157,19 @@ function lineAnchors(): [number, number][] | null {
 
 // Piecewise-linear lookup over anchors sorted by both columns.
 function interpolate(points: [number, number][], value: number, from: 0 | 1, to: 0 | 1): number {
-  if (value <= points[0][from]) return points[0][to];
-  for (let i = 1; i < points.length; i++) {
-    const a = points[i - 1];
-    const b = points[i];
+  const [first, ...rest] = points;
+  // lineAnchors always starts with the padding's anchor.
+  if (!first) return 0;
+  if (value <= first[from]) return first[to];
+  let a = first;
+  for (const b of rest) {
     if (value <= b[from]) {
       const span = b[from] - a[from];
       return span > 0 ? a[to] + ((value - a[from]) / span) * (b[to] - a[to]) : b[to];
     }
+    a = b;
   }
-  return points[points.length - 1][to];
+  return a[to];
 }
 
 function setScrollPosition(
@@ -234,7 +242,7 @@ function findRun(query: string, forward: boolean, restart: boolean): [number, nu
   findState.marks.forEach((mark, i) => mark.classList.toggle("current", i === findState.index));
   if (findState.index >= 0) {
     suppressScrollEventsUntil = Date.now() + 200;
-    findState.marks[findState.index].scrollIntoView({ block: "center" });
+    findState.marks[findState.index]?.scrollIntoView({ block: "center" });
   }
   return [findState.index + 1, findState.marks.length];
 }

@@ -26,7 +26,7 @@ function anchors(markdown: string): [string, number][] {
   const { html, anchorLines } = renderWithLines(markdown);
   const elements = anchorElements(html);
   expect(elements.length).toBe(anchorLines.length);
-  return elements.map((element, index) => [element.tagName.toLowerCase(), anchorLines[index]]);
+  return elements.map((element, index) => [element.tagName.toLowerCase(), anchorLines[index] ?? -1]);
 }
 
 describe("anchor lines", () => {

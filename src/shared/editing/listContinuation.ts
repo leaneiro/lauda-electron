@@ -37,7 +37,7 @@ export function lineInfo(line: string): LineInfo | null {
   const task: string | undefined = match[6];
   return {
     prefixLength: match[0].length,
-    indentUnit: match[0].length - match[1].length - (task?.length ?? 0),
+    indentUnit: match[0].length - (match[1]?.length ?? 0) - (task?.length ?? 0),
   };
 }
 
@@ -53,11 +53,15 @@ export function newlineAction(line: string, caretOffset: number): NewlineAction 
     return { kind: "endList", prefixLength };
   }
 
-  const indent = match[1];
+  // The indent and the spaces always take part in a match, empty or not;
+  // a number and its delimiter come exactly when there is no bullet.
+  const indent = match[1] ?? "";
   const bullet: string | undefined = match[2];
-  const spaces = match[5];
+  const spaces = match[5] ?? "";
   let prefix =
-    bullet !== undefined ? indent + bullet + spaces : indent + String(nextNumber(match[3])) + match[4] + spaces;
+    bullet !== undefined
+      ? indent + bullet + spaces
+      : indent + String(nextNumber(match[3] ?? "0")) + (match[4] ?? ".") + spaces;
   if (match[6] !== undefined) {
     prefix += "[ ] ";
   }

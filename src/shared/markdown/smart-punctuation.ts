@@ -62,8 +62,8 @@ export function smartPunctuation(
   const replacements = new Map<Text, Replacement[]>();
   if (children.length === 0) return replacements;
   const content = {
-    start: children[0].position?.start.offset ?? 0,
-    end: children[children.length - 1].position?.end.offset ?? source.markdown.length,
+    start: children[0]?.position?.start.offset ?? 0,
+    end: children.at(-1)?.position?.end.offset ?? source.markdown.length,
   };
   const add = (node: Text, replacement: Replacement): void => {
     const list = replacements.get(node);
@@ -189,7 +189,7 @@ function matchSingleQuotes(delimiters: readonly QuoteDelimiter[]): void {
     if (!closer.canClose) return;
     for (let index = closerIndex - 1; index >= 0; index -= 1) {
       const opener = delimiters[index];
-      if (opener.source < openersBottom) break;
+      if (!opener || opener.source < openersBottom) break;
       if (!opener.canOpen || matched.has(opener)) continue;
       if (opener.enclosingEnds.some((end) => end <= closer.source)) continue;
       opener.replace(leftSingleQuote);
@@ -261,7 +261,7 @@ function characterBefore(text: string, offset: number): string {
     const high = text.charCodeAt(offset - 2);
     if (high >= 0xd800 && high <= 0xdbff) return text.slice(offset - 2, offset);
   }
-  return text[offset - 1];
+  return text[offset - 1] ?? "\n";
 }
 
 function characterAt(text: string, offset: number): string {

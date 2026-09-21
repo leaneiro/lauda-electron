@@ -65,7 +65,7 @@ function styleLine(text: string, fences: { from: number; to: number }[], offset:
       const indices = group !== undefined ? (match as RegExpMatchArray & { indices?: [number, number][] }).indices?.[group] : undefined;
       const start = indices ? indices[0] : match.index ?? 0;
       const end = indices ? indices[1] : start + match[0].length;
-      for (let i = start; i < end; i++) apply(styles[i]);
+      for (const style of styles.slice(start, end)) apply(style);
     }
   };
   paint(listMarkerRegex, (s) => (s.color = "indigo"));
@@ -99,14 +99,15 @@ function buildDecorations(view: EditorView, fences: { from: number; to: number }
     while (position <= to) {
       const line = doc.lineAt(position);
       const styles = styleLine(line.text, fences.filter((f) => f.from < line.to + 1 && f.to > line.from), line.from);
+      // Runs of characters with the same classes become one decoration each.
+      const names = styles.map(classes);
       let runStart = 0;
-      for (let i = 1; i <= styles.length; i++) {
-        const previous = classes(styles[runStart]);
-        if (i === styles.length || classes(styles[i]) !== previous) {
-          if (previous) builder.add(line.from + runStart, line.from + i, Decoration.mark({ class: previous }));
-          runStart = i;
-        }
-      }
+      names.forEach((name, i) => {
+        const next = names[i + 1];
+        if (next === name) return;
+        if (name) builder.add(line.from + runStart, line.from + i + 1, Decoration.mark({ class: name }));
+        runStart = i + 1;
+      });
       position = line.to + 1;
     }
   }

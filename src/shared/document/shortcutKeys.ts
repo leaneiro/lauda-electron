@@ -49,14 +49,18 @@ function alignTables(text: string): string {
   const cellsOf = (line: string) => line.trim().slice(1, -1).split("|");
   const isDivider = (cells: string[]) => cells.every((cell) => /^\s*:?-+:?\s*$/.test(cell));
 
+  const isRowAt = (index: number) => {
+    const line = lines[index];
+    return line !== undefined && isRow(line);
+  };
   let start = 0;
   while (start < lines.length) {
-    if (!isRow(lines[start])) {
+    if (!isRowAt(start)) {
       start += 1;
       continue;
     }
     let end = start;
-    while (end + 1 < lines.length && isRow(lines[end + 1])) end += 1;
+    while (isRowAt(end + 1)) end += 1;
 
     const rows = lines.slice(start, end + 1).map(cellsOf);
     const columns = Math.max(...rows.map((row) => row.length));
@@ -65,8 +69,7 @@ function alignTables(text: string): string {
       const cells = rows.filter((row) => !isDivider(row)).map((row) => (row[column] ?? "").trim());
       widths[column] = Math.max(1, ...cells.map((cell) => [...cell].length));
     }
-    for (let index = 0; index < rows.length; index++) {
-      const row = rows[index];
+    rows.forEach((row, index) => {
       const cells = row.map((cell, column) => {
         const width = widths[column] ?? 1;
         if (isDivider(row)) {
@@ -79,7 +82,7 @@ function alignTables(text: string): string {
         return ` ${value}${" ".repeat(Math.max(width - [...value].length, 0))} `;
       });
       lines[start + index] = `|${cells.join("|")}|`;
-    }
+    });
     start = end + 1;
   }
   return lines.join("\n");

@@ -92,23 +92,25 @@ export function renderForPrint(markdown: string, options: RenderOptions = {}): s
   const renderer = new HTMLRenderer(options.strictLineBreaks ?? false);
   let html = "";
   let index = 0;
-  while (index < children.length) {
-    if (children[index].kind !== "heading") {
-      html += renderer.visit(children[index]);
+  const at = (position: number) => children[position];
+  for (let block = at(index); block; block = at(index)) {
+    if (block.kind !== "heading") {
+      html += renderer.visit(block);
       index += 1;
       continue;
     }
-    let group = renderer.visit(children[index]);
+    let group = renderer.visit(block);
     index += 1;
-    while (index < children.length && children[index].kind === "heading") {
-      group += renderer.visit(children[index]);
+    for (let heading = at(index); heading?.kind === "heading"; heading = at(index)) {
+      group += renderer.visit(heading);
       index += 1;
     }
-    if (index < children.length && avoidsInnerBreaks(children[index])) {
+    const following = at(index);
+    if (following && avoidsInnerBreaks(following)) {
       // The next block is itself unbreakable (pre/table/quote): if it
       // doesn't fit it would jump to the next page alone, stranding the
       // heading above an empty gap, so they travel as one unit.
-      group += renderer.visit(children[index]);
+      group += renderer.visit(following);
       index += 1;
       html += `<div class="keep-with-next">${group}</div>\n`;
     } else {

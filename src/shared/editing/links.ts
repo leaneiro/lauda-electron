@@ -19,8 +19,8 @@ export { allowedSchemes };
 export function isLikelyURL(string: string): boolean {
   if (string === "" || /\p{White_Space}/u.test(string)) return false;
   const scheme = /^([A-Za-z][A-Za-z0-9+.-]*):/.exec(string);
-  if (scheme === null) return false;
-  const name = scheme[1].toLowerCase();
+  const name = scheme?.[1]?.toLowerCase();
+  if (scheme === null || name === undefined) return false;
   if (!allowedSchemes.has(name)) return false;
 
   const rest = string.slice(scheme[0].length);

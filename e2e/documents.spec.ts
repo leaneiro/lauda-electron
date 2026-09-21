@@ -15,7 +15,7 @@ test("exports HTML and PDF next to the document", async () => {
   }, [htmlPath, pdfPath]);
 
   await app.evaluate(({ BrowserWindow }) => {
-    BrowserWindow.getAllWindows()[0].webContents.send("menu:command", { name: "export-html" });
+    BrowserWindow.getAllWindows()[0]?.webContents.send("menu:command", { name: "export-html" });
   });
   await expect.poll(() => existsSync(htmlPath)).toBe(true);
   const html = readFileSync(htmlPath, "utf8");
@@ -24,7 +24,7 @@ test("exports HTML and PDF next to the document", async () => {
   expect(html).toContain("script-src 'none'");
 
   await app.evaluate(({ BrowserWindow }) => {
-    BrowserWindow.getAllWindows()[0].webContents.send("menu:command", { name: "export-pdf" });
+    BrowserWindow.getAllWindows()[0]?.webContents.send("menu:command", { name: "export-pdf" });
   });
   await expect.poll(() => existsSync(pdfPath), { timeout: 15_000 }).toBe(true);
   expect(readFileSync(pdfPath).subarray(0, 5).toString()).toBe("%PDF-");
@@ -54,7 +54,7 @@ test("the tabs left open come back at the next launch", async () => {
 test("closing a new document with text asks whether to keep it", async () => {
   const { app, window } = await launch({ files: { "keep.md": "# Keep\n" } });
   await app.evaluate(({ BrowserWindow }) => {
-    BrowserWindow.getAllWindows()[0].webContents.send("menu:command", { name: "new" });
+    BrowserWindow.getAllWindows()[0]?.webContents.send("menu:command", { name: "new" });
   });
   await expect(window.locator(".tab")).toHaveCount(2);
   await expect(window.locator(".tab.is-selected .tab-title")).toHaveText("Untitled");

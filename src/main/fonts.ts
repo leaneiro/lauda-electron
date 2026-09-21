@@ -31,7 +31,7 @@ export function installedFontFamilies(): Promise<string[]> {
       families = output.split(/\r?\n/);
     } else {
       const output = await run("fc-list", [":", "family"]);
-      families = output.split("\n").map((line) => line.split(",")[0]);
+      families = output.split("\n").map((line) => line.split(",")[0] ?? "");
     }
     const unique = new Set(families.map((family) => family.trim()).filter((family) => family && !family.startsWith(".")));
     return [...unique].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));

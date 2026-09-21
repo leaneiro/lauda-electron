@@ -37,7 +37,7 @@ export function trimmingWhitespacesAndNewlines(text: string): string {
 function trimming(text: string, set: RegExp): string {
   let start = 0;
   let end = text.length;
-  while (start < end && set.test(text[start])) start += 1;
-  while (end > start && set.test(text[end - 1])) end -= 1;
+  while (start < end && set.test(text.charAt(start))) start += 1;
+  while (end > start && set.test(text.charAt(end - 1))) end -= 1;
   return text.slice(start, end);
 }

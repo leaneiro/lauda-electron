@@ -61,7 +61,7 @@ test("a pasted screenshot is saved next to the document and linked", async () =>
     await clipboard.write([new ClipboardItem({ "image/png": new Blob([pixel], { type: "image/png" }) })]);
   });
   // Paste acts on the focused window, which a test's window may not be.
-  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.paste());
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.paste());
   await expect(window.locator(".cm-content")).toHaveText(/^!\[\]\(image-\d{8}-\d{6}\.png\)$/);
   const images = readdirSync(folder).filter((name) => name.endsWith(".png"));
   expect(images).toHaveLength(1);

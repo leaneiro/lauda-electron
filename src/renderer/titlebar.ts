@@ -113,7 +113,7 @@ export class TitleBar {
     }
 
     const width = workspace.previewWidth;
-    const next = previewWidths[(width.level + 1) % previewWidths.length];
+    const next = previewWidths[(width.level + 1) % previewWidths.length] ?? width;
     const isShown = workspace.viewMode === "previewOnly";
     this.widthButton.classList.toggle("is-out", !isShown);
     this.widthButton.setAttribute("aria-hidden", String(!isShown));

@@ -102,7 +102,7 @@ export function swiftDescription(value: number): string {
   if (value === 0) return Object.is(value, -0) ? "-0.0" : "0.0";
   const sign = value < 0 ? "-" : "";
   const magnitude = Math.abs(value);
-  const [mantissa, exponentText] = magnitude.toExponential().split("e");
+  const [mantissa = "0", exponentText = "0"] = magnitude.toExponential().split("e");
   const exponent = Number(exponentText);
   if (magnitude > 2 ** 53 || exponent < -4) {
     const digits = String(Math.abs(exponent)).padStart(2, "0");

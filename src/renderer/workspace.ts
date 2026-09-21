@@ -137,7 +137,8 @@ export class Workspace {
     if (!this.selected || this.documents.length < 2) return;
     const index = this.documents.indexOf(this.selected);
     const count = this.documents.length;
-    this.select(this.documents[(index + offset + count) % count]);
+    const next = this.documents[(index + offset + count) % count];
+    if (next) this.select(next);
   }
 
   /// Closes a tab, letting the document have its say first: a file is

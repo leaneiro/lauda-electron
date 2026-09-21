@@ -210,7 +210,8 @@ async function insertImages(view: EditorView, document: LaudaDocument, files: Fi
   const result = withPaths.every((item) => item.path)
     ? await lauda.invoke("images:import", document.filePath, withPaths.map((item) => item.path))
     : await (async () => {
-        const png = await pngBytes(files[0]);
+        const first = files[0];
+        const png = first ? await pngBytes(first) : null;
         return png ? lauda.invoke("images:save-pasted", document.filePath as string, png) : { paths: [], error: "" };
       })();
   if (result.paths.length > 0) {

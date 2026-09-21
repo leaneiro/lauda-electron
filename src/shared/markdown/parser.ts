@@ -178,7 +178,8 @@ function provenanceExtension(provenance: Provenance): Extension {
         const context = top<mdast.Parent>(this);
         // A hard break takes its line ending in.
         if (this.data.atHardBreak) {
-          context.children[context.children.length - 1].position!.end = pointOf(token.end);
+          const lastChild = context.children.at(-1);
+          if (lastChild?.position) lastChild.position.end = pointOf(token.end);
           this.data.atHardBreak = undefined;
           return;
         }
@@ -432,12 +433,12 @@ class Converter {
       kind: "table",
       line,
       columnAlignments: column((index) => node.align?.[index] ?? null),
-      head: { kind: "tableHead", line, cells: column((index) => this.cell(head.children[index])) },
+      head: { kind: "tableHead", line, cells: column((index) => this.cell(head?.children[index])) },
       rows: body.map((row, rowIndex) => ({
         kind: "tableRow",
         line: lineOf(row),
         cells: column((index) => {
-          const spansUp = markers[rowIndex + 1][index] && markers.slice(0, rowIndex + 1).some((above) => !above[index]);
+          const spansUp = markers[rowIndex + 1]?.[index] && markers.slice(0, rowIndex + 1).some((above) => !above[index]);
           return this.cell(spansUp ? undefined : row.children[index]);
         }),
       })),
@@ -555,8 +556,8 @@ class Converter {
 /// until cmark took them out, and the paragraph keeps their position.
 function paragraphStart(siblings: readonly mdast.RootContent[], index: number): SourceLine {
   let first = siblings[index];
-  for (let above = index - 1; above >= 0; above -= 1) {
-    const sibling = siblings[above];
+  if (!first) return null;
+  for (const sibling of siblings.slice(0, index).reverse()) {
     const touches = sibling.position !== undefined && first.position !== undefined
       && sibling.position.end.line + 1 === first.position.start.line;
     if (sibling.type !== "definition" || !touches) break;

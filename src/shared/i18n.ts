@@ -22,7 +22,7 @@ export function pickLocale(preferred: readonly string[]): Locale {
     const normalized = tag.replace("_", "-");
     const exact = supportedLocales.find((l) => l.toLowerCase() === normalized.toLowerCase());
     if (exact) return exact;
-    const [language, ...rest] = normalized.split("-");
+    const [language = "", ...rest] = normalized.split("-");
     const lower = language.toLowerCase();
     if (lower === "zh") {
       const region = rest.join("-").toLowerCase();
@@ -30,7 +30,7 @@ export function pickLocale(preferred: readonly string[]): Locale {
       return "zh-Hans";
     }
     if (lower === "pt") return "pt-BR";
-    const byLanguage = supportedLocales.find((l) => l.split("-")[0].toLowerCase() === lower);
+    const byLanguage = supportedLocales.find((l) => (l.split("-")[0] ?? "").toLowerCase() === lower);
     if (byLanguage) return byLanguage;
   }
   return "en";

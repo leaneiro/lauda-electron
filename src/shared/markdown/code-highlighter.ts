@@ -161,13 +161,13 @@ function numberEnd(text: string, start: number): number | null {
   };
   const afterFirst = start + codePointLength(text, start);
   const integerEnds = [afterFirst, ...digitsAndUnderscores(afterFirst)];
-  for (let i = integerEnds.length - 1; i >= 0; i -= 1) {
-    const integerEnd = integerEnds[i];
+  // Longest first: the number ends where the most digits still leave a
+  // word boundary behind them.
+  for (const integerEnd of [...integerEnds].reverse()) {
     if (text[integerEnd] === ".") {
       const fractionEnds = digitsAndUnderscores(integerEnd + 1);
-      for (let j = fractionEnds.length - 1; j >= 0; j -= 1) {
-        if (isWordBoundary(text, fractionEnds[j])) return fractionEnds[j];
-      }
+      const fractionEnd = [...fractionEnds].reverse().find((end) => isWordBoundary(text, end));
+      if (fractionEnd !== undefined) return fractionEnd;
     }
     if (isWordBoundary(text, integerEnd)) return integerEnd;
   }
@@ -214,7 +214,7 @@ function characterBefore(text: string, position: number): string {
     const high = text.charCodeAt(position - 2);
     if (high >= 0xd800 && high <= 0xdbff) return text.slice(position - 2, position);
   }
-  return text[position - 1];
+  return text[position - 1] ?? "";
 }
 
 // MARK: - Language table

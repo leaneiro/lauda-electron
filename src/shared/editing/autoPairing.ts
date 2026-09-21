@@ -175,7 +175,7 @@ export function deletingBackward(selection: TextRange, openPair: OpenPair | null
 /// surrogate pair (an emoji) stays half, which, like the native U+FFFD, is
 /// neither a word nor room for a pair.
 function characterAt(text: string, index: number): string | null {
-  return index >= 0 && index < text.length ? text[index] : null;
+  return text[index] ?? null;
 }
 
 /// The pairs the editor typed that the caret hasn't left yet, innermost

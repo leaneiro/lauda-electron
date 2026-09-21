@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { _electron as electron, expect, test } from "@playwright/test";
+import { _electron as electron, expect, type Page, test } from "@playwright/test";
 import { clickMenu, forceQuit, launch, previewFrame } from "./launch";
 
 test("exports HTML and PDF next to the document", async () => {
@@ -109,6 +109,38 @@ test("settings reach the editor and the preview", async () => {
         .evaluate((el) => getComputedStyle(el).getPropertyValue("--editor-size").trim()),
     )
     .toBe("18px");
+  await app.close();
+});
+
+/// The editor's text size as the window applies it.
+function editorSize(window: Page): Promise<string> {
+  return window
+    .locator(".editor-pane")
+    .first()
+    .evaluate((pane) => getComputedStyle(pane).getPropertyValue("--editor-size").trim());
+}
+
+test("the Settings window stores each change, and Restore Defaults shows the defaults", async () => {
+  const { app, window } = await launch({ files: { "style.md": "Text\n" } });
+  await previewFrame(window);
+  const opened = app.waitForEvent("window");
+  await clickMenu(app, ...(process.platform === "darwin" ? ["Lauda", "Settings…"] : ["File", "Settings…"]));
+  const settings = await opened;
+  const size = settings.locator('input[type="range"]').first();
+  await expect(size).toHaveValue("14");
+  // The special fonts, a line, then the system's.
+  await expect(settings.locator("select").first().locator("hr")).toHaveCount(1);
+
+  await size.focus();
+  await settings.keyboard.press("ArrowRight");
+  await settings.keyboard.press("ArrowRight");
+  await expect.poll(() => editorSize(window)).toBe("16px");
+  // The slider stays where the reader has it while its own changes come back.
+  await expect(size).toBeFocused();
+
+  await settings.getByRole("button", { name: "Restore Defaults" }).click();
+  await expect(settings.locator('input[type="range"]').first()).toHaveValue("14");
+  await expect.poll(() => editorSize(window)).toBe("14px");
   await app.close();
 });
 

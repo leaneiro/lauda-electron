@@ -1,6 +1,7 @@
 import { previewWidths, type ViewMode } from "../shared/settings";
 import { isMac, lauda, t } from "./api";
 import type { LaudaDocument } from "./document";
+import { element } from "./dom";
 import { icons, widthColumn, widthLevelIcon } from "./icons";
 import { OutlinePopover } from "./outline";
 import { tabAnimation, type Workspace } from "./workspace";
@@ -10,12 +11,6 @@ const modes: { mode: ViewMode; key: string; icon: string }[] = [
   { mode: "split", key: "Editor and Preview", icon: icons.split },
   { mode: "previewOnly", key: "Preview Only", icon: icons.previewOnly },
 ];
-
-function element<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string): HTMLElementTagNameMap[K] {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  return node;
-}
 
 /// The title bar: the document's name, or the open documents as tabs, and
 /// the toolbar's glass controls (DocumentToolbar.swift, WorkspaceTabStrip.swift).

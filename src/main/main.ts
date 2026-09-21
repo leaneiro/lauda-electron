@@ -20,12 +20,11 @@ import type { AppearanceMode } from "../shared/settings";
 import { showError } from "./dialogs";
 import { exportHTML, exportPDF } from "./export";
 import { DocumentWatcher, readText } from "./files";
-import { installedFontFamilies } from "./fonts";
 import { GrantedFiles, isOpenableByPath } from "./granted-files";
 import { logWindowFailure } from "./log";
 import { buildMenu } from "./menu";
 import { guardPages } from "./navigation";
-import { distDirectory, handleProtocols, registerSchemes } from "./protocols";
+import { appOrigin, distDirectory, handleProtocols, registerSchemes } from "./protocols";
 import { registerDocumentRequests } from "./requests/documents";
 import { handle } from "./requests/handle";
 import { RecentFiles, readSession, SettingsStore } from "./store";
@@ -248,8 +247,14 @@ function refreshMenu(): void {
 /// from the network, which may ask. Electron grants what nobody decides
 /// on, so the decision is written down: no.
 function denyWebPermissions(): void {
-  session.defaultSession.setPermissionRequestHandler((_contents, _permission, answer) => answer(false));
-  session.defaultSession.setPermissionCheckHandler(() => false);
+  // One exception: the app's own pages may list the installed fonts, which
+  // the Settings window's pickers show. A document's preview, of an origin
+  // of its own, may not.
+  const allowed = (permission: string, origin: string) => permission === "local-fonts" && origin === `${appOrigin}/`;
+  session.defaultSession.setPermissionRequestHandler((_contents, permission, answer, details) =>
+    answer(allowed(permission, `${URL.parse(details.requestingUrl)?.origin}/`)),
+  );
+  session.defaultSession.setPermissionCheckHandler((_contents, permission, origin) => allowed(permission, origin));
 }
 
 function applyAppearance(mode: AppearanceMode): void {
@@ -285,7 +290,6 @@ function registerRequests(): void {
       // A link that isn't a URL goes nowhere, as a click on it should.
     }
   });
-  handle("app:list-fonts", () => installedFontFamilies());
   handle("app:read-clipboard", () => clipboard.readText());
   handle("app:log-failure", (_event, what, kind) => logWindowFailure(what, kind));
   handle("app:open-files", (_event, paths) =>

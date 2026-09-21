@@ -53,6 +53,23 @@ function slider(
   return [input, shown];
 }
 
+/// The font families installed on this computer, as the system lists them
+/// to the page (the Local Font Access API), sorted as the native app sorts
+/// them. Hidden system faces, whose names start with a dot, are left out,
+/// as on the Mac. Without the API, or its permission, the pickers keep the
+/// special fonts.
+async function installedFontFamilies(): Promise<string[]> {
+  const query = (window as Window & { queryLocalFonts?: () => Promise<{ family: string }[]> }).queryLocalFonts;
+  let faces: { family: string }[] = [];
+  try {
+    faces = (await query?.()) ?? [];
+  } catch {
+    return [];
+  }
+  const families = new Set(faces.map((face) => face.family.trim()).filter((name) => name && !name.startsWith(".")));
+  return [...families].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+}
+
 /// The line height with two decimals, as the language writes numbers.
 function formatLineHeight(value: number, locale: string): string {
   return new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
@@ -184,7 +201,7 @@ async function start(): Promise<void> {
   document.title = context.t("Settings");
   const form = new SettingsForm(context, document.getElementById("settings") as HTMLFormElement, state.settings);
   lauda.on("settings:changed", (settings) => form.settingsChanged(settings));
-  form.fontsListed(await lauda.invoke("app:list-fonts"));
+  form.fontsListed(await installedFontFamilies());
 }
 
 void start();

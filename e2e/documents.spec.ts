@@ -128,8 +128,10 @@ test("the Settings window stores each change, and Restore Defaults shows the def
   const settings = await opened;
   const size = settings.locator('input[type="range"]').first();
   await expect(size).toHaveValue("14");
-  // The special fonts, a line, then the system's.
+  // The special fonts, a line, then the system's, as the system lists them
+  // to the page.
   await expect(settings.locator("select").first().locator("hr")).toHaveCount(1);
+  await expect.poll(() => settings.locator("select").first().locator("hr ~ option").count()).toBeGreaterThan(10);
 
   await size.focus();
   await settings.keyboard.press("ArrowRight");
@@ -303,6 +305,20 @@ test("the text width button cycles in preview-only mode", async () => {
 /// The window names files by path. One it wasn't handed can't be written,
 /// moved, watched or have images copied beside it, however it asks: a page
 /// taken over by a bug must not reach the rest of the disk.
+/// Every permission a page can ask for is refused, but one: the app's own
+/// pages may list the installed fonts, for the Settings window's pickers.
+/// A document's preview, of an origin of its own, may not.
+test("only the app's own pages may list the installed fonts", async () => {
+  const { app, window } = await launch({ files: { "a.md": "# A\n" } });
+  const preview = await previewFrame(window);
+  const state = (name: string) =>
+    navigator.permissions.query({ name } as unknown as PermissionDescriptor).then((status) => status.state);
+  expect(await window.evaluate(state, "local-fonts")).toBe("granted");
+  expect(await preview.evaluate(state, "local-fonts")).toBe("denied");
+  expect(await window.evaluate(state, "geolocation")).toBe("denied");
+  await app.close();
+});
+
 test("the window can only write the files it was handed", async () => {
   const { app, window, folder } = await launch({ files: { "mine.md": "# Mine\n" } });
   await expect(window.locator(".window-title")).toHaveText("mine.md");

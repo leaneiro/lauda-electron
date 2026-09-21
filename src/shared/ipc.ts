@@ -7,7 +7,6 @@ export interface Requests {
   "app:init": { args: []; result: InitialState };
   "settings:fit-window": { args: [height: number]; result: void };
   "app:open-external": { args: [url: string]; result: void };
-  "app:list-fonts": { args: []; result: string[] };
   "app:read-clipboard": { args: []; result: string };
   /// A failure in the window, for the log: what was being done, and the
   /// error's kind, never its message.

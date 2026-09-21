@@ -1,6 +1,6 @@
+import { appearanceModes, limits, type Settings, specialFontOptions } from "../../shared/settings";
 import { configure, lauda, t } from "../api";
 import { followTheme } from "../theme";
-import { appearanceModes, limits, specialFontOptions, type Settings } from "../../shared/settings";
 
 /// The Settings window (SettingsView.swift): General, Editor and Preview,
 /// then Restore Defaults. Every change is stored at once and every window

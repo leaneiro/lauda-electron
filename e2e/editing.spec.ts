@@ -1,8 +1,8 @@
-import { _electron as electron, expect, test } from "@playwright/test";
 import { existsSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { clickMenu, forceQuit, launch, previewFrame } from "./launch";
+import { _electron as electron, expect, test } from "@playwright/test";
+import { forceQuit, launch, previewFrame } from "./launch";
 
 test("a backtick from a dead key pairs and closes, as on a Brazilian keyboard", async () => {
   const { app, window } = await launch({ files: { "dead.md": "" } });

@@ -64,14 +64,14 @@ function setStyle(family: string, size: number, lineHeight: number): void {
   reflowing(() => {
     const style = document.documentElement.style;
     style.setProperty("--pfont", family);
-    style.setProperty("--psize", size + "px");
+    style.setProperty("--psize", `${size}px`);
     style.setProperty("--plh", String(lineHeight));
   });
 }
 
 function setContentWidth(rem: number): void {
   reflowing(() => {
-    document.documentElement.style.setProperty("--article-max", rem + "rem");
+    document.documentElement.style.setProperty("--article-max", `${rem}rem`);
   });
 }
 
@@ -234,6 +234,7 @@ function findRun(query: string, forward: boolean, restart: boolean): [number, nu
     for (const node of nodes) {
       let current = node;
       let position: number;
+      // biome-ignore lint/suspicious/noAssignInExpressions: a scan that walks matches finds the next one in its own condition.
       while ((position = (current.textContent ?? "").toLowerCase().indexOf(lowered)) !== -1) {
         const match = current.splitText(position);
         const rest = match.splitText(query.length);
@@ -249,7 +250,9 @@ function findRun(query: string, forward: boolean, restart: boolean): [number, nu
   } else if (findState.marks.length) {
     findState.index = (findState.index + (forward ? 1 : -1) + findState.marks.length) % findState.marks.length;
   }
-  findState.marks.forEach((mark, i) => mark.classList.toggle("current", i === findState.index));
+  findState.marks.forEach((mark, i) => {
+    mark.classList.toggle("current", i === findState.index);
+  });
   if (findState.index >= 0) {
     suppressScrollEventsUntil = Date.now() + 200;
     findState.marks[findState.index]?.scrollIntoView({ block: "center" });

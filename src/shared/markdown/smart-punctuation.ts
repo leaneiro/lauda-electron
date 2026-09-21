@@ -240,7 +240,7 @@ function isSpace(character: string): boolean {
 /// categories. cmark's table predates a hundred or so punctuation marks of
 /// rare scripts that `\p{P}` knows, and still counts U+166D.
 function isPunctuation(character: string): boolean {
-  return /^[!-\/:-@\[-`{-~\p{P}᙭]$/u.test(character);
+  return /^[!-/:-@[-`{-~\p{P}᙭]$/u.test(character);
 }
 
 /// Whether only container prefixes (indentation, `>`) precede `offset` on
@@ -266,6 +266,6 @@ function characterBefore(text: string, offset: number): string {
 }
 
 function characterAt(text: string, offset: number): string {
-  if (offset >= text.length) return "\n";
-  return String.fromCodePoint(text.codePointAt(offset)!);
+  const point = text.codePointAt(offset);
+  return point === undefined ? "\n" : String.fromCodePoint(point);
 }

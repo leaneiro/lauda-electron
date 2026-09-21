@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { resolveDocumentFile } from "../../src/main/document-files";
 
 describe("what a document's preview may read", () => {

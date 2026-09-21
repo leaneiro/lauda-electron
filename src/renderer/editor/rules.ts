@@ -1,5 +1,5 @@
-import * as editing from "../../shared/editing";
 import * as documents from "../../shared/document";
+import * as editing from "../../shared/editing";
 import { t } from "../api";
 
 /// The native editing rules (src/shared/editing, ported from Swift with

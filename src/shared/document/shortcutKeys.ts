@@ -25,7 +25,7 @@ function inCtrlTerms(modifiers: string, key: string): string {
 
 /// A shortcut with nothing to say for itself, in the parentheses it is
 /// usually given in: the parentheses go with it.
-const parenthesised = /[  ]?\(([⌃⌥⇧⌘]+\S)\)/gu;
+const parenthesised = /[ {2}]?\(([⌃⌥⇧⌘]+\S)\)/gu;
 
 /// The text with every Mac shortcut written the way Windows and Linux spell
 /// it. Text without any is returned as it came.

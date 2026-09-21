@@ -1,7 +1,14 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
-    "includes": ["src/**", "test/**", "e2e/**", "scripts/**", "*.ts", "*.mts"]
+    "includes": [
+      "src/**",
+      "test/**",
+      "e2e/**",
+      "scripts/**",
+      "*.ts",
+      "*.mts"
+    ]
   },
   "formatter": {
     "indentStyle": "space",
@@ -9,6 +16,40 @@
     "lineWidth": 120
   },
   "javascript": {
-    "formatter": { "quoteStyle": "double", "semicolons": "always", "trailingCommas": "all" }
-  }
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  },
+  "linter": {
+    "rules": {
+      "recommended": true,
+      "suspicious": {
+        "noConfusingVoidType": "off",
+        "noDuplicateCustomProperties": "off"
+      },
+      "complexity": {
+        "noImportantStyles": "off"
+      },
+      "style": {
+        "noDescendingSpecificity": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "test/**",
+        "e2e/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNonNullAssertion": "off"
+          }
+        }
+      }
+    }
+  ]
 }

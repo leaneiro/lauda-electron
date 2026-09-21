@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  type ClipboardFlavors,
   imageImport,
   imageInsertion,
   imageMarkdown,
@@ -7,7 +8,6 @@ import {
   pastedImageTimestamp,
   pasteIntent,
   uniqueDestination,
-  type ClipboardFlavors,
 } from "../../src/shared/document";
 
 /// A folder holding these names, as the file system would answer.

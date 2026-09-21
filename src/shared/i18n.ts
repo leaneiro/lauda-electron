@@ -1,5 +1,5 @@
-import native from "../../resources/locales/native.json";
 import app from "../../resources/locales/app.json";
+import native from "../../resources/locales/native.json";
 
 /// The languages the app speaks. English is the base; Brazilian Portuguese
 /// is reviewed; the others are drafts, as in the native app.

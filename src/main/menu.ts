@@ -1,5 +1,5 @@
-import { Menu, type MenuItemConstructorOptions } from "electron";
 import { basename } from "node:path";
+import { Menu, type MenuItemConstructorOptions } from "electron";
 import type { Strings } from "../shared/i18n";
 import type { MenuCommand, MenuState } from "../shared/ipc";
 

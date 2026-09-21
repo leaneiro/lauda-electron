@@ -1,8 +1,8 @@
+import { type SaveStatusIcon, saveStatusColor, saveStatusIcon } from "../shared/document";
 import { isMac, shortcut, strings, t } from "./api";
-import { icons } from "./icons";
-import { characterCount, readingTimeLabel, saveStatusOf, wordCount } from "./document-info";
 import type { LaudaDocument } from "./document";
-import { saveStatusColor, saveStatusIcon, type SaveStatusIcon } from "../shared/document";
+import { characterCount, readingTimeLabel, saveStatusOf, wordCount } from "./document-info";
+import { icons } from "./icons";
 
 /// The native app's symbols for a save status, drawn here as their SVGs.
 const drawnIcons: Record<SaveStatusIcon, string> = {

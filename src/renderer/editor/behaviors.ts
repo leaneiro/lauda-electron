@@ -1,5 +1,3 @@
-import { Annotation, EditorSelection, type Extension, Transaction } from "@codemirror/state";
-import { EditorView, keymap, ViewPlugin, type ViewUpdate, type KeyBinding } from "@codemirror/view";
 import {
   history,
   historyKeymap,
@@ -11,6 +9,8 @@ import {
   undo,
   undoSelection,
 } from "@codemirror/commands";
+import { Annotation, EditorSelection, type Extension, Transaction } from "@codemirror/state";
+import { EditorView, type KeyBinding, keymap, ViewPlugin, type ViewUpdate } from "@codemirror/view";
 import { lauda } from "../api";
 import type { LaudaDocument } from "../document";
 import * as rules from "./rules";

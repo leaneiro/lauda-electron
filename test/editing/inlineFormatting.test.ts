@@ -4,10 +4,10 @@ import {
   italicMarker,
   link,
   strikethroughMarker,
+  type TextEdit,
   toggle,
   togglePair,
   underlineTags,
-  type TextEdit,
 } from "../../src/shared/editing";
 
 function apply(edit: TextEdit, text: string): string {

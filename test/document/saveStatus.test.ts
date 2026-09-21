@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { saveStatus, saveStatusColor, saveStatusIcon, type SaveStatus } from "../../src/shared/document";
+import { type SaveStatus, saveStatus, saveStatusColor, saveStatusIcon } from "../../src/shared/document";
 
 const file = "/tmp/notes.md";
 const savedAt = new Date(1_800_000_000 * 1000);

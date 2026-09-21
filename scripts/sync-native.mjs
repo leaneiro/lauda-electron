@@ -2,7 +2,7 @@
 // step: the string catalog (converted to JSON, plural variations kept), the
 // preview's stylesheet and wordmark font, the welcome guides and the icons.
 // Run it after changing any of them in the native repository.
-import { cpSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -34,7 +34,7 @@ for (const [key, entry] of Object.entries(catalog.strings)) {
   strings[key] = out;
 }
 mkdirSync(join(root, "resources/locales"), { recursive: true });
-writeFileSync(join(root, "resources/locales/native.json"), JSON.stringify(strings, null, 2) + "\n");
+writeFileSync(join(root, "resources/locales/native.json"), `${JSON.stringify(strings, null, 2)}\n`);
 
 copy("Sources/Lauda/Preview/preview.css", "resources/preview/preview.css");
 copy("Sources/Lauda/Preview/LaudaWordmark.woff", "resources/preview/LaudaWordmark.woff");

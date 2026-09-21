@@ -1,30 +1,30 @@
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { copyFile, rename, rm } from "node:fs/promises";
+import { basename, dirname, extname, join } from "node:path";
 import {
   app,
   BrowserWindow,
   clipboard,
   dialog,
+  type IpcMainInvokeEvent,
   ipcMain,
   Menu,
   nativeTheme,
   session,
   shell,
   systemPreferences,
-  type IpcMainInvokeEvent,
 } from "electron";
-import { existsSync, readFileSync, statSync } from "node:fs";
-import { copyFile, rename, rm } from "node:fs/promises";
-import { basename, dirname, extname, join } from "node:path";
-import { pickLocale, Strings } from "../shared/i18n";
-import type { Events, MenuCommand, MenuState, OpenDocument, Requests, RequestChannel } from "../shared/ipc";
 import { withCtrlShortcuts } from "../shared/document";
-import { isImagePath } from "../shared/markdown/content-policy";
+import { pickLocale, Strings } from "../shared/i18n";
+import type { Events, MenuCommand, MenuState, OpenDocument, RequestChannel, Requests } from "../shared/ipc";
 import { allowedLinkSchemes } from "../shared/markdown";
+import { isImagePath } from "../shared/markdown/content-policy";
 import type { AppearanceMode } from "../shared/settings";
 import { messageOf, showError, showWarning } from "./dialogs";
 import { exportHTML, exportPDF } from "./export";
-import { GrantedFiles, isOpenableByPath } from "./granted-files";
 import { DocumentWatcher, readText, writeText } from "./files";
 import { installedFontFamilies } from "./fonts";
+import { GrantedFiles, isOpenableByPath } from "./granted-files";
 import { freePathIn, importImages, savePastedImage } from "./images";
 import { buildMenu } from "./menu";
 import {
@@ -35,7 +35,7 @@ import {
   registerDocumentFolder,
   registerSchemes,
 } from "./protocols";
-import { readSession, readWindowState, RecentFiles, sessionFile, SettingsStore, windowStateFile } from "./store";
+import { RecentFiles, readSession, readWindowState, SettingsStore, sessionFile, windowStateFile } from "./store";
 
 const isMac = process.platform === "darwin";
 const isWindows = process.platform === "win32";
@@ -671,7 +671,7 @@ app.on("web-contents-created", (_event, contents) => {
     const url = event.url;
     if (url.startsWith("lauda-doc://") && url.endsWith("/.lauda-preview")) return;
     const parent = event.frame?.parent;
-    if (parent && parent.url.startsWith("lauda-doc://") && url.startsWith("https://")) return;
+    if (parent?.url.startsWith("lauda-doc://") && url.startsWith("https://")) return;
     if (parent && !parent.url.startsWith(appOrigin) && !parent.url.startsWith("lauda-doc://")) return;
     event.preventDefault();
   });

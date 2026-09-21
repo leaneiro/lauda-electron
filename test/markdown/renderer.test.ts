@@ -33,7 +33,7 @@ describe("HTML renderer", () => {
 
   it("lets a long code block break across pages", () => {
     const code = Array.from({ length: 10 }, (_, index) => `let v${index + 1} = ${index + 1}`).join("\n");
-    const html = render("```swift\n" + code + "\n```");
+    const html = render(`\`\`\`swift\n${code}\n\`\`\``);
     // A long block has no class=keep.
     expect(html.startsWith("<pre><code")).toBe(true);
   });

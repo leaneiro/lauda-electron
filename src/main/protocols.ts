@@ -1,10 +1,10 @@
-import { app, protocol } from "electron";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { extname, join, resolve, sep } from "node:path";
+import { app, protocol } from "electron";
+import { exportContentSecurityPolicy, previewContentSecurityPolicy } from "../shared/markdown";
 import { resolveDocumentFile } from "./document-files";
 import { previewStylesheet } from "./preview-styles";
-import { exportContentSecurityPolicy, previewContentSecurityPolicy } from "../shared/markdown";
 
 export const appScheme = "lauda-app";
 export const documentScheme = "lauda-doc";
@@ -118,7 +118,7 @@ export function handleProtocols(locale: string): void {
     } catch {
       return new Response(null, { status: 400 });
     }
-    const file = resolve(distDirectory, "." + pathname);
+    const file = resolve(distDirectory, `.${pathname}`);
     if (!file.startsWith(distDirectory + sep)) return new Response(null, { status: 403 });
     try {
       const body = await readFile(file);

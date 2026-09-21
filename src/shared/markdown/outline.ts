@@ -2,7 +2,7 @@ import { trimmingWhitespaces } from "../editing/characters";
 // The document outline (Outline.swift): the headings the toolbar's popover
 // lists, with the source line picking one scrolls both panes to.
 
-import { childrenOf, plainText, type Heading, type Markup } from "./markup";
+import { childrenOf, type Heading, type Markup, plainText } from "./markup";
 import { parseDocument } from "./parser";
 
 /// A heading in the document outline.

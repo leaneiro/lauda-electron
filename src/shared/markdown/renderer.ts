@@ -6,16 +6,16 @@ import { highlightCode } from "./code-highlighter";
 import { allowedLinkSchemes } from "./content-policy";
 import { escapeHTML } from "./escape";
 import {
-  childrenOf,
-  plainText,
   type BlockMarkup,
   type CodeBlock,
   type ColumnAlignment,
+  childrenOf,
   type Image,
   type Link,
   type ListItem,
   type Markup,
   type OrderedList,
+  plainText,
   type Table,
 } from "./markup";
 import { parseDocument } from "./parser";
@@ -144,7 +144,7 @@ export function isAllowedLinkDestination(destination: string): boolean {
   // Browsers skip whitespace and control characters inside a scheme.
   const text = Array.from(destination)
     .filter((character) => {
-      const value = character.codePointAt(0)!;
+      const value = character.codePointAt(0) ?? 0;
       return value > 0x20 && value !== 0x7f;
     })
     .join("");
@@ -256,7 +256,7 @@ class HTMLRenderer {
     const [first, ...rest] = listItem.children;
     if (first?.kind === "paragraph") {
       inner = this.childrenHTML(first);
-      for (const child of rest) inner += "\n" + this.visit(child);
+      for (const child of rest) inner += `\n${this.visit(child)}`;
     } else {
       inner = listItem.children.map((child) => this.visit(child)).join("");
     }

@@ -1,11 +1,12 @@
 // Builds the app into dist/: the main process and the preload script for
 // Node, the window's interface, the render worker and the preview page's
 // script for the browser, and the static files next to them.
-import { build } from "esbuild";
-import { cpSync, mkdirSync, rmSync, readFileSync, writeFileSync } from "node:fs";
+
 import { execSync } from "node:child_process";
+import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { build } from "esbuild";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(root, "dist");

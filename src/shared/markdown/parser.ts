@@ -7,13 +7,13 @@
 // exposes (the whole info string of a code block, literals ending in "\n",
 // empty destinations read as none).
 
-import { fromMarkdown } from "mdast-util-from-markdown";
+import type * as mdast from "mdast";
 import type { CompileContext, Extension, Options, Token } from "mdast-util-from-markdown";
+import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
-import type * as mdast from "mdast";
 import type { BlockMarkup, CodeBlock, Document, InlineMarkup, ListItem, SourceLine, Table, TableCell } from "./markup";
-import { smartPunctuation, type Piece, type Replacement, type SmartSource } from "./smart-punctuation";
+import { type Piece, type Replacement, type SmartSource, smartPunctuation } from "./smart-punctuation";
 
 /// Parses `markdown` into the tree the native renderer walks.
 export function parseDocument(markdown: string): Document {
@@ -172,7 +172,7 @@ function provenanceExtension(provenance: Provenance): Extension {
         const tail = this.stack.pop() as mdast.Text;
         const start = tail.value.length;
         tail.value += this.sliceSerialize(token);
-        tail.position!.end = pointOf(token.end);
+        if (tail.position) tail.position.end = pointOf(token.end);
         provenance.addLiteral(tail, start, tail.value.length, token.start.offset);
       },
       lineEnding(token) {
@@ -193,7 +193,7 @@ function provenanceExtension(provenance: Provenance): Extension {
         const text = tail as mdast.Text;
         const start = text.value.length;
         text.value += this.sliceSerialize(token);
-        text.position!.end = pointOf(token.end);
+        if (text.position) text.position.end = pointOf(token.end);
         provenance.addLineEnding(text, start, text.value.length, token.start.offset);
       },
       label() {
@@ -316,7 +316,7 @@ class Converter {
         // cmark keeps each line with its "\n"; micromark leaves out the
         // last one unless the block runs to the end of the document.
         const html = normalizeLineEndings(node.value);
-        return { kind: "htmlBlock", line: lineOf(node), rawHTML: html.endsWith("\n") ? html : html + "\n" };
+        return { kind: "htmlBlock", line: lineOf(node), rawHTML: html.endsWith("\n") ? html : `${html}\n` };
       }
       case "table": {
         // The table keeps the position of the paragraph it grew out of.
@@ -385,7 +385,8 @@ class Converter {
       if (head?.type === "text") {
         const literal = this.provenance.literals(head).find((piece) => piece.start === 0);
         const lineEnding = this.provenance.lineEndings(head).find((piece) => piece.start === 0);
-        const spaces = literal ? /^[ \t]*/.exec(head.value.slice(0, literal.end))![0].length : 0;
+        // A pattern that matches nothing still matches, empty.
+        const spaces = literal ? (/^[ \t]*/.exec(head.value.slice(0, literal.end))?.[0].length ?? 0) : 0;
         if (spaces > 0) {
           this.provenance.dropLeading(head, spaces);
         } else if (lineEnding) {
@@ -408,7 +409,7 @@ class Converter {
   private codeBlock(node: mdast.Code): CodeBlock {
     const fenced = this.provenance.fencedCode(node);
     const value = normalizeLineEndings(node.value);
-    let code = value.length > 0 ? value + "\n" : "";
+    let code = value.length > 0 ? `${value}\n` : "";
     if (value.length === 0 && fenced?.raw !== undefined) {
       // One line ending follows the opening fence; each empty line inside
       // adds one more.

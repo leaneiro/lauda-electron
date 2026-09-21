@@ -1,7 +1,7 @@
-import { _electron as electron, type ElectronApplication, type Page } from "@playwright/test";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { type ElectronApplication, _electron as electron, type Page } from "@playwright/test";
 
 export interface Launched {
   app: ElectronApplication;

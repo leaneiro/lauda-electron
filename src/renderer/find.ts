@@ -1,6 +1,6 @@
+import type { ViewMode } from "../shared/settings";
 import { isMac, shortcut, t } from "./api";
 import { icons } from "./icons";
-import type { ViewMode } from "../shared/settings";
 
 export interface FindCounts {
   current: number;

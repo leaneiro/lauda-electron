@@ -1,5 +1,5 @@
 import { RangeSetBuilder, type Text } from "@codemirror/state";
-import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from "@codemirror/view";
+import { Decoration, type DecorationSet, type EditorView, ViewPlugin, type ViewUpdate } from "@codemirror/view";
 import { type FenceLine, pairFences } from "../../shared/editing/code";
 
 /// Light regex-based Markdown highlighting for the editor pane, the native

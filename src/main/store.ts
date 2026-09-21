@@ -1,8 +1,8 @@
-import { app } from "electron";
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { defaultPreferences, sanitizeSettings, type Settings } from "../shared/settings";
+import { app } from "electron";
 import type { SessionContents } from "../shared/ipc";
+import { defaultPreferences, type Settings, sanitizeSettings } from "../shared/settings";
 
 /// A small JSON file in the app's data folder. Written atomically (a temporary
 /// file, then a rename), so a crash mid-write never leaves half a file.

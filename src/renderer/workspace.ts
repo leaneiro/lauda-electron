@@ -1,9 +1,9 @@
+import type { MenuCommand, OpenDocument } from "../shared/ipc";
 import { modeChangeMs } from "../shared/layout";
+import { nextPreviewWidthLevel, previewWidthShowing, type Settings, type ViewMode } from "../shared/settings";
 import { lauda, t } from "./api";
 import { LaudaDocument } from "./document";
 import { DocumentView } from "./document-view";
-import type { MenuCommand, OpenDocument } from "../shared/ipc";
-import { nextPreviewWidthLevel, previewWidthShowing, type Settings, type ViewMode } from "../shared/settings";
 
 type Listener = () => void;
 

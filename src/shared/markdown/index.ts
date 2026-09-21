@@ -3,29 +3,29 @@
 // the pages' policies. Pure TypeScript, so it runs in the render worker, the
 // main process and tests alike.
 
+export { highlightCode } from "./code-highlighter";
+export { allowedLinkSchemes, documentScheme, imageFileExtensions, isImagePath } from "./content-policy";
+export { escapeHTML } from "./escape";
+export type * from "./markup";
+export { childrenOf, plainText } from "./markup";
+export { type OutlineItem, outlineItems, outlineTitle } from "./outline";
+export { parseDocument } from "./parser";
 export {
-  render,
-  renderWithLines,
-  renderForPrint,
-  isAllowedLinkDestination,
   codeBlockLineCount,
   compactCodeBlockLineLimit,
-  type RenderOptions,
+  isAllowedLinkDestination,
   type RenderedDocument,
+  type RenderOptions,
+  render,
+  renderForPrint,
+  renderWithLines,
 } from "./renderer";
-export { escapeHTML } from "./escape";
-export { highlightCode } from "./code-highlighter";
-export { outlineItems, outlineTitle, type OutlineItem } from "./outline";
 export { sourceLineCount } from "./source-lines";
 export {
-  previewContentSecurityPolicy,
   exportContentSecurityPolicy,
-  wordmarkFontFace,
+  previewContentSecurityPolicy,
   previewStyles,
-  standalone,
   type StandaloneOptions,
+  standalone,
+  wordmarkFontFace,
 } from "./template";
-export { allowedLinkSchemes, documentScheme, imageFileExtensions, isImagePath } from "./content-policy";
-export { parseDocument } from "./parser";
-export { childrenOf, plainText } from "./markup";
-export type * from "./markup";

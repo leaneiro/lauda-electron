@@ -1,7 +1,7 @@
-import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { clickMenu, forceQuit, launch, previewFrame } from "./launch";
+import { expect, test } from "@playwright/test";
+import { clickMenu, launch, previewFrame } from "./launch";
 
 const mod = process.platform === "darwin" ? "Meta" : "Control";
 

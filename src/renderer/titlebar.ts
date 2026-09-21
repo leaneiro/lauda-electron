@@ -1,9 +1,9 @@
+import { previewWidths, type ViewMode } from "../shared/settings";
 import { isMac, lauda, t } from "./api";
+import type { LaudaDocument } from "./document";
 import { icons, widthColumn, widthLevelIcon } from "./icons";
 import { OutlinePopover } from "./outline";
 import { tabAnimation, type Workspace } from "./workspace";
-import type { LaudaDocument } from "./document";
-import { previewWidths, type ViewMode } from "../shared/settings";
 
 const modes: { mode: ViewMode; key: string; icon: string }[] = [
   { mode: "editorOnly", key: "Editor Only", icon: icons.editorOnly },
@@ -32,7 +32,7 @@ export class TitleBar {
   private readonly outline: OutlinePopover;
 
   constructor(
-    private readonly root: HTMLElement,
+    root: HTMLElement,
     private readonly workspace: Workspace,
   ) {
     if (!isMac()) {

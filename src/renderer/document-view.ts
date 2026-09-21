@@ -1,14 +1,14 @@
-import { Editor } from "./editor/editor";
 import { boldMarker, italicMarker, strikethroughMarker, underlineTags } from "../shared/editing";
-import { PreviewPane } from "./preview/preview-pane";
-import { FindSession } from "./find";
-import { StatusBar } from "./status-bar";
-import type { LaudaDocument } from "./document";
-import type { Workspace } from "./workspace";
-import { type ScrollSync, farFromTheEnd } from "./scroll-sync";
 import type { MenuCommand } from "../shared/ipc";
-import { cssEditorFontFamily, cssFontFamily, type Settings, type ViewMode } from "../shared/settings";
 import { clampSplit, isSmoothModeChange, modeChangeMs } from "../shared/layout";
+import { cssEditorFontFamily, cssFontFamily, type Settings, type ViewMode } from "../shared/settings";
+import type { LaudaDocument } from "./document";
+import { Editor } from "./editor/editor";
+import { FindSession } from "./find";
+import { PreviewPane } from "./preview/preview-pane";
+import { farFromTheEnd, type ScrollSync } from "./scroll-sync";
+import { StatusBar } from "./status-bar";
+import type { Workspace } from "./workspace";
 
 /// One document's part of the window: its editor and preview side by side,
 /// the find bar over them and the status bar under them. Each open document

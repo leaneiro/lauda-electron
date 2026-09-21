@@ -1,9 +1,9 @@
 import {
   characterCount as countCharacters,
+  wordCount as countWords,
   readingTime,
   type SaveStatus,
   saveStatus,
-  wordCount as countWords,
 } from "../shared/document";
 import { outlineItems as headings } from "../shared/markdown";
 import { strings, t } from "./api";

@@ -1,6 +1,6 @@
-import { _electron as electron, expect, test } from "@playwright/test";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { _electron as electron, expect, test } from "@playwright/test";
 import { clickMenu, forceQuit, launch, previewFrame } from "./launch";
 
 test("exports HTML and PDF next to the document", async () => {

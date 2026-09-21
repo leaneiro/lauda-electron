@@ -107,6 +107,7 @@ function tokenize(code: string, spec: Language): string {
 /// without "\r" splits the same way character by character, so the common
 /// case skips the segmenter.
 function characters(code: string): string[] {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: the ASCII range, control characters and all, is what the fast path takes.
   if (!/[^\x00-\x0C\x0E-\x7F]/.test(code)) return code.split("");
   return Array.from(graphemes.segment(code), (piece) => piece.segment);
 }
@@ -182,7 +183,7 @@ function numberEnd(text: string, start: number): number | null {
 function isWordBoundary(text: string, position: number): boolean {
   let currentIsWord = false;
   if (position < text.length) {
-    const current = String.fromCodePoint(text.codePointAt(position)!);
+    const current = String.fromCodePoint(text.codePointAt(position) ?? 0);
     if (combining.test(current)) return false;
     currentIsWord = wordCharacter.test(current);
   }
@@ -204,11 +205,12 @@ const combining = /^[\p{Grapheme_Extend}\p{Cf}]$/u;
 const digit = /^\p{Nd}$/u;
 
 function isDigit(text: string, position: number): boolean {
-  return position < text.length && digit.test(String.fromCodePoint(text.codePointAt(position)!));
+  const point = text.codePointAt(position);
+  return point !== undefined && digit.test(String.fromCodePoint(point));
 }
 
 function codePointLength(text: string, position: number): number {
-  return text.codePointAt(position)! > 0xffff ? 2 : 1;
+  return (text.codePointAt(position) ?? 0) > 0xffff ? 2 : 1;
 }
 
 function characterBefore(text: string, position: number): string {

@@ -65,7 +65,7 @@ export function newlineAction(line: string, caretOffset: number): NewlineAction 
   if (match[6] !== undefined) {
     prefix += "[ ] ";
   }
-  return { kind: "continueList", insertion: "\n" + prefix };
+  return { kind: "continueList", insertion: `\n${prefix}` };
 }
 
 /// The number the next item gets. Swift's Int() reads ASCII digits only, so

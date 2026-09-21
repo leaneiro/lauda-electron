@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { clampSplit, isSmoothModeChange } from "../../src/shared/layout";
 import {
   cssFontFamily,
   defaultSettings,
@@ -6,7 +7,6 @@ import {
   previewWidthShowing,
   sanitizeSettings,
 } from "../../src/shared/settings";
-import { clampSplit, isSmoothModeChange } from "../../src/shared/layout";
 
 describe("settings", () => {
   test("defaults are the native app's", () => {

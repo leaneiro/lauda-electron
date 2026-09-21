@@ -1,5 +1,5 @@
 import type { LaudaAPI } from "../preload/bridge";
-import { Strings, type Locale } from "../shared/i18n";
+import { type Locale, Strings } from "../shared/i18n";
 import type { InitialState, Platform } from "../shared/ipc";
 
 declare global {

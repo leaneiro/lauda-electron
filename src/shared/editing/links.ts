@@ -1,5 +1,5 @@
-import { trimmingWhitespaces, trimmingWhitespacesAndNewlines } from "./characters";
 import { allowedLinkSchemes as allowedSchemes } from "../markdown/content-policy";
+import { trimmingWhitespaces, trimmingWhitespacesAndNewlines } from "./characters";
 import { substring, type TextEdit, type TextRange } from "./textEdit";
 
 /// The link schemes allowed to leave the app are the content policy's, the

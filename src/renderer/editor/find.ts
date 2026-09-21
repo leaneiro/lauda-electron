@@ -1,6 +1,6 @@
-import { StateEffect, StateField, type EditorState } from "@codemirror/state";
-import { Decoration, type DecorationSet, EditorView } from "@codemirror/view";
 import { SearchCursor } from "@codemirror/search";
+import { type EditorState, StateEffect, StateField } from "@codemirror/state";
+import { Decoration, type DecorationSet, EditorView } from "@codemirror/view";
 import type { FindCounts } from "../find";
 
 interface FindState {

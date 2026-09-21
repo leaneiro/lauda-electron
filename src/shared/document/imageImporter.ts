@@ -58,7 +58,7 @@ export function imageImport(source: string, directory: string, isTaken: (name: s
   // Without its trailing separator, unless the folder is the root.
   const base = withSlashes(directory).replace(/(.)\/+$/, "$1");
   const file = withSlashes(source);
-  if (file.startsWith(base + "/")) {
+  if (file.startsWith(`${base}/`)) {
     return { kind: "reference", path: file.slice(base.length + 1) };
   }
   return { kind: "copy", name: uniqueDestination(lastPathComponent(source), isTaken) };

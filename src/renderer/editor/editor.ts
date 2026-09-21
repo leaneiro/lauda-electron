@@ -1,7 +1,7 @@
-import { EditorSelection, EditorState, Transaction } from "@codemirror/state";
-import { drawSelection, EditorView, keymap } from "@codemirror/view";
 import { standardKeymap } from "@codemirror/commands";
 import { openSearchPanel, search, searchKeymap } from "@codemirror/search";
+import { EditorSelection, EditorState, Transaction } from "@codemirror/state";
+import { drawSelection, EditorView, keymap } from "@codemirror/view";
 import { lauda } from "../api";
 import type { LaudaDocument } from "../document";
 import type { EditorFinding, FindCounts } from "../find";
@@ -9,8 +9,8 @@ import type { ScrollSync } from "../scroll-sync";
 import { behaviors, programmaticEdit } from "./behaviors";
 import { findClear, findCounts, findField, findStep, findUpdate } from "./find";
 import { markdownHighlighting } from "./highlight";
-import { EditorScrolling } from "./scrolling";
 import * as rules from "./rules";
+import { EditorScrolling } from "./scrolling";
 
 /// The Markdown editor pane (MarkdownTextView.swift): plain text with light
 /// highlighting, the native typing behaviors, and its place in the shared

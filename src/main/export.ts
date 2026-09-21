@@ -1,14 +1,14 @@
-import { showError } from "./dialogs";
-import { app, BrowserWindow, dialog } from "electron";
 import { writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { app, BrowserWindow, dialog } from "electron";
 import type { Strings } from "../shared/i18n";
 import type { ExportRequest } from "../shared/ipc";
-import { cssFontFamily, type Settings } from "../shared/settings";
 import { renderForPrint, standalone } from "../shared/markdown";
-import { distDirectory, serveExportPage } from "./protocols";
-import { previewStylesheet } from "./preview-styles";
+import { cssFontFamily, type Settings } from "../shared/settings";
+import { showError } from "./dialogs";
 import { writeText } from "./files";
+import { previewStylesheet } from "./preview-styles";
+import { distDirectory, serveExportPage } from "./protocols";
 
 /// A self-contained page, styled like the preview and following the
 /// preview's font settings.

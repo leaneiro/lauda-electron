@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  OpenPairs,
   deletingBackward,
   isInsideCode,
   maxRange,
+  OpenPairs,
   substitution,
-  typing,
   type TextRange,
   type Typing,
+  typing,
 } from "../../src/shared/editing";
 
 /// Text with the caret as ‸, or a selection between « and ».
@@ -28,8 +28,8 @@ function parse(marked: string): { text: string; selection: TextRange } {
 function render(text: string, selection: TextRange): string {
   const before = text.slice(0, selection.location);
   const after = text.slice(maxRange(selection));
-  if (selection.length === 0) return before + "‸" + after;
-  return before + "«" + text.slice(selection.location, maxRange(selection)) + "»" + after;
+  if (selection.length === 0) return `${before}‸${after}`;
+  return `${before}«${text.slice(selection.location, maxRange(selection))}»${after}`;
 }
 
 /// The native editor reduced to its text, selection, open pairs and what an
@@ -180,13 +180,13 @@ describe("AutoPairing typing", () => {
   it.each(pairs)("an opening %s brings its closing %s", (open, close) => {
     const editor = new Editor();
     editor.type(open);
-    expect(editor.state).toBe(open + "‸" + close);
+    expect(editor.state).toBe(`${open}‸${close}`);
   });
 
   it.each(pairs)("typing the closing character of %s%s steps over it", (open, close) => {
     const editor = new Editor();
-    editor.type(open + "a" + close);
-    expect(editor.state).toBe(open + "a" + close + "‸");
+    editor.type(`${open}a${close}`);
+    expect(editor.state).toBe(`${open}a${close}‸`);
   });
 
   it("types bold and bold italic through", () => {
@@ -263,7 +263,7 @@ describe("AutoPairing typing", () => {
   it.each(["(", "[", '"', "*", "_", "`"])("pairs nothing right before a word: %s", (opener) => {
     const editor = new Editor("‸word");
     editor.type(opener);
-    expect(editor.state).toBe(opener + "‸word");
+    expect(editor.state).toBe(`${opener}‸word`);
   });
 
   /// After a letter or a digit, a quote or a marker closes something.

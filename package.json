@@ -18,7 +18,10 @@
     "sync-native": "node scripts/sync-native.mjs",
     "dist:linux": "node scripts/build.mjs --production && electron-builder --linux",
     "dist:win": "node scripts/build.mjs --production && electron-builder --win",
-    "dist:mac": "node scripts/build.mjs --production && electron-builder --mac --config.appId=com.carneirolabs.lauda.electron --config.productName=\"Lauda Electron\""
+    "dist:mac": "node scripts/build.mjs --production && electron-builder --mac --config.appId=com.carneirolabs.lauda.electron --config.productName=\"Lauda Electron\"",
+    "lint": "biome check src test e2e scripts",
+    "format": "biome check --write src test e2e scripts",
+    "check": "npm run typecheck && npm run lint && npm test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",

@@ -56,6 +56,13 @@ export class TitleBar {
     this.viewModes.setAttribute("role", "group");
     this.viewModes.setAttribute("aria-label", t("View Mode"));
 
+    // The tabs are one stop for the keyboard, the selected tab; the arrows
+    // move between them, selecting as they go, and Return goes to the
+    // document.
+    this.strip.setAttribute("role", "tablist");
+    this.strip.setAttribute("aria-label", t("Open Documents"));
+    this.strip.addEventListener("keydown", (event) => this.tabKey(event));
+
     this.widthButton.innerHTML = widthLevelIcon(0);
     this.widthButton.addEventListener("click", () => workspace.cycleWidth());
 
@@ -173,7 +180,10 @@ export class TitleBar {
 
   private makeTab(document: LaudaDocument): HTMLElement {
     const tab = element("div", "tab glass");
+    tab.setAttribute("role", "tab");
     const close = element("button", "tab-close");
+    // Closing from the keyboard is Close Tab's shortcut, on the selected tab.
+    close.tabIndex = -1;
     close.innerHTML = `<span class="icon-x">${icons.close}</span><span class="icon-dot">${icons.dot}</span>`;
     const title = element("span", "tab-title");
     tab.append(close, title);
@@ -198,6 +208,9 @@ export class TitleBar {
     const { t } = this.context;
     const isSelected = document === this.workspace.selected;
     tab.classList.toggle("is-selected", isSelected);
+    tab.setAttribute("aria-selected", String(isSelected));
+    tab.tabIndex = isSelected ? 0 : -1;
+    tab.setAttribute("aria-label", document.title);
     tab.classList.toggle("clear", !isSelected);
     tab.classList.toggle("is-edited", document.isEdited);
     tab.title = document.filePath ?? document.title;
@@ -208,6 +221,30 @@ export class TitleBar {
       "aria-label",
       document.isEdited ? t("Close %@, unsaved", document.title) : t("Close %@", document.title),
     );
+  }
+
+  private tabKey(event: KeyboardEvent): void {
+    const documents = this.workspace.documents;
+    const selected = this.workspace.selected;
+    if (!selected || documents.length < 2) return;
+    const index = documents.indexOf(selected);
+    const targets: Record<string, LaudaDocument | undefined> = {
+      ArrowLeft: documents[(index - 1 + documents.length) % documents.length],
+      ArrowRight: documents[(index + 1) % documents.length],
+      Home: documents[0],
+      End: documents[documents.length - 1],
+    };
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      this.workspace.view(selected)?.focus();
+      return;
+    }
+    const target = targets[event.key];
+    if (!target) return;
+    event.preventDefault();
+    // Selecting gives the document's panes the keyboard; it stays on the tabs.
+    this.workspace.select(target);
+    this.tabs.get(target.id)?.focus();
   }
 
   /// Windows and Linux draw the window's buttons over the right end of the

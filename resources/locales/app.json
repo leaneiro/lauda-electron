@@ -26,6 +26,7 @@
     "Bring All to Front": { "en": "Bring All to Front", "pt-BR": "Trazer Tudo para a Frente", "de": "Alle nach vorne bringen", "es": "Traer todo al frente", "fr": "Tout ramener au premier plan", "ja": "すべてを手前に移動", "zh-Hans": "前置全部窗口" },
     "Toggle Full Screen": { "en": "Toggle Full Screen", "pt-BR": "Tela Cheia", "de": "Vollbild", "es": "Pantalla completa", "fr": "Plein écran", "ja": "フルスクリーン", "zh-Hans": "全屏幕" },
     "Menu": { "en": "Menu", "pt-BR": "Menu", "de": "Menü", "es": "Menú", "fr": "Menu", "ja": "メニュー", "zh-Hans": "菜单" },
+    "Open Documents": { "en": "Open Documents", "pt-BR": "Documentos abertos", "de": "Geöffnete Dokumente", "es": "Documentos abiertos", "fr": "Documents ouverts", "ja": "開いている書類", "zh-Hans": "打开的文稿" },
     "Version %@": { "en": "Version %@", "pt-BR": "Versão %@", "de": "Version %@", "es": "Versión %@", "fr": "Version %@", "ja": "バージョン %@", "zh-Hans": "版本 %@" },
     "OK": { "en": "OK", "pt-BR": "OK", "de": "OK", "es": "Aceptar", "fr": "OK", "ja": "OK", "zh-Hans": "好" },
     "Open": { "en": "Open", "pt-BR": "Abrir", "de": "Öffnen", "es": "Abrir", "fr": "Ouvrir", "ja": "開く", "zh-Hans": "打开" },

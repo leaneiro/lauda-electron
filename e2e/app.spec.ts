@@ -100,6 +100,32 @@ test("view modes, tabs and the outline", async () => {
   await app.close();
 });
 
+/// The tabs follow the pattern screen readers know: a list of tabs, the
+/// selected one marked and the only stop for Tab, the arrows moving along.
+test("the tabs can be read and walked with the keyboard", async () => {
+  const { app, window } = await launch({ files: { "a.md": "# A\n", "b.md": "# B\n", "c.md": "# C\n" } });
+  const tabs = window.getByRole("tab");
+  await expect(tabs).toHaveCount(3);
+  await expect(window.getByRole("tablist")).toHaveAccessibleName("Open Documents");
+  await expect(window.getByRole("tab", { selected: true })).toHaveAccessibleName("c.md");
+  await expect(tabs.nth(0)).toHaveAttribute("tabindex", "-1");
+  await expect(tabs.nth(2)).toHaveAttribute("tabindex", "0");
+
+  await tabs.nth(2).focus();
+  await window.keyboard.press("ArrowRight");
+  await expect(window.getByRole("tab", { selected: true })).toHaveAccessibleName("a.md");
+  await expect(tabs.nth(0)).toBeFocused();
+  await window.keyboard.press("End");
+  await expect(tabs.nth(2)).toBeFocused();
+  await window.keyboard.press("ArrowLeft");
+  await expect(window.getByRole("tab", { selected: true })).toHaveAccessibleName("b.md");
+  await expect(window.locator(".window-title")).toHaveText("b.md");
+
+  await window.keyboard.press("Enter");
+  await expect(window.locator(".document:not([hidden]) .cm-content")).toBeFocused();
+  await app.close();
+});
+
 /// A click from a test is handed to the page; a click from the mouse reaches
 /// it only where the window's drag region leaves off. The region is
 /// inherited, so a control under anything still in it, its own glass capsule

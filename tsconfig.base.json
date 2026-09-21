@@ -1,0 +1,17 @@
+{
+  "//": "What every part of the app is compiled with. Each part's folder has a tsconfig.json that adds the libraries of the place it runs, so code for one place can't reach for another's: no DOM in the main process, no Node in the window, neither in shared.",
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "noEmit": true
+  }
+}

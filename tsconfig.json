@@ -1,19 +1,16 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2023",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "lib": ["ES2023", "DOM", "DOM.Iterable", "WebWorker.ImportScripts"],
-    "types": ["node"],
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "noFallthroughCasesInSwitch": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "isolatedModules": true,
-    "resolveJsonModule": true,
-    "noEmit": true
+    "lib": [
+      "ES2023"
+    ],
+    "types": [
+      "node"
+    ]
   },
-  "include": ["src", "test", "e2e", "scripts/*.d.ts"]
+  "include": [
+    "*.ts",
+    "*.mts",
+    "scripts/*.d.ts"
+  ]
 }

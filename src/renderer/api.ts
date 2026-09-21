@@ -1,4 +1,4 @@
-import type { LaudaAPI } from "../preload/preload";
+import type { LaudaAPI } from "../preload/bridge";
 import { Strings, type Locale } from "../shared/i18n";
 import type { InitialState, Platform } from "../shared/ipc";
 

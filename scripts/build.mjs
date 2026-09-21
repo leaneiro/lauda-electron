@@ -36,7 +36,9 @@ await Promise.all([
     outdir: dist,
     platform: "node",
     format: "cjs",
-    target: "node22",
+    // The runtime Electron 44 ships (Node 24, Chromium 152): nothing is
+    // lowered that it runs as written.
+    target: "node24",
     external: ["electron"],
   }),
   build({
@@ -49,18 +51,18 @@ await Promise.all([
     outdir: dist,
     platform: "browser",
     format: "iife",
-    target: "chrome130",
+    target: "chrome152",
   }),
   // A worker has no DOM: packages that ship a version for workers (the
   // parser's entity decoder does) must use that one.
   build({
     ...common,
-    entryPoints: { "renderer/render-worker": "src/renderer/preview/render-worker.ts" },
+    entryPoints: { "renderer/render-worker": "src/worker/render-worker.ts" },
     outdir: dist,
     platform: "browser",
     conditions: ["worker"],
     format: "iife",
-    target: "chrome130",
+    target: "chrome152",
   }),
 ]);
 

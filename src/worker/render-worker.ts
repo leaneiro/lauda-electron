@@ -1,6 +1,6 @@
 // Parses Markdown off the window's thread, as the native preview renders on
 // a background queue.
-import { renderWithLines } from "../../shared/markdown";
+import { renderWithLines } from "../shared/markdown";
 
 interface RenderRequest {
   id: number;

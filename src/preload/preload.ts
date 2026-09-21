@@ -1,9 +1,10 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
 import type { EventChannel, Events, RequestChannel, Requests } from "../shared/ipc";
+import type { LaudaAPI } from "./bridge";
 
 /// The only way the window reaches the main process: named requests and
 /// events, nothing else of Electron or Node.
-const api = {
+const api: LaudaAPI = {
   invoke<C extends RequestChannel>(channel: C, ...args: Requests[C]["args"]): Promise<Requests[C]["result"]> {
     return ipcRenderer.invoke(channel, ...args);
   },
@@ -12,7 +13,6 @@ const api = {
     ipcRenderer.on(channel, wrapped);
     return () => ipcRenderer.removeListener(channel, wrapped);
   },
-  /// The path of a file dropped on the window, which the sandbox hides.
   pathForFile(file: File): string {
     return webUtils.getPathForFile(file);
   },
@@ -20,4 +20,3 @@ const api = {
 
 contextBridge.exposeInMainWorld("lauda", api);
 
-export type LaudaAPI = typeof api;

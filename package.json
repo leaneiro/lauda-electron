@@ -12,7 +12,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "start": "node scripts/build.mjs && electron .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -p src/shared && tsc -p src/main && tsc -p src/preload && tsc -p src/renderer && tsc -p src/worker && tsc -p src/preview && tsc -p test && tsc -p e2e && tsc -p .",
     "test": "vitest run",
     "e2e": "node scripts/build.mjs && playwright test",
     "sync-native": "node scripts/sync-native.mjs",

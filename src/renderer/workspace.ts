@@ -8,6 +8,9 @@ import { DocumentView } from "./document-view";
 
 type Listener = () => void;
 
+/// The menu commands about a document rather than the window.
+type DocumentCommand = Exclude<MenuCommand, { name: "new" | "view-mode" | "next-tab" | "previous-tab" }>;
+
 /// How long a tab takes to come or go, which the title bar waits for: the
 /// same as a change of layout, since the two often run together.
 export const tabAnimation = modeChangeMs;
@@ -70,7 +73,7 @@ export class Workspace {
     this.listeners.add(listener);
   }
 
-  changed(): void {
+  private notifyChanged(): void {
     for (const listener of this.listeners) listener();
     this.reportToMain();
   }
@@ -129,7 +132,7 @@ export class Workspace {
     const view = new DocumentView(this.context, document, this);
     this.views.set(document.id, view);
     this.container.append(view.element);
-    document.onChange(() => this.changed());
+    document.onChange(() => this.notifyChanged());
     if (document.filePath) void this.context.lauda.invoke("doc:watch", document.filePath);
     this.tabsChanged();
     this.showSelected();
@@ -148,7 +151,7 @@ export class Workspace {
     for (const [id, view] of this.views) view.setVisible(id === document?.id);
     if (document && document.id !== this.focusedId) this.views.get(document.id)?.focus();
     this.focusedId = document?.id ?? null;
-    this.changed();
+    this.notifyChanged();
   }
 
   selectNext(): void {
@@ -205,7 +208,7 @@ export class Workspace {
       const ok = reason === "quit" ? await this.canClose(document) : await this.close(document);
       if (!ok) {
         this.remembersSession = true;
-        this.changed();
+        this.notifyChanged();
         return false;
       }
     }
@@ -226,7 +229,7 @@ export class Workspace {
       window.setTimeout(() => {
         if (!this.showsTabs) return;
         this.tabsAreIn = true;
-        this.changed();
+        this.notifyChanged();
       }, titleBarSettling);
     } else {
       // The strip itself holds still: its tabs are what fades, and the bar
@@ -235,7 +238,7 @@ export class Workspace {
         if (this.documents.length >= 2) return;
         this.showsTabs = false;
         this.tabsAreIn = false;
-        this.changed();
+        this.notifyChanged();
       }, tabAnimation);
     }
   }
@@ -250,7 +253,7 @@ export class Workspace {
       view.setViewMode(mode, id === this.selected?.id);
     }
     this.selected && this.views.get(this.selected.id)?.focus();
-    this.changed();
+    this.notifyChanged();
   }
 
   cycleWidth(): void {
@@ -270,14 +273,14 @@ export class Workspace {
   applySettings(settings: Settings): void {
     this.settings = settings;
     for (const view of this.views.values()) view.applySettings(settings);
-    this.changed();
+    this.notifyChanged();
   }
 
   // MARK: - Commands
 
+  /// A command from the menus: the window's own here, the rest for the
+  /// selected document.
   async perform(command: MenuCommand): Promise<void> {
-    const document = this.selected;
-    const view = document ? this.views.get(document.id) : undefined;
     switch (command.name) {
       case "new":
         this.newDocument();
@@ -291,7 +294,16 @@ export class Workspace {
       case "previous-tab":
         this.selectPrevious();
         return;
+      default:
+        await this.performOnSelected(command);
     }
+  }
+
+  /// What the selected document's file goes through here; its panes' own
+  /// commands (find, formatting) go to its view.
+  private async performOnSelected(command: DocumentCommand): Promise<void> {
+    const document = this.selected;
+    const view = document ? this.views.get(document.id) : undefined;
     if (!document || !view) return;
     switch (command.name) {
       case "close":

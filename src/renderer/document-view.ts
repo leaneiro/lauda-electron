@@ -12,6 +12,24 @@ import { farFromTheEnd, type ScrollSync } from "./scroll-sync";
 import { StatusBar } from "./status-bar";
 import type { Workspace } from "./workspace";
 
+/// The menu commands the panes carry out: find, and the formatting the
+/// editor applies.
+export type PaneCommand = Extract<
+  MenuCommand,
+  {
+    name:
+      | "find"
+      | "find-next"
+      | "find-previous"
+      | "find-replace"
+      | "bold"
+      | "italic"
+      | "underline"
+      | "strikethrough"
+      | "link";
+  }
+>;
+
 /// One document's part of the window: its editor and preview side by side,
 /// the find bar over them and the status bar under them. Each open document
 /// has its own, so what a pane holds (the scroll position, the caret, undo,
@@ -192,7 +210,7 @@ export class DocumentView {
     this.preview.fileMoved();
   }
 
-  perform(command: MenuCommand): void {
+  perform(command: PaneCommand): void {
     switch (command.name) {
       case "find":
         this.find.open();

@@ -71,7 +71,7 @@ export class LaudaDocument {
     return () => this.listeners.delete(listener);
   }
 
-  private changed(): void {
+  private notifyChanged(): void {
     for (const listener of this.listeners) listener();
   }
 
@@ -79,7 +79,7 @@ export class LaudaDocument {
   edit(text: string): void {
     if (text === this.text) return;
     this.text = text;
-    this.changed();
+    this.notifyChanged();
     this.scheduleAutosave();
   }
 
@@ -90,7 +90,7 @@ export class LaudaDocument {
       this.savedText = text;
       this.savedDate = new Date();
     }
-    this.changed();
+    this.notifyChanged();
   }
 
   private scheduleAutosave(): void {
@@ -115,7 +115,7 @@ export class LaudaDocument {
     if (ok) {
       this.revertText = this.text;
       this.savedDate = new Date();
-      this.changed();
+      this.notifyChanged();
     }
     return ok;
   }
@@ -131,7 +131,7 @@ export class LaudaDocument {
     this.savedText = this.text;
     this.revertText = this.text;
     this.savedDate = new Date();
-    this.changed();
+    this.notifyChanged();
     return true;
   }
 
@@ -149,7 +149,7 @@ export class LaudaDocument {
       if (this.filePath === filePath) {
         this.savedText = written;
         this.savedDate = new Date();
-        this.changed();
+        this.notifyChanged();
       }
       return true;
     });
@@ -170,6 +170,6 @@ export class LaudaDocument {
   /// The file moved (Rename, Move To): the document follows it.
   moved(to: string): void {
     this.filePath = to;
-    this.changed();
+    this.notifyChanged();
   }
 }

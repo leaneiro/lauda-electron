@@ -25,7 +25,7 @@ export function buildMenu(context: MenuContext): Menu {
   const t = strings.t.bind(strings);
   const hasDocument = state.hasDocument;
   const hasFile = state.hasFile;
-  const command = (name: MenuCommand["name"]) => () => send({ name } as MenuCommand);
+  const command = (name: Exclude<MenuCommand["name"], "view-mode">) => () => send({ name });
 
   const recent: MenuItemConstructorOptions[] = context.recentFiles.map((filePath) => ({
     label: basename(filePath),

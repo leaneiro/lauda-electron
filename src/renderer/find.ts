@@ -55,7 +55,7 @@ export class FindSession {
     this.editor.setFindCountsHandler((counts) => this.show(counts));
     for (const listener of this.openListeners) listener();
     if (this.query) this.search();
-    else this.changed();
+    else this.notifyChanged();
   }
 
   /// Searches for the query from the top of the document.
@@ -119,10 +119,10 @@ export class FindSession {
   private show(counts: FindCounts): void {
     this.current = counts.current;
     this.total = counts.total;
-    this.changed();
+    this.notifyChanged();
   }
 
-  private changed(): void {
+  private notifyChanged(): void {
     for (const listener of this.listeners) listener();
   }
 }

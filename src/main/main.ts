@@ -24,10 +24,11 @@ import { installedFontFamilies } from "./fonts";
 import { GrantedFiles, isOpenableByPath } from "./granted-files";
 import { buildMenu } from "./menu";
 import { guardPages } from "./navigation";
-import { appOrigin, distDirectory, handleProtocols, registerSchemes } from "./protocols";
+import { distDirectory, handleProtocols, registerSchemes } from "./protocols";
 import { registerDocumentRequests } from "./requests/documents";
 import { handle } from "./requests/handle";
-import { RecentFiles, readSession, readWindowState, SettingsStore, windowStateFile } from "./store";
+import { RecentFiles, readSession, SettingsStore } from "./store";
+import { DocumentWindow, SettingsWindow } from "./windows";
 
 const isMac = process.platform === "darwin";
 const isWindows = process.platform === "win32";
@@ -58,17 +59,15 @@ const buildInfo: { version: string; gitHash: string } = (() => {
 let settings: SettingsStore;
 let recentFiles: RecentFiles;
 let strings: Strings;
-let workspaceWindow: BrowserWindow | null = null;
-let settingsWindow: BrowserWindow | null = null;
 /// Set once the window's page answered app:init; opening waits for it.
-let windowIsReady = false;
-const whenWindowReady: (() => void)[] = [];
 /// Files asked for before the app was ready (the Finder, the command line).
 const filesToOpen: string[] = [];
 let isReady = false;
-let isQuitting = false;
-let closeIsConfirmed = false;
 let menuState: MenuState = { hasDocument: false, hasFile: false, documentCount: 0, viewMode: "split" };
+
+/// The document window and its life (DocumentWindow), and Settings.
+const documentWindow = new DocumentWindow(() => settingsWindow.close());
+const settingsWindow = new SettingsWindow({ title: () => strings.t("Settings"), parent: () => documentWindow.current });
 
 const watcher = new DocumentWatcher((filePath, text) => send("doc:changed-on-disk", { filePath, text }));
 /// The files this process has handed the window, the only ones it may
@@ -76,7 +75,7 @@ const watcher = new DocumentWatcher((filePath, text) => send("doc:changed-on-dis
 const granted = new GrantedFiles();
 
 function send<C extends keyof Events>(channel: C, payload: Events[C]): void {
-  workspaceWindow?.webContents.send(channel, payload);
+  documentWindow.send(channel, payload);
 }
 
 function sendCommand(command: MenuCommand): void {
@@ -92,13 +91,6 @@ const markdownOnlyExtensions = ["md", "markdown", "mdown", "mkd", "mkdn", "mdwn"
 const plainTextExtensions = ["txt", "text"];
 const markdownExtensions = [...markdownOnlyExtensions, ...plainTextExtensions];
 
-/// The windows' background before their pages draw, the page's own colour
-/// (--window-bg in app.css; Settings is the lighter grey of a sheet).
-function windowBackground(kind: "document" | "settings" = "document"): string {
-  if (nativeTheme.shouldUseDarkColors) return "#1e1e1e";
-  return kind === "settings" ? "#f5f5f7" : "#ffffff";
-}
-
 /// Opens the files one after another, so their tabs keep this order
 /// whatever each one takes to read. A file already open comes forward.
 async function openFiles(paths: string[], select?: string | null): Promise<void> {
@@ -106,7 +98,7 @@ async function openFiles(paths: string[], select?: string | null): Promise<void>
     filesToOpen.push(...paths);
     return;
   }
-  const window = ensureWindow();
+  const window = documentWindow.ensure();
   for (const filePath of paths) {
     try {
       const text = await readText(filePath);
@@ -135,9 +127,8 @@ async function showOpenDialog(): Promise<void> {
       { name: strings.t("All Files"), extensions: ["*"] },
     ],
   };
-  const result = workspaceWindow
-    ? await dialog.showOpenDialog(workspaceWindow, options)
-    : await dialog.showOpenDialog(options);
+  const parent = documentWindow.current;
+  const result = parent ? await dialog.showOpenDialog(parent, options) : await dialog.showOpenDialog(options);
   if (!result.canceled) await openFiles(result.filePaths);
 }
 
@@ -164,7 +155,7 @@ function welcomeGuideText(): string {
 /// The guide opens as an untitled document holding its text, so people can
 /// experiment freely and save it only if they want to.
 function showWelcomeGuide(): void {
-  ensureWindow();
+  documentWindow.ensure();
   const document: OpenDocument = { filePath: null, text: welcomeGuideText(), title: strings.t("Welcome") };
   withWindow(() => send("workspace:open", document));
 }
@@ -186,7 +177,7 @@ async function launchWithoutFiles(): Promise<void> {
   } else if (isMac) {
     await showOpenDialog();
   } else {
-    ensureWindow();
+    documentWindow.ensure();
     sendCommand({ name: "new" });
   }
 }
@@ -205,127 +196,14 @@ function filesInArguments(argv: string[]): string[] {
 
 // MARK: - The window
 
-function titleBarOverlay(): Electron.TitleBarOverlayOptions {
-  const dark = nativeTheme.shouldUseDarkColors;
-  return { color: windowBackground(), symbolColor: dark ? "#e6e6e9" : "#1d1d1f", height: 52 };
-}
-
-function ensureWindow(): BrowserWindow {
-  if (workspaceWindow) return workspaceWindow;
-  const state = readWindowState();
-  const window = new BrowserWindow({
-    width: state?.width ?? 1200,
-    height: state?.height ?? 800,
-    x: state?.x,
-    y: state?.y,
-    minWidth: 700,
-    minHeight: 500,
-    show: false,
-    title: "Lauda",
-    backgroundColor: windowBackground(),
-    titleBarStyle: "hidden",
-    ...(isMac ? { trafficLightPosition: { x: 19, y: 19 } } : { titleBarOverlay: titleBarOverlay() }),
-    ...(process.platform === "linux" ? { icon: join(distDirectory, "resources/icons/AppIcon-512.png") } : {}),
-    webPreferences: {
-      preload: join(__dirname, "preload.js"),
-      sandbox: true,
-      contextIsolation: true,
-      nodeIntegration: false,
-      spellcheck: false,
-    },
-  });
-  workspaceWindow = window;
-  windowIsReady = false;
-  closeIsConfirmed = false;
-  if (!isMac) window.setMenuBarVisibility(false);
-  window.loadURL(`${appOrigin}/renderer/index.html`);
-  window.once("ready-to-show", () => {
-    if (state?.maximized) window.maximize();
-    window.show();
-  });
-
-  let saveTimer: NodeJS.Timeout | undefined;
-  const rememberBounds = () => {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      if (window.isDestroyed() || window.isMinimized() || window.isFullScreen()) return;
-      const bounds = window.getNormalBounds();
-      windowStateFile.write({ ...bounds, maximized: window.isMaximized() });
-    }, 400);
-  };
-  window.on("resize", rememberBounds);
-  window.on("move", rememberBounds);
-  const reportState = () => {
-    if (!window.isDestroyed()) {
-      send("window:state", { isFullScreen: window.isFullScreen(), isFocused: window.isFocused() });
-    }
-  };
-  for (const event of ["enter-full-screen", "leave-full-screen", "focus", "blur"] as const) {
-    window.on(event as "focus", reportState);
-  }
-
-  // The close button means every tab. The window asks each document in
-  // turn (untitled text asks whether to keep it) and answers; only then
-  // does it really close. On Windows and Linux closing the window is how
-  // the app quits, so the tabs are remembered for the next launch.
-  window.on("close", (event) => {
-    if (closeIsConfirmed) return;
-    event.preventDefault();
-    send("workspace:close-everything", { reason: isQuitting || !isMac ? "quit" : "window" });
-  });
-  window.on("closed", () => {
-    workspaceWindow = null;
-    windowIsReady = false;
-    settingsWindow?.close();
-    if (isQuitting) app.quit();
-  });
-  return window;
-}
-
 function withWindow(action: () => void): void {
-  ensureWindow();
-  if (windowIsReady) action();
-  else whenWindowReady.push(action);
-}
-
-function showSettings(): void {
-  if (settingsWindow) {
-    settingsWindow.focus();
-    return;
-  }
-  const window = new BrowserWindow({
-    width: 480,
-    height: 540,
-    useContentSize: true,
-    resizable: false,
-    minimizable: false,
-    maximizable: false,
-    fullscreenable: false,
-    show: false,
-    title: strings.t("Settings"),
-    parent: workspaceWindow ?? undefined,
-    backgroundColor: windowBackground("settings"),
-    webPreferences: {
-      preload: join(__dirname, "preload.js"),
-      sandbox: true,
-      contextIsolation: true,
-      nodeIntegration: false,
-      spellcheck: false,
-    },
-  });
-  settingsWindow = window;
-  window.setMenu(null);
-  window.loadURL(`${appOrigin}/renderer/settings.html`);
-  window.once("ready-to-show", () => window.show());
-  window.on("closed", () => {
-    settingsWindow = null;
-  });
+  documentWindow.whenReady(action);
 }
 
 function showAbout(): void {
   const version = `${buildInfo.version} (${buildInfo.gitHash})`;
   if (isWindows) {
-    const parent = workspaceWindow ?? undefined;
+    const parent = documentWindow.current ?? undefined;
     const options: Electron.MessageBoxOptions = {
       type: "none",
       title: strings.t("About Lauda"),
@@ -356,7 +234,7 @@ function refreshMenu(): void {
         open: () => void showOpenDialog(),
         openRecent: (filePath) => void openFiles([filePath]),
         clearRecent: () => recentFiles.clear(),
-        showSettings,
+        showSettings: () => settingsWindow.show(),
         showWelcomeGuide,
         showAbout,
       }),
@@ -380,17 +258,12 @@ function applyAppearance(mode: AppearanceMode): void {
 // MARK: - Requests from the window
 
 function windowFor(event: IpcMainInvokeEvent): BrowserWindow {
-  return BrowserWindow.fromWebContents(event.sender) ?? ensureWindow();
+  return BrowserWindow.fromWebContents(event.sender) ?? documentWindow.ensure();
 }
 
 function registerRequests(): void {
   handle("app:init", (event) => {
-    if (event.sender === workspaceWindow?.webContents) {
-      setImmediate(() => {
-        windowIsReady = true;
-        for (const action of whenWindowReady.splice(0)) action();
-      });
-    }
+    documentWindow.pageAskedForState(event.sender);
     // LAUDA_PLATFORM lays the window out as on another system, to look at
     // its title bar while developing; the menus and dialogs stay this one's.
     const platform = targetPlatform();
@@ -432,14 +305,7 @@ function registerRequests(): void {
   handle("window:show-menu", (event, x, y) => {
     Menu.getApplicationMenu()?.popup({ window: windowFor(event), x: Math.round(x), y: Math.round(y) });
   });
-  handle("window:closed-everything", (_event, ok) => {
-    if (!ok) {
-      isQuitting = false;
-      return;
-    }
-    closeIsConfirmed = true;
-    workspaceWindow?.close();
-  });
+  handle("window:closed-everything", (_event, ok) => documentWindow.everythingClosed(ok));
 
   registerDocumentRequests({ granted, watcher, recentFiles, strings, windowFor });
 
@@ -450,8 +316,7 @@ function registerRequests(): void {
   handle("settings:restore-defaults", () => settings.restoreDefaults());
   /// The Settings window is as tall as its form, as the native one is.
   handle("settings:fit-window", (_event, height) => {
-    if (settingsWindow && Number.isFinite(height))
-      settingsWindow.setContentSize(480, Math.ceil(Math.min(Math.max(height, 200), 900)));
+    settingsWindow.fitContent(height);
   });
 
   handle("menu:set-state", (_event, state) => {
@@ -462,7 +327,7 @@ function registerRequests(): void {
 
 // MARK: - Guarding the pages
 
-guardPages(app, { strings: () => strings, window: () => workspaceWindow });
+guardPages(app, { strings: () => strings, window: () => documentWindow.current });
 
 // MARK: - The app's life
 
@@ -474,28 +339,22 @@ app.on("open-file", (event, filePath) => {
 app.on("second-instance", (_event, argv) => {
   const files = filesInArguments(argv);
   if (files.length > 0) void openFiles(files);
-  else if (workspaceWindow) {
-    if (workspaceWindow.isMinimized()) workspaceWindow.restore();
-    workspaceWindow.focus();
-  } else void launchWithoutFiles();
+  else if (!documentWindow.bringForward()) void launchWithoutFiles();
 });
 
 /// Quitting asks the window first: unsaved untitled text is reviewed and
 /// every file is written. The tabs aren't closed as far as the session is
 /// concerned, so they come back at the next launch.
 app.on("before-quit", (event) => {
-  if (!workspaceWindow || closeIsConfirmed) return;
-  event.preventDefault();
-  isQuitting = true;
-  send("workspace:close-everything", { reason: "quit" });
+  if (documentWindow.askToQuit()) event.preventDefault();
 });
 
 app.on("window-all-closed", () => {
-  if (!isMac || isQuitting) app.quit();
+  if (!isMac || documentWindow.isQuitting) app.quit();
 });
 
 app.on("activate", () => {
-  if (!workspaceWindow && isReady) void showOpenDialog();
+  if (!documentWindow.current && isReady) void showOpenDialog();
 });
 
 app.whenReady().then(async () => {
@@ -512,9 +371,7 @@ app.whenReady().then(async () => {
   });
   recentFiles.onChange(refreshMenu);
   nativeTheme.on("updated", () => {
-    if (!workspaceWindow) return;
-    workspaceWindow.setBackgroundColor(windowBackground());
-    if (!isMac) workspaceWindow.setTitleBarOverlay(titleBarOverlay());
+    documentWindow.themeChanged();
   });
   app.setAboutPanelOptions({
     applicationName: "Lauda",

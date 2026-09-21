@@ -1,5 +1,5 @@
 import { watch, type FSWatcher } from "node:fs";
-import { readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 
 /// Strict UTF-8 with a Latin-1 fallback, never lossy, so a save can't
@@ -17,18 +17,46 @@ export async function readText(filePath: string): Promise<string> {
   return decodeText(await readFile(filePath));
 }
 
+/// Windows refuses, for a moment, to replace a file another program holds
+/// open (an antivirus, the search indexer, a sync client), and these are
+/// the codes it says so with. It lets go within tens of milliseconds, so
+/// the step is tried again rather than the save failing.
+const transientCodes = new Set(["EPERM", "EBUSY", "EACCES"]);
+
+export async function retryingTransientErrors<T>(
+  operation: () => Promise<T>,
+  delays: readonly number[] = [10, 30, 60, 120, 250],
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((done) => setTimeout(done, ms)),
+): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException | undefined)?.code;
+      const delay = delays[attempt];
+      if (delay === undefined || !code || !transientCodes.has(code)) throw error;
+      await sleep(delay);
+    }
+  }
+}
+
 /// Writes through a temporary file in the same folder and renames it over
 /// the document, so a crash or a full disk never leaves half a file. The
-/// file keeps its permissions when it existed.
+/// file keeps its permissions when it existed. A document that is a
+/// symbolic link is written where the link points, so the link stays a
+/// link rather than becoming a copy of the file it pointed to.
 export async function writeText(filePath: string, text: string): Promise<void> {
-  const temporary = join(dirname(filePath), `.${basename(filePath)}.lauda-${process.pid}-${Date.now()}.tmp`);
+  const target = await realpath(filePath).catch(() => filePath);
+  const temporary = join(dirname(target), `.${basename(target)}.lauda-${process.pid}-${Date.now()}.tmp`);
   let mode: number | undefined;
   try {
-    mode = (await stat(filePath)).mode;
-  } catch {}
+    mode = (await stat(target)).mode;
+  } catch {
+    // A new file: it takes the folder's defaults.
+  }
   try {
     await writeFile(temporary, text, { encoding: "utf8", mode });
-    await rename(temporary, filePath);
+    await retryingTransientErrors(() => rename(temporary, target));
   } catch (error) {
     await rm(temporary, { force: true });
     throw error;

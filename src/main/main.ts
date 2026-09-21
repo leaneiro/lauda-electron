@@ -22,6 +22,7 @@ import { exportHTML, exportPDF } from "./export";
 import { DocumentWatcher, readText } from "./files";
 import { installedFontFamilies } from "./fonts";
 import { GrantedFiles, isOpenableByPath } from "./granted-files";
+import { logWindowFailure } from "./log";
 import { buildMenu } from "./menu";
 import { guardPages } from "./navigation";
 import { distDirectory, handleProtocols, registerSchemes } from "./protocols";
@@ -280,10 +281,13 @@ function registerRequests(): void {
     try {
       const scheme = new URL(url).protocol.replace(/:$/, "").toLowerCase();
       if (allowedLinkSchemes.has(scheme)) void shell.openExternal(url);
-    } catch {}
+    } catch {
+      // A link that isn't a URL goes nowhere, as a click on it should.
+    }
   });
   handle("app:list-fonts", () => installedFontFamilies());
   handle("app:read-clipboard", () => clipboard.readText());
+  handle("app:log-failure", (_event, what, kind) => logWindowFailure(what, kind));
   handle("app:open-files", (_event, paths) =>
     openFiles(paths.filter((path) => isOpenableByPath(path, markdownExtensions))),
   );

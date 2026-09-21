@@ -9,6 +9,9 @@ export interface Requests {
   "app:open-external": { args: [url: string]; result: void };
   "app:list-fonts": { args: []; result: string[] };
   "app:read-clipboard": { args: []; result: string };
+  /// A failure in the window, for the log: what was being done, and the
+  /// error's kind, never its message.
+  "app:log-failure": { args: [what: string, kind: string]; result: void };
   "app:open-files": { args: [paths: string[]]; result: void };
   "window:set-document": { args: [info: WindowDocumentInfo]; result: void };
   "window:title-bar-double-click": { args: []; result: void };

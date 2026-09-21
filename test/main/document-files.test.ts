@@ -1,8 +1,8 @@
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { resolveDocumentFile } from "../../src/main/document-files";
+import { afterAll, beforeAll, describe, expect, it, test } from "vitest";
+import { resolveAppFile, resolveDocumentFile } from "../../src/main/document-files";
 
 describe("what a document's preview may read", () => {
   let root: string;
@@ -40,5 +40,24 @@ describe("what a document's preview may read", () => {
     expect(resolveDocumentFile(folder, "/")).toBeNull();
     expect(resolveDocumentFile(folder, "/missing.png")).toBeNull();
     expect(resolveDocumentFile(folder, "/%E0%A4%A")).toBeNull();
+  });
+});
+
+describe("the app's own scheme", () => {
+  const dist = "/Applications/Lauda.app/Contents/Resources/app.asar/dist";
+
+  it("serves the files inside the built app", () => {
+    expect(resolveAppFile(dist, "/renderer/index.html")).toEqual({ file: `${dist}/renderer/index.html` });
+    expect(resolveAppFile(dist, "/preview/preview.js")).toEqual({ file: `${dist}/preview/preview.js` });
+  });
+
+  it("refuses a path that climbs out, however it is spelled", () => {
+    expect(resolveAppFile(dist, "/../../../../etc/passwd")).toEqual({ status: 403 });
+    expect(resolveAppFile(dist, "/renderer/%2e%2e/%2e%2e/secrets")).toEqual({ status: 403 });
+    expect(resolveAppFile(dist, "/..%2f..%2fetc%2fpasswd")).toEqual({ status: 403 });
+  });
+
+  it("refuses a path that doesn't decode", () => {
+    expect(resolveAppFile(dist, "/renderer/%E0%A4%A.html")).toEqual({ status: 400 });
   });
 });

@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { extname, join, resolve, sep } from "node:path";
 import { app, protocol } from "electron";
 import { exportContentSecurityPolicy, previewContentSecurityPolicy } from "../shared/markdown";
-import { resolveDocumentFile } from "./document-files";
+import { resolveAppFile, resolveDocumentFile } from "./document-files";
 import { previewStylesheet } from "./preview-styles";
 
 export const appScheme = "lauda-app";
@@ -112,14 +112,9 @@ export function handleProtocols(locale: string): void {
   protocol.handle(appScheme, async (request) => {
     const url = new URL(request.url);
     if (url.host !== "app") return new Response(null, { status: 404 });
-    let pathname: string;
-    try {
-      pathname = decodeURIComponent(url.pathname);
-    } catch {
-      return new Response(null, { status: 400 });
-    }
-    const file = resolve(distDirectory, `.${pathname}`);
-    if (!file.startsWith(distDirectory + sep)) return new Response(null, { status: 403 });
+    const resolved = resolveAppFile(distDirectory, url.pathname);
+    if ("status" in resolved) return new Response(null, { status: resolved.status });
+    const { file } = resolved;
     try {
       const body = await readFile(file);
       return new Response(body, { headers: { "content-type": contentType(file) } });

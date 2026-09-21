@@ -25,9 +25,9 @@ describe("what a frame may load", () => {
   });
 
   it("lets a document's web embeds load in the preview, over https only", () => {
-    expect(mayFrameNavigate({ url: "https://www.youtube.com/embed/x", isMainFrame: false, parentURL: preview }, app)).toBe(
-      true,
-    );
+    expect(
+      mayFrameNavigate({ url: "https://www.youtube.com/embed/x", isMainFrame: false, parentURL: preview }, app),
+    ).toBe(true);
     expect(mayFrameNavigate({ url: "http://example.com", isMainFrame: false, parentURL: preview }, app)).toBe(false);
     expect(mayFrameNavigate({ url: "file:///etc/passwd", isMainFrame: false, parentURL: preview }, app)).toBe(false);
     expect(mayFrameNavigate({ url: `${app}/renderer/index.html`, isMainFrame: false, parentURL: preview }, app)).toBe(
@@ -37,7 +37,10 @@ describe("what a frame may load", () => {
 
   it("leaves what happens inside an embed to the embed", () => {
     expect(
-      mayFrameNavigate({ url: "https://ads.example/frame", isMainFrame: false, parentURL: "https://www.youtube.com/embed/x" }, app),
+      mayFrameNavigate(
+        { url: "https://ads.example/frame", isMainFrame: false, parentURL: "https://www.youtube.com/embed/x" },
+        app,
+      ),
     ).toBe(true);
   });
 

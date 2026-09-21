@@ -1,6 +1,7 @@
 import { type FSWatcher, watch } from "node:fs";
 import { readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
+import { logFailure } from "./log";
 
 /// Strict UTF-8 with a Latin-1 fallback, never lossy, so a save can't
 /// silently corrupt a file that came in another encoding (as the native
@@ -86,9 +87,16 @@ export class DocumentWatcher {
         if (changed && changed.toString() !== name) return;
         this.scheduleCheck(filePath);
       });
-      watcher.on("error", () => this.unwatch(filePath));
+      watcher.on("error", (error) => {
+        logFailure("files", "Watching a document's folder", error);
+        this.unwatch(filePath);
+      });
       this.watchers.set(filePath, watcher);
-    } catch {}
+    } catch (error) {
+      // On Linux, most often the system's limit on watches (inotify) being
+      // reached: changes made elsewhere stop showing, and this says why.
+      logFailure("files", "Watching a document's folder", error);
+    }
   }
 
   unwatch(filePath: string): void {

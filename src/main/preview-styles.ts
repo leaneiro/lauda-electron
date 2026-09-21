@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { previewStyles, wordmarkFontFace } from "../shared/markdown";
+import { logFailure } from "./log";
 
 let cached: string | undefined;
 
@@ -17,7 +18,10 @@ export function previewStylesheet(distDirectory: string): string {
       face = wordmarkFontFace(
         readFileSync(join(distDirectory, "resources/preview/LaudaWordmark.woff")).toString("base64"),
       );
-    } catch {}
+    } catch (error) {
+      // The preview draws the app's name in the system's serif without it.
+      logFailure("preview", "Reading the wordmark font", error);
+    }
     cached = previewStyles(face, css);
   }
   return cached;

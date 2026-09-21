@@ -14,6 +14,7 @@ self.onmessage = (event: MessageEvent<RenderRequest>) => {
     const rendered = renderWithLines(markdown, { strictLineBreaks });
     self.postMessage({ id, ...rendered });
   } catch (error) {
-    self.postMessage({ id, error: String(error) });
+    // Its kind only: a parser's message can quote the document.
+    self.postMessage({ id, error: error instanceof Error ? error.name : typeof error });
   }
 };

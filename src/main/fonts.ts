@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { logFailure } from "./log";
 
 let cached: Promise<string[]> | undefined;
 
@@ -23,7 +24,9 @@ export function installedFontFamilies(): Promise<string[]> {
         families = (data.SPFontsDataType ?? []).flatMap((font) =>
           (font.typefaces ?? []).map((face) => face.family ?? ""),
         );
-      } catch {}
+      } catch (error) {
+        logFailure("fonts", "Reading the Mac's list of fonts", error);
+      }
     } else if (process.platform === "win32") {
       const output = await run("powershell.exe", [
         "-NoProfile",

@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { app } from "electron";
 import type { SessionContents } from "../shared/ipc";
 import { defaultPreferences, type Settings, sanitizeSettings } from "../shared/settings";
+import { logFailure } from "./log";
 
 /// A small JSON file in the app's data folder. Written atomically (a temporary
 /// file, then a rename), so a crash mid-write never leaves half a file.
@@ -30,7 +31,7 @@ class JSONFile<T> {
       writeFileSync(temporary, JSON.stringify(value, null, 2));
       renameSync(temporary, this.path);
     } catch (error) {
-      console.error(`Writing ${this.path}:`, error);
+      logFailure("settings", `Writing ${this.name}`, error);
     }
   }
 }

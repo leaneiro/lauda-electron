@@ -20,7 +20,7 @@ class RenderClient {
       const { id, error, ...content } = event.data;
       const resolve = this.waiting.get(id);
       this.waiting.delete(id);
-      if (error) console.error("Rendering failed:", error);
+      if (error) void lauda.invoke("app:log-failure", "Rendering a document", error);
       resolve?.(error ? null : content);
     };
   }

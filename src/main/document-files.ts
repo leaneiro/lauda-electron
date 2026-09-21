@@ -26,3 +26,18 @@ export function resolveDocumentFile(folder: string, requestPath: string): string
   if (!isImagePath(target)) return null;
   return target;
 }
+
+/// What the app's own scheme serves for `requestPath`: a file inside the
+/// built app (`distDirectory`), or why not. A path that climbs out of it,
+/// however it is spelled, or that doesn't decode, gets nothing.
+export function resolveAppFile(distDirectory: string, requestPath: string): { file: string } | { status: 400 | 403 } {
+  let pathname: string;
+  try {
+    pathname = decodeURIComponent(requestPath);
+  } catch {
+    return { status: 400 };
+  }
+  const file = resolve(distDirectory, `.${pathname}`);
+  if (!file.startsWith(distDirectory + sep)) return { status: 403 };
+  return { file };
+}

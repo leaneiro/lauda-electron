@@ -1,4 +1,3 @@
-import { writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { app, BrowserWindow, dialog } from "electron";
 import type { Strings } from "../shared/i18n";
@@ -6,7 +5,7 @@ import type { ExportRequest } from "../shared/ipc";
 import { renderForPrint, standalone } from "../shared/markdown";
 import { cssFontFamily, type Settings } from "../shared/settings";
 import { showError } from "./dialogs";
-import { writeText } from "./files";
+import { writeAtomically } from "./files";
 import { previewStylesheet } from "./preview-styles";
 import { distDirectory, serveExportPage } from "./protocols";
 
@@ -36,7 +35,7 @@ export async function exportHTML(window: BrowserWindow, request: ExportRequest, 
   });
   if (result.canceled || !result.filePath) return;
   try {
-    await writeText(result.filePath, standaloneHTML(request, settings));
+    await writeAtomically(result.filePath, standaloneHTML(request, settings));
   } catch (error) {
     await showExportError(window, request, error, strings);
   }
@@ -89,7 +88,7 @@ export async function exportPDF(window: BrowserWindow, request: ExportRequest, s
       printBackground: true,
       margins: { top: margin, bottom: margin, left: margin, right: margin },
     });
-    await writeFile(result.filePath, pdf);
+    await writeAtomically(result.filePath, pdf);
   } catch (error) {
     await showExportError(window, request, error, strings);
   } finally {

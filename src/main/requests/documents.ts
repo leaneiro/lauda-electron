@@ -4,7 +4,7 @@ import { app, type BrowserWindow, dialog, type IpcMainInvokeEvent } from "electr
 import type { Strings } from "../../shared/i18n";
 import { isImagePath } from "../../shared/markdown/content-policy";
 import { messageOf, showError, showWarning } from "../dialogs";
-import { type DocumentWatcher, writeText } from "../files";
+import { type DocumentWatcher, writeAtomically } from "../files";
 import type { GrantedFiles } from "../granted-files";
 import { freePathIn, importImages, savePastedImage } from "../images";
 import { forgetDocumentFolder, registerDocumentFolder } from "../protocols";
@@ -39,7 +39,7 @@ export function registerDocumentRequests({
     if (!granted.has(filePath)) return notGranted;
     try {
       watcher.noteWritten(filePath, text);
-      await writeText(filePath, text);
+      await writeAtomically(filePath, text);
       return { ok: true };
     } catch (error) {
       return { ok: false, error: messageOf(error) };
@@ -56,7 +56,7 @@ export function registerDocumentRequests({
     if (result.canceled || !result.filePath) return null;
     try {
       watcher.noteWritten(result.filePath, request.text);
-      await writeText(result.filePath, request.text);
+      await writeAtomically(result.filePath, request.text);
       recentFiles.note(result.filePath);
       granted.grant(result.filePath);
       return result.filePath;

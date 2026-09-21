@@ -1,8 +1,8 @@
-import { lstatSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { lstatSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { decodeText, retryingTransientErrors, writeText } from "../../src/main/files";
+import { decodeText, retryingTransientErrors, writeAtomically } from "../../src/main/files";
 
 const folders: string[] = [];
 function folder(): string {
@@ -23,7 +23,7 @@ describe("writing a document", () => {
     const dir = folder();
     const file = join(dir, "notes.md");
     writeFileSync(file, "old");
-    await writeText(file, "new text");
+    await writeAtomically(file, "new text");
     expect(readFileSync(file, "utf8")).toBe("new text");
   });
 
@@ -34,15 +34,26 @@ describe("writing a document", () => {
     writeFileSync(real, "old");
     symlinkSync(real, link);
 
-    await writeText(link, "through the link");
+    await writeAtomically(link, "through the link");
     expect(lstatSync(link).isSymbolicLink()).toBe(true);
     expect(readFileSync(real, "utf8")).toBe("through the link");
+  });
+
+  /// An exported PDF goes through the same steps as a document's text.
+  it("writes bytes as they are", async () => {
+    const dir = folder();
+    const file = join(dir, "export.pdf");
+    writeFileSync(file, "old");
+    const bytes = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x00, 0xff, 0x0a]);
+    await writeAtomically(file, bytes);
+    expect(new Uint8Array(readFileSync(file))).toEqual(bytes);
+    expect(readdirSync(dir)).toEqual(["export.pdf"]);
   });
 
   it("creates a file that isn't there yet", async () => {
     const dir = folder();
     const file = join(dir, "new.md");
-    await writeText(file, "first words");
+    await writeAtomically(file, "first words");
     expect(readFileSync(file, "utf8")).toBe("first words");
   });
 });

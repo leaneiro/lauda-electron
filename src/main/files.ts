@@ -42,11 +42,12 @@ export async function retryingTransientErrors<T>(
 }
 
 /// Writes through a temporary file in the same folder and renames it over
-/// the document, so a crash or a full disk never leaves half a file. The
-/// file keeps its permissions when it existed. A document that is a
-/// symbolic link is written where the link points, so the link stays a
-/// link rather than becoming a copy of the file it pointed to.
-export async function writeText(filePath: string, text: string): Promise<void> {
+/// the file, so a crash or a full disk never leaves half a file: a
+/// document's text, or an exported page or PDF. The file keeps its
+/// permissions when it existed. A file that is a symbolic link is written
+/// where the link points, so the link stays a link rather than becoming a
+/// copy of the file it pointed to.
+export async function writeAtomically(filePath: string, contents: string | Uint8Array): Promise<void> {
   const target = await realpath(filePath).catch(() => filePath);
   const temporary = join(dirname(target), `.${basename(target)}.lauda-${process.pid}-${Date.now()}.tmp`);
   let mode: number | undefined;
@@ -56,7 +57,7 @@ export async function writeText(filePath: string, text: string): Promise<void> {
     // A new file: it takes the folder's defaults.
   }
   try {
-    await writeFile(temporary, text, { encoding: "utf8", mode });
+    await writeFile(temporary, contents, { encoding: "utf8", mode });
     await retryingTransientErrors(() => rename(temporary, target));
   } catch (error) {
     await rm(temporary, { force: true });

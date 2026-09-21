@@ -27,6 +27,7 @@
     "Toggle Full Screen": { "en": "Toggle Full Screen", "pt-BR": "Tela Cheia", "de": "Vollbild", "es": "Pantalla completa", "fr": "Plein écran", "ja": "フルスクリーン", "zh-Hans": "全屏幕" },
     "Menu": { "en": "Menu", "pt-BR": "Menu", "de": "Menü", "es": "Menú", "fr": "Menu", "ja": "メニュー", "zh-Hans": "菜单" },
     "Open Documents": { "en": "Open Documents", "pt-BR": "Documentos abertos", "de": "Geöffnete Dokumente", "es": "Documentos abiertos", "fr": "Documents ouverts", "ja": "開いている書類", "zh-Hans": "打开的文稿" },
+    "A Markdown editor with a live, side-by-side preview": { "en": "A Markdown editor with a live, side-by-side preview", "pt-BR": "Um editor de Markdown com visualização ao vivo, lado a lado", "de": "Ein Markdown-Editor mit Live-Vorschau daneben", "es": "Un editor de Markdown con vista previa en vivo, lado a lado", "fr": "Un éditeur Markdown avec un aperçu en direct, côte à côte", "ja": "ライブプレビューを並べて表示する Markdown エディタ", "zh-Hans": "带并排实时预览的 Markdown 编辑器" },
     "Version %@": { "en": "Version %@", "pt-BR": "Versão %@", "de": "Version %@", "es": "Versión %@", "fr": "Version %@", "ja": "バージョン %@", "zh-Hans": "版本 %@" },
     "OK": { "en": "OK", "pt-BR": "OK", "de": "OK", "es": "Aceptar", "fr": "OK", "ja": "OK", "zh-Hans": "好" },
     "Open": { "en": "Open", "pt-BR": "Abrir", "de": "Öffnen", "es": "Abrir", "fr": "Ouvrir", "ja": "開く", "zh-Hans": "打开" },

@@ -103,7 +103,16 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "installerLanguages": [
+        "en_US",
+        "pt_BR",
+        "de_DE",
+        "es_ES",
+        "fr_FR",
+        "ja_JP",
+        "zh_CN"
+      ]
     },
     "linux": {
       "target": [
@@ -118,7 +127,13 @@
       "desktop": {
         "entry": {
           "MimeType": "text/markdown;text/x-markdown;",
-          "Keywords": "markdown;editor;writing;"
+          "Keywords": "markdown;editor;writing;",
+          "Comment[pt_BR]": "Um editor de Markdown com visualização ao vivo, lado a lado",
+          "Comment[de]": "Ein Markdown-Editor mit Live-Vorschau daneben",
+          "Comment[es]": "Un editor de Markdown con vista previa en vivo, lado a lado",
+          "Comment[fr]": "Un éditeur Markdown avec un aperçu en direct, côte à côte",
+          "Comment[ja]": "ライブプレビューを並べて表示する Markdown エディタ",
+          "Comment[zh_CN]": "带并排实时预览的 Markdown 编辑器"
         }
       },
       "syncDesktopName": true

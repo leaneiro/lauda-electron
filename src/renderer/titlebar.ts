@@ -1,3 +1,4 @@
+import type { TranslationKey } from "../shared/i18n";
 import { previewWidths, type ViewMode } from "../shared/settings";
 import type { WindowContext } from "./context";
 import type { LaudaDocument } from "./document";
@@ -6,7 +7,7 @@ import { icons, widthColumn, widthLevelIcon } from "./icons";
 import { OutlinePopover } from "./outline";
 import { tabAnimation, type Workspace } from "./workspace";
 
-const modes: { mode: ViewMode; key: string; icon: string }[] = [
+const modes: { mode: ViewMode; key: TranslationKey; icon: string }[] = [
   { mode: "editorOnly", key: "Editor Only", icon: icons.editorOnly },
   { mode: "split", key: "Editor and Preview", icon: icons.split },
   { mode: "previewOnly", key: "Preview Only", icon: icons.previewOnly },

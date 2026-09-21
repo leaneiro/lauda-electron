@@ -1,5 +1,5 @@
 import type { LaudaAPI } from "../preload/bridge";
-import { type Locale, Strings } from "../shared/i18n";
+import { type Locale, Strings, type TranslationKey } from "../shared/i18n";
 import type { Platform } from "../shared/ipc";
 import { DocumentWorker } from "./worker-client";
 
@@ -39,7 +39,7 @@ export class WindowContext {
   }
 
   /// The localized string for an English key (see shared/i18n).
-  readonly t = (key: string, ...args: (string | number)[]): string => this.strings.t(key, ...args);
+  readonly t = (key: TranslationKey, ...args: (string | number)[]): string => this.strings.t(key, ...args);
 
   /// A shortcut as the platform writes it: ⇧⌘G on a Mac, Ctrl+Shift+G elsewhere.
   shortcut(key: string, shift = false): string {

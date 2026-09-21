@@ -6,6 +6,10 @@ import native from "../../resources/locales/native.json";
 export const supportedLocales = ["en", "pt-BR", "de", "es", "fr", "ja", "zh-Hans"] as const;
 export type Locale = (typeof supportedLocales)[number];
 
+/// A key of the string catalogs: the native app's, and this edition's own.
+/// A key that is in neither doesn't compile, rather than showing English.
+export type TranslationKey = keyof typeof native | keyof typeof app.strings;
+
 type PluralForms = Partial<Record<"zero" | "one" | "two" | "few" | "many" | "other", string>>;
 type Entry = Record<string, string | PluralForms>;
 
@@ -53,7 +57,7 @@ export class Strings {
   /// The string for `key`, with `%@` and `%lld` filled in from `args` in
   /// order (`%1$@` picks one by position). A key with plural variations
   /// chooses its form from the first number argument.
-  t(key: string, ...args: (string | number)[]): string {
+  t(key: TranslationKey, ...args: (string | number)[]): string {
     const value = this.lookup(key);
     const template = typeof value === "string" ? value : this.pluralForm(value, args);
     return format(template, args, this.numbers);
@@ -64,7 +68,7 @@ export class Strings {
     return this.numbers.format(value);
   }
 
-  private lookup(key: string): string | PluralForms {
+  private lookup(key: TranslationKey): string | PluralForms {
     if (!this.isMac) {
       const override = outsideMac[this.locale]?.[key];
       if (override) return override;

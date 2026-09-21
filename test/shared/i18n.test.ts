@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { pickLocale, Strings } from "../../src/shared/i18n";
+import { pickLocale, Strings, type TranslationKey } from "../../src/shared/i18n";
 
 describe("pickLocale", () => {
   test.each([
@@ -41,8 +41,10 @@ describe("Strings", () => {
     );
   });
 
+  /// The compiler refuses a key that is in no catalog; one that arrives
+  /// anyway, from a catalog out of step, still reads as itself.
   test("a missing key reads as itself", () => {
-    expect(new Strings("fr", true).t("Nothing like this")).toBe("Nothing like this");
+    expect(new Strings("fr", true).t("Nothing like this" as TranslationKey)).toBe("Nothing like this");
   });
 
   test("German says speichern outside the Mac", () => {

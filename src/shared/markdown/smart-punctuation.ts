@@ -55,10 +55,7 @@ interface QuoteDelimiter {
 
 /// The replacements, per text node, that cmark's smart punctuation makes in
 /// the inline content `children` of one block.
-export function smartPunctuation(
-  children: readonly PhrasingContent[],
-  source: SmartSource,
-): Map<Text, Replacement[]> {
+export function smartPunctuation(children: readonly PhrasingContent[], source: SmartSource): Map<Text, Replacement[]> {
   const replacements = new Map<Text, Replacement[]>();
   if (children.length === 0) return replacements;
   const content = {
@@ -155,7 +152,9 @@ export function smartPunctuation(
             add(node, { index, length: 1, text: flanking.canClose ? rightDoubleQuote : leftDoubleQuote });
           } else {
             const replacement: { index: number; length: number; text: string } = {
-              index, length: 1, text: rightSingleQuote,
+              index,
+              length: 1,
+              text: rightSingleQuote,
             };
             add(node, replacement);
             if (flanking.canOpen || flanking.canClose) {
@@ -163,7 +162,9 @@ export function smartPunctuation(
                 source: offset,
                 ...flanking,
                 enclosingEnds,
-                replace: (text) => { replacement.text = text; },
+                replace: (text) => {
+                  replacement.text = text;
+                },
               });
             }
           }

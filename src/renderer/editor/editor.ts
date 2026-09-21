@@ -37,7 +37,12 @@ export class Editor implements EditorFinding {
           keymap.of(standardKeymap),
           drawSelection(),
           EditorView.lineWrapping,
-          EditorView.contentAttributes.of({ spellcheck: "false", autocorrect: "off", autocapitalize: "off", "aria-multiline": "true" }),
+          EditorView.contentAttributes.of({
+            spellcheck: "false",
+            autocorrect: "off",
+            autocapitalize: "off",
+            "aria-multiline": "true",
+          }),
           markdownHighlighting,
           findField,
           // The editor's own find-and-replace (Find and Replace…), as the
@@ -112,7 +117,13 @@ export class Editor implements EditorFinding {
     const selection = state.selection.main;
     const word = selection.empty ? state.wordAt(selection.head) : null;
     const wordRange = word ? { from: word.from, to: word.to } : { from: selection.from, to: selection.to };
-    const edit = rules.togglePair(opening, closing, state.doc.toString(), { from: selection.from, to: selection.to }, wordRange);
+    const edit = rules.togglePair(
+      opening,
+      closing,
+      state.doc.toString(),
+      { from: selection.from, to: selection.to },
+      wordRange,
+    );
     programmaticEdit(this.view, edit);
     this.view.focus();
   }
@@ -121,7 +132,10 @@ export class Editor implements EditorFinding {
     const clipboard = await lauda.invoke("app:read-clipboard");
     const state = this.view.state;
     const selection = state.selection.main;
-    programmaticEdit(this.view, rules.linkEdit(state.doc.toString(), { from: selection.from, to: selection.to }, clipboard));
+    programmaticEdit(
+      this.view,
+      rules.linkEdit(state.doc.toString(), { from: selection.from, to: selection.to }, clipboard),
+    );
     this.view.focus();
   }
 

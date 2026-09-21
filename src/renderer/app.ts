@@ -35,7 +35,9 @@ async function start(): Promise<void> {
   });
   document.addEventListener("drop", (event) => {
     event.preventDefault();
-    const paths = Array.from(event.dataTransfer?.files ?? []).map((file) => lauda.pathForFile(file)).filter(Boolean);
+    const paths = Array.from(event.dataTransfer?.files ?? [])
+      .map((file) => lauda.pathForFile(file))
+      .filter(Boolean);
     if (paths.length > 0) void lauda.invoke("app:open-files", paths);
   });
 }

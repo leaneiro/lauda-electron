@@ -101,7 +101,10 @@ export class DocumentWatcher {
 
   private scheduleCheck(filePath: string): void {
     clearTimeout(this.timers.get(filePath));
-    this.timers.set(filePath, setTimeout(() => void this.check(filePath), 250));
+    this.timers.set(
+      filePath,
+      setTimeout(() => void this.check(filePath), 250),
+    );
   }
 
   private async check(filePath: string): Promise<void> {

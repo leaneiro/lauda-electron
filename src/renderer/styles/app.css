@@ -55,7 +55,9 @@
   --popover-bg: rgba(246, 246, 246, 0.86);
   --clear-field-mark: #ffffff;
 
-  --ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", system-ui, "Helvetica Neue", "Noto Sans", Ubuntu, Cantarell, sans-serif;
+  --ui-font:
+    -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", system-ui, "Helvetica Neue", "Noto Sans",
+    Ubuntu, Cantarell, sans-serif;
   --editor-font: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
   --editor-size: 14px;
   --editor-line-height: 1.51;
@@ -112,9 +114,12 @@
   color-scheme: dark;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-html, body {
+html,
+body {
   margin: 0;
   height: 100%;
   overflow: hidden;
@@ -135,7 +140,10 @@ button {
   margin: 0;
   cursor: default;
 }
-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 
 /* MARK: - Title bar */
 
@@ -152,9 +160,13 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   -webkit-app-region: drag;
   z-index: 10;
 }
-body.fullscreen #titlebar { padding-left: 20px; }
+body.fullscreen #titlebar {
+  padding-left: 20px;
+}
 body.platform-win32 #titlebar,
-body.platform-linux #titlebar { padding-left: 8px; }
+body.platform-linux #titlebar {
+  padding-left: 8px;
+}
 /* The bar drags the window, its controls don't. The region is inherited, so
    a glass capsule that holds buttons has to leave the region as well: its
    sheen covers the buttons, and a sheen still in the region puts them back
@@ -162,7 +174,9 @@ body.platform-linux #titlebar { padding-left: 8px; }
 #titlebar .glass,
 #titlebar button,
 #titlebar .tab,
-#titlebar input { -webkit-app-region: no-drag; }
+#titlebar input {
+  -webkit-app-region: no-drag;
+}
 
 .menu-button {
   width: 36px;
@@ -174,11 +188,15 @@ body.platform-linux #titlebar { padding-left: 8px; }
   margin-right: 8px;
   flex: none;
 }
-.menu-button:hover { background: var(--pill-hover); }
+.menu-button:hover {
+  background: var(--pill-hover);
+}
 
 /* The title sits a little in from where the tabs start, as the native
    title item does. */
-body.platform-darwin .window-title { margin-left: 12px; }
+body.platform-darwin .window-title {
+  margin-left: 12px;
+}
 .window-title {
   font-size: 15px;
   font-weight: 600;
@@ -189,9 +207,14 @@ body.platform-darwin .window-title { margin-left: 12px; }
   max-width: 30%;
   transition: opacity var(--mode-change) ease-out;
 }
-.window-title.is-hidden { opacity: 0; }
+.window-title.is-hidden {
+  opacity: 0;
+}
 
-.title-spacer { flex: 1 1 0; min-width: 8px; }
+.title-spacer {
+  flex: 1 1 0;
+  min-width: 8px;
+}
 
 /* The picker sits in the middle of the bar with one document; with tabs it
    joins the controls on the right. */
@@ -213,10 +236,15 @@ body.platform-darwin .window-title { margin-left: 12px; }
 .glass {
   background: var(--glass-fill);
   backdrop-filter: blur(14px) saturate(1.7);
-  box-shadow: var(--glass-shadow), inset 0 0 0 1px var(--glass-rim), inset 0 1px 0 var(--glass-highlight);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 0 0 1px var(--glass-rim),
+    inset 0 1px 0 var(--glass-highlight);
   position: relative;
   overflow: hidden;
-  transition: transform 0.18s cubic-bezier(0.3, 1.4, 0.6, 1), background-color 0.2s;
+  transition:
+    transform 0.18s cubic-bezier(0.3, 1.4, 0.6, 1),
+    background-color 0.2s;
 }
 /* The clear kind carries neither rim nor shadow, so next to it the solid
    one plainly stands out, which on a screen without the real material is
@@ -232,14 +260,22 @@ body.platform-darwin .window-title { margin-left: 12px; }
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(90px circle at var(--pointer-x, 50%) var(--pointer-y, 50%), rgba(255, 255, 255, 0.55), transparent 60%);
+  background: radial-gradient(
+    90px circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+    rgba(255, 255, 255, 0.55),
+    transparent 60%
+  );
   opacity: 0;
   transition: opacity 0.2s;
   pointer-events: none;
   mix-blend-mode: soft-light;
 }
-.glass:hover::after { opacity: 1; }
-.glass:active { transform: scale(0.96); }
+.glass:hover::after {
+  opacity: 1;
+}
+.glass:active {
+  transform: scale(0.96);
+}
 
 .glass-button {
   width: 36px;
@@ -275,20 +311,34 @@ body.platform-darwin .window-title { margin-left: 12px; }
   background: transparent;
   transition: background-color 0.15s;
 }
-.view-modes button:hover::before { background: var(--pill-hover); }
-.view-modes button[aria-pressed="true"]::before { background: var(--pill-selected); }
-.view-modes svg { position: relative; }
+.view-modes button:hover::before {
+  background: var(--pill-hover);
+}
+.view-modes button[aria-pressed="true"]::before {
+  background: var(--pill-selected);
+}
+.view-modes svg {
+  position: relative;
+}
 
 .width-button {
-  transition: opacity var(--mode-change) ease-in-out, transform var(--mode-change) ease-in-out;
+  transition:
+    opacity var(--mode-change) ease-in-out,
+    transform var(--mode-change) ease-in-out;
 }
 .width-button.is-out {
   opacity: 0;
   transform: scale(0.8);
   pointer-events: none;
 }
-.width-button svg { color: var(--icon-ink-secondary); }
-.width-column { transition: x 0.28s cubic-bezier(0.3, 1.5, 0.6, 1), width 0.28s cubic-bezier(0.3, 1.5, 0.6, 1); }
+.width-button svg {
+  color: var(--icon-ink-secondary);
+}
+.width-column {
+  transition:
+    x 0.28s cubic-bezier(0.3, 1.5, 0.6, 1),
+    width 0.28s cubic-bezier(0.3, 1.5, 0.6, 1);
+}
 
 /* MARK: - Tabs */
 
@@ -299,7 +349,9 @@ body.platform-darwin .window-title { margin-left: 12px; }
   height: 28px;
   flex: 1 1 auto;
   min-width: 0;
-  transition: opacity var(--mode-change) ease-out, transform var(--mode-change) ease-out;
+  transition:
+    opacity var(--mode-change) ease-out,
+    transform var(--mode-change) ease-out;
   transform-origin: left center;
 }
 .tab-strip.is-out {
@@ -321,28 +373,50 @@ body.platform-darwin .window-title { margin-left: 12px; }
   font-size: 13px;
   color: var(--text-secondary);
   transform-origin: left center;
-  transition: opacity var(--mode-change) ease-out, transform var(--mode-change) ease-out, max-width var(--mode-change) ease-out, min-width var(--mode-change) ease-out, background-color 0.2s;
+  transition:
+    opacity var(--mode-change) ease-out,
+    transform var(--mode-change) ease-out,
+    max-width var(--mode-change) ease-out,
+    min-width var(--mode-change) ease-out,
+    background-color 0.2s;
 }
 /* The tab showing is the solid one: a capsule with its own rim and shadow,
    over names in the quieter colour. */
 .tab.is-selected {
   color: var(--text);
   background: var(--tab-fill);
-  box-shadow: var(--tab-shadow), inset 0 0 0 1px var(--tab-rim), inset 0 1px 0 var(--glass-highlight);
+  box-shadow:
+    var(--tab-shadow),
+    inset 0 0 0 1px var(--tab-rim),
+    inset 0 1px 0 var(--glass-highlight);
 }
 /* The others keep a quiet capsule of their own, so they still read as tabs,
    and answer the pointer with a touch more of it. */
-.tab.clear { background: var(--tab-quiet); }
-.tab.clear:hover { background: var(--tab-hover); }
-.tab.is-entering, .tab.is-leaving, .tab.is-fading {
+.tab.clear {
+  background: var(--tab-quiet);
+}
+.tab.clear:hover {
+  background: var(--tab-hover);
+}
+.tab.is-entering,
+.tab.is-leaving,
+.tab.is-fading {
   opacity: 0;
   transform: scale(0.85);
 }
 /* Leaving room behind is for a tab the others outlive; the last ones keep
    their shape while they go. Either way a tab on its way out is past
    answering the pointer. */
-.tab.is-leaving, .tab.is-fading { pointer-events: none; }
-.tab.is-leaving { min-width: 0; max-width: 0; padding: 0; margin-right: -6px; }
+.tab.is-leaving,
+.tab.is-fading {
+  pointer-events: none;
+}
+.tab.is-leaving {
+  min-width: 0;
+  max-width: 0;
+  padding: 0;
+  margin-right: -6px;
+}
 .tab-title {
   overflow: hidden;
   white-space: nowrap;
@@ -360,18 +434,38 @@ body.platform-darwin .window-title { margin-left: 12px; }
   opacity: 0;
   border-radius: 8px;
 }
-.tab-close span { display: grid; place-items: center; }
-.tab-close .icon-x svg { width: 12px; height: 12px; }
-.tab-close .icon-dot { display: none; color: var(--accent); }
-.tab-close .icon-dot svg { width: 14px; height: 14px; }
+.tab-close span {
+  display: grid;
+  place-items: center;
+}
+.tab-close .icon-x svg {
+  width: 12px;
+  height: 12px;
+}
+.tab-close .icon-dot {
+  display: none;
+  color: var(--accent);
+}
+.tab-close .icon-dot svg {
+  width: 14px;
+  height: 14px;
+}
 .tab.is-selected .tab-close,
 .tab:hover .tab-close,
-.tab.is-edited .tab-close { opacity: 1; }
-.tab-close:hover { background: var(--pill-hover); }
+.tab.is-edited .tab-close {
+  opacity: 1;
+}
+.tab-close:hover {
+  background: var(--pill-hover);
+}
 /* An unsaved tab shows a dot where its close button is, until the pointer
    comes over it. */
-.tab.is-edited:not(:hover) .icon-x { display: none; }
-.tab.is-edited:not(:hover) .icon-dot { display: grid; }
+.tab.is-edited:not(:hover) .icon-x {
+  display: none;
+}
+.tab.is-edited:not(:hover) .icon-dot {
+  display: grid;
+}
 
 /* MARK: - Documents */
 
@@ -385,7 +479,9 @@ body.platform-darwin .window-title { margin-left: 12px; }
   display: flex;
   flex-direction: column;
 }
-.document[hidden] { display: none; }
+.document[hidden] {
+  display: none;
+}
 
 .panes {
   position: relative;
@@ -397,12 +493,22 @@ body.platform-darwin .window-title { margin-left: 12px; }
   position: absolute;
   top: 0;
   bottom: 0;
-  transition: left var(--mode-change) ease-in-out, width var(--mode-change) ease-in-out, opacity var(--mode-change) ease-in-out;
+  transition:
+    left var(--mode-change) ease-in-out,
+    width var(--mode-change) ease-in-out,
+    opacity var(--mode-change) ease-in-out;
 }
-.panes.no-animation .pane { transition: none; }
-.pane.is-away { visibility: hidden; }
+.panes.no-animation .pane {
+  transition: none;
+}
+.pane.is-away {
+  visibility: hidden;
+}
 
-.editor-pane { left: 0; width: calc((100% - 1px) * var(--split)); }
+.editor-pane {
+  left: 0;
+  width: calc((100% - 1px) * var(--split));
+}
 .divider {
   left: calc((100% - 1px) * var(--split));
   width: 1px;
@@ -417,15 +523,33 @@ body.platform-darwin .window-title { margin-left: 12px; }
   width: 11px;
   cursor: col-resize;
 }
-.preview-pane { left: calc((100% - 1px) * var(--split) + 1px); width: calc((100% - 1px) * (1 - var(--split))); }
+.preview-pane {
+  left: calc((100% - 1px) * var(--split) + 1px);
+  width: calc((100% - 1px) * (1 - var(--split)));
+}
 
-.panes[data-mode="editorOnly"] .editor-pane { width: 100%; }
-.panes[data-mode="editorOnly"] .divider { left: 100%; opacity: 0; }
-.panes[data-mode="editorOnly"] .preview-pane { left: calc(100% + 1px); }
+.panes[data-mode="editorOnly"] .editor-pane {
+  width: 100%;
+}
+.panes[data-mode="editorOnly"] .divider {
+  left: 100%;
+  opacity: 0;
+}
+.panes[data-mode="editorOnly"] .preview-pane {
+  left: calc(100% + 1px);
+}
 
-.panes[data-mode="previewOnly"] .editor-pane { left: calc((100% - 1px) * var(--split) * -1); }
-.panes[data-mode="previewOnly"] .divider { left: -1px; opacity: 0; }
-.panes[data-mode="previewOnly"] .preview-pane { left: 0; width: 100%; }
+.panes[data-mode="previewOnly"] .editor-pane {
+  left: calc((100% - 1px) * var(--split) * -1);
+}
+.panes[data-mode="previewOnly"] .divider {
+  left: -1px;
+  opacity: 0;
+}
+.panes[data-mode="previewOnly"] .preview-pane {
+  left: 0;
+  width: 100%;
+}
 
 .preview-frame {
   display: block;
@@ -444,7 +568,9 @@ body.platform-darwin .window-title { margin-left: 12px; }
   font-family: var(--editor-font);
   font-size: var(--editor-size);
 }
-.editor-pane .cm-editor.cm-focused { outline: none; }
+.editor-pane .cm-editor.cm-focused {
+  outline: none;
+}
 .editor-pane .cm-scroller {
   font-family: inherit;
   line-height: var(--editor-line-height);
@@ -456,24 +582,61 @@ body.platform-darwin .window-title { margin-left: 12px; }
   user-select: text;
 }
 /* The native text view's inset (24) plus its line fragment padding (5). */
-.editor-pane .cm-line { padding: 0 29px; }
-.editor-pane .cm-cursor { border-left-color: var(--caret); border-left-width: 1.5px; }
-.editor-pane .cm-selectionBackground { background: var(--selection-inactive) !important; }
-.editor-pane .cm-focused .cm-selectionBackground { background: var(--selection) !important; }
-.editor-pane .cm-content ::selection { background: transparent; }
-.editor-pane .cm-searchMatch { background: rgba(255, 214, 10, 0.3); border-radius: 2px; }
-.editor-pane .cm-searchMatch-selected { background: #ff9f0a; color: #1d1d1f; }
+.editor-pane .cm-line {
+  padding: 0 29px;
+}
+.editor-pane .cm-cursor {
+  border-left-color: var(--caret);
+  border-left-width: 1.5px;
+}
+.editor-pane .cm-selectionBackground {
+  background: var(--selection-inactive) !important;
+}
+.editor-pane .cm-focused .cm-selectionBackground {
+  background: var(--selection) !important;
+}
+.editor-pane .cm-content ::selection {
+  background: transparent;
+}
+.editor-pane .cm-searchMatch {
+  background: rgba(255, 214, 10, 0.3);
+  border-radius: 2px;
+}
+.editor-pane .cm-searchMatch-selected {
+  background: #ff9f0a;
+  color: #1d1d1f;
+}
 
-.md-bold { font-weight: 700; }
-.md-italic { font-style: italic; }
-.md-struck { text-decoration: line-through; }
-.md-underlined { text-decoration: underline; }
-.md-struck.md-underlined { text-decoration: line-through underline; }
-.md-indigo { color: var(--indigo); }
-.md-secondary { color: var(--text-secondary); }
-.md-link { color: var(--link); }
-.md-tertiary { color: var(--text-tertiary); }
-.md-purple { color: var(--purple); }
+.md-bold {
+  font-weight: 700;
+}
+.md-italic {
+  font-style: italic;
+}
+.md-struck {
+  text-decoration: line-through;
+}
+.md-underlined {
+  text-decoration: underline;
+}
+.md-struck.md-underlined {
+  text-decoration: line-through underline;
+}
+.md-indigo {
+  color: var(--indigo);
+}
+.md-secondary {
+  color: var(--text-secondary);
+}
+.md-link {
+  color: var(--link);
+}
+.md-tertiary {
+  color: var(--text-tertiary);
+}
+.md-purple {
+  color: var(--purple);
+}
 
 /* MARK: - Status bar */
 
@@ -491,11 +654,23 @@ body.platform-darwin .window-title { margin-left: 12px; }
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.status-bar .spacer { flex: 1; }
-.save-status { display: flex; align-items: center; gap: 5px; }
-.save-status[data-color="green"] svg { color: var(--green); }
-.save-status[data-color="orange"] svg { color: var(--orange); }
-.save-status[data-color="secondary"] svg { color: var(--text-secondary); }
+.status-bar .spacer {
+  flex: 1;
+}
+.save-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.save-status[data-color="green"] svg {
+  color: var(--green);
+}
+.save-status[data-color="orange"] svg {
+  color: var(--orange);
+}
+.save-status[data-color="secondary"] svg {
+  color: var(--text-secondary);
+}
 
 /* MARK: - Find bar */
 
@@ -510,10 +685,14 @@ body.platform-darwin .window-title { margin-left: 12px; }
   padding: 8px 11px;
   background: var(--control-bg);
   border-radius: 10px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16), inset 0 0 0 1px var(--separator);
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.16),
+    inset 0 0 0 1px var(--separator);
   color: var(--text-secondary);
 }
-.find-bar[hidden] { display: none; }
+.find-bar[hidden] {
+  display: none;
+}
 .find-bar input {
   width: 170px;
   border: none;
@@ -524,14 +703,18 @@ body.platform-darwin .window-title { margin-left: 12px; }
   color: var(--text);
   user-select: text;
 }
-.find-bar input::placeholder { color: var(--text-tertiary); }
+.find-bar input::placeholder {
+  color: var(--text-tertiary);
+}
 .find-count {
   min-width: 34px;
   text-align: center;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
-.find-count.is-empty { color: var(--red); }
+.find-count.is-empty {
+  color: var(--red);
+}
 .find-bar button {
   width: 20px;
   height: 20px;
@@ -540,9 +723,15 @@ body.platform-darwin .window-title { margin-left: 12px; }
   color: var(--text);
   border-radius: 4px;
 }
-.find-bar button:disabled { color: var(--text-tertiary); }
-.find-bar button:not(:disabled):hover { background: var(--pill-hover); }
-.find-bar .find-close { color: var(--text-secondary); }
+.find-bar button:disabled {
+  color: var(--text-tertiary);
+}
+.find-bar button:not(:disabled):hover {
+  background: var(--pill-hover);
+}
+.find-bar .find-close {
+  color: var(--text-secondary);
+}
 
 /* MARK: - Outline */
 
@@ -552,11 +741,16 @@ body.platform-darwin .window-title { margin-left: 12px; }
   background: var(--popover-bg);
   backdrop-filter: blur(24px) saturate(1.8);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18), 0 0 0 1px var(--separator);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.18),
+    0 0 0 1px var(--separator);
   animation: popover-in 0.16s ease-out;
 }
 @keyframes popover-in {
-  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
 }
 .popover::before {
   content: "";
@@ -592,8 +786,15 @@ body.platform-darwin .window-title { margin-left: 12px; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.outline-row.level-1 { font-weight: 600; }
-.outline-row:hover, .outline-row:focus-visible { background: var(--accent); color: var(--accent-text); outline: none; }
+.outline-row.level-1 {
+  font-weight: 600;
+}
+.outline-row:hover,
+.outline-row:focus-visible {
+  background: var(--accent);
+  color: var(--accent-text);
+  outline: none;
+}
 .outline-empty {
   position: relative;
   padding: 16px 20px;
@@ -603,6 +804,15 @@ body.platform-darwin .window-title { margin-left: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pane, .glass, .tab, .tab-strip, .width-button, .window-title { transition: none !important; }
-  .popover { animation: none; }
+  .pane,
+  .glass,
+  .tab,
+  .tab-strip,
+  .width-button,
+  .window-title {
+    transition: none !important;
+  }
+  .popover {
+    animation: none;
+  }
 }

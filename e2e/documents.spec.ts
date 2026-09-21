@@ -3,16 +3,21 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { clickMenu, forceQuit, launch, previewFrame } from "./launch";
 
-
 test("exports HTML and PDF next to the document", async () => {
   const { app, window, folder } = await launch({ files: { "report.md": "# Report\n\nSome **text**.\n" } });
   await previewFrame(window);
   const htmlPath = join(folder, "report.html");
   const pdfPath = join(folder, "report.pdf");
-  await app.evaluate(({ dialog }, paths) => {
-    let call = 0;
-    dialog.showSaveDialog = (async () => ({ canceled: false, filePath: paths[call++] })) as typeof dialog.showSaveDialog;
-  }, [htmlPath, pdfPath]);
+  await app.evaluate(
+    ({ dialog }, paths) => {
+      let call = 0;
+      dialog.showSaveDialog = (async () => ({
+        canceled: false,
+        filePath: paths[call++],
+      })) as typeof dialog.showSaveDialog;
+    },
+    [htmlPath, pdfPath],
+  );
 
   await app.evaluate(({ BrowserWindow }) => {
     BrowserWindow.getAllWindows()[0]?.webContents.send("menu:command", { name: "export-html" });
@@ -44,7 +49,10 @@ test("the tabs left open come back at the next launch", async () => {
   expect(session.files.map((file: string) => file.split(/[\\/]/).pop())).toEqual(["one.md", "two.md"]);
   expect(session.selected.endsWith("one.md")).toBe(true);
 
-  const app = await electron.launch({ args: ["."], env: { ...process.env, LAUDA_USER_DATA: userData, LAUDA_LOCALE: "en" } });
+  const app = await electron.launch({
+    args: ["."],
+    env: { ...process.env, LAUDA_USER_DATA: userData, LAUDA_LOCALE: "en" },
+  });
   const window = await app.firstWindow();
   await expect(window.locator(".tab")).toHaveCount(2);
   await expect(window.locator(".tab.is-selected .tab-title")).toHaveText("one.md");
@@ -86,9 +94,21 @@ test("settings reach the editor and the preview", async () => {
   const { app, window } = await launch({ files: { "style.md": "Line one\nLine two\n" } });
   const preview = await previewFrame(window);
   await expect(preview.locator("p br")).toHaveCount(1);
-  await window.evaluate(() => (globalThis as unknown as { lauda: { invoke: (...args: unknown[]) => Promise<void> } }).lauda.invoke("settings:set", { strictLineBreaks: true, editorFontSize: 18 }));
+  await window.evaluate(() =>
+    (globalThis as unknown as { lauda: { invoke: (...args: unknown[]) => Promise<void> } }).lauda.invoke(
+      "settings:set",
+      { strictLineBreaks: true, editorFontSize: 18 },
+    ),
+  );
   await expect(preview.locator("p br")).toHaveCount(0);
-  await expect.poll(() => window.locator(".editor-pane").first().evaluate((el) => getComputedStyle(el).getPropertyValue("--editor-size").trim())).toBe("18px");
+  await expect
+    .poll(() =>
+      window
+        .locator(".editor-pane")
+        .first()
+        .evaluate((el) => getComputedStyle(el).getPropertyValue("--editor-size").trim()),
+    )
+    .toBe("18px");
   await app.close();
 });
 
@@ -142,9 +162,17 @@ test("duplicate, revert, rename and move", async () => {
 
   // The menu is built again once the move is noted, a beat after the file
   // lands, so the list is waited for rather than read the moment it does.
-  await expect.poll(() => app.evaluate(({ Menu }) =>
-    Menu.getApplicationMenu()!.items.find((item) => item.label === "File")!.submenu!.items.find((item) => item.label === "Open Recent")!.submenu!.items.map((item) => item.label)[0],
-  )).toBe("final.md");
+  await expect
+    .poll(() =>
+      app.evaluate(
+        ({ Menu }) =>
+          Menu.getApplicationMenu()!
+            .items.find((item) => item.label === "File")!
+            .submenu!.items.find((item) => item.label === "Open Recent")!
+            .submenu!.items.map((item) => item.label)[0],
+      ),
+    )
+    .toBe("final.md");
   await forceQuit(app);
 });
 
@@ -172,7 +200,12 @@ test("the window can only write the files it was handed", async () => {
   await expect(window.locator(".window-title")).toHaveText("mine.md");
   const elsewhere = join(folder, "not-opened.md");
   const answer = await window.evaluate(
-    (path) => (globalThis as unknown as { lauda: { invoke: (c: string, ...a: unknown[]) => Promise<unknown> } }).lauda.invoke("doc:write", path, "written anyway"),
+    (path) =>
+      (globalThis as unknown as { lauda: { invoke: (c: string, ...a: unknown[]) => Promise<unknown> } }).lauda.invoke(
+        "doc:write",
+        path,
+        "written anyway",
+      ),
     elsewhere,
   );
   expect(answer).toMatchObject({ ok: false });
@@ -181,7 +214,12 @@ test("the window can only write the files it was handed", async () => {
   // The file it opened is still its to write.
   const opened = join(folder, "mine.md");
   const allowed = await window.evaluate(
-    (path) => (globalThis as unknown as { lauda: { invoke: (c: string, ...a: unknown[]) => Promise<unknown> } }).lauda.invoke("doc:write", path, "# Mine, again\n"),
+    (path) =>
+      (globalThis as unknown as { lauda: { invoke: (c: string, ...a: unknown[]) => Promise<unknown> } }).lauda.invoke(
+        "doc:write",
+        path,
+        "# Mine, again\n",
+      ),
     opened,
   );
   expect(allowed).toMatchObject({ ok: true });

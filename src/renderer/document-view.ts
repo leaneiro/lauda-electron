@@ -29,7 +29,10 @@ export class DocumentView {
   private readonly resizeObserver: ResizeObserver;
   private readonly unsubscribe: () => void;
 
-  constructor(readonly document: LaudaDocument, private readonly workspace: Workspace) {
+  constructor(
+    readonly document: LaudaDocument,
+    private readonly workspace: Workspace,
+  ) {
     this.mode = workspace.viewMode;
     this.element.className = "document";
     this.element.hidden = true;
@@ -151,7 +154,13 @@ export class DocumentView {
   /// caret follows when the editor is showing (OutlineJump).
   jumpToLine(line: number): void {
     const lineCount = Math.max(this.document.text.split("\n").length, 1);
-    this.publishScroll({ line, fraction: line / lineCount, endLine: null, toEndDistance: farFromTheEnd, source: "navigation" });
+    this.publishScroll({
+      line,
+      fraction: line / lineCount,
+      endLine: null,
+      toEndDistance: farFromTheEnd,
+      source: "navigation",
+    });
     if (this.mode !== "previewOnly") this.editor.placeCaret(line);
   }
 
@@ -159,7 +168,11 @@ export class DocumentView {
 
   applySettings(settings: Settings, initial = false): void {
     this.editor.applyStyle(cssEditorFontFamily(settings.editorFontName), settings.editorFontSize);
-    this.preview.setStyle(cssFontFamily(settings.previewFontName), settings.previewFontSize, settings.previewLineHeight);
+    this.preview.setStyle(
+      cssFontFamily(settings.previewFontName),
+      settings.previewFontSize,
+      settings.previewLineHeight,
+    );
     this.preview.setContentWidth(this.workspace.previewWidth.rem);
     if (!initial) this.preview.setMarkdown(this.document.text, settings.strictLineBreaks);
     this.layOut(settings.splitFraction);

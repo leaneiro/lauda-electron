@@ -14,8 +14,13 @@ import {
 
 describe("preview security: links", () => {
   it.each([
-    "https://example.com", "http://example.com", "mailto:someone@example.com",
-    "notes.md", "./img/a.png", "#section", "folder/page?x=a:b",
+    "https://example.com",
+    "http://example.com",
+    "mailto:someone@example.com",
+    "notes.md",
+    "./img/a.png",
+    "#section",
+    "folder/page?x=a:b",
   ])("keeps the external, relative or fragment link %s", (destination) => {
     expect(render(`[x](${destination})`)).toContain("<a href=");
   });
@@ -54,7 +59,14 @@ describe("preview security: page policies", () => {
   });
 
   it("blocks scripts in exported documents", () => {
-    const html = standalone({ title: "T", bodyHTML: "<p>x</p>", styles: "", fontFamily: "x", fontSize: 16, lineHeight: 1.6 });
+    const html = standalone({
+      title: "T",
+      bodyHTML: "<p>x</p>",
+      styles: "",
+      fontFamily: "x",
+      fontSize: 16,
+      lineHeight: 1.6,
+    });
     expect(html).toContain(`content="${exportContentSecurityPolicy}"`);
     expect(exportContentSecurityPolicy.startsWith("script-src 'none'")).toBe(true);
   });
@@ -84,8 +96,9 @@ describe("preview security: images", () => {
 
 describe("escaping", () => {
   it("escapes attribute values", () => {
-    expect(render('![a "b" <c>](x.png "t & \\"q\\"")'))
-      .toBe('<p><img src="x.png" alt="a “b” &lt;c&gt;" title="t &amp; &quot;q&quot;"></p>\n');
+    expect(render('![a "b" <c>](x.png "t & \\"q\\"")')).toBe(
+      '<p><img src="x.png" alt="a “b” &lt;c&gt;" title="t &amp; &quot;q&quot;"></p>\n',
+    );
   });
 
   it("escapes a link's destination", () => {

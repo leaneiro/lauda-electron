@@ -15,7 +15,10 @@ const headingRegex = /^#{1,6}[ \t].*$/gmu;
 const listMarkerRegex = /^[ \t]*(?:[-*+]|\d{1,3}[.)])[ \t]/gmu;
 const blockquoteRegex = /^[ \t]*>.*$/gmu;
 const boldRegex = /(?:\*\*[^*\n]+\*\*|__[^_\n]+__)/gu;
-const italicRegex = new RegExp(String.raw`(?<![${word}*])\*(?!\*)[^*\n]+\*(?!\*)|(?<![${word}_])_(?!_)[^_\n]+_(?!_)`, "gu");
+const italicRegex = new RegExp(
+  String.raw`(?<![${word}*])\*(?!\*)[^*\n]+\*(?!\*)|(?<![${word}_])_(?!_)[^_\n]+_(?!_)`,
+  "gu",
+);
 const strikethroughRegex = /~~[^~\n]+~~/gu;
 /// Underline is written as tags, so the editor shows it the same way.
 const underlineRegex = /<u>[^<\n]*<\/u>/giu;
@@ -58,12 +61,22 @@ function classes(style: Style): string {
 
 /// Styles one line of text, `offset` being where it starts in the document.
 function styleLine(text: string, fences: { from: number; to: number }[], offset: number): Style[] {
-  const styles: Style[] = Array.from({ length: text.length }, () => ({ color: null, bold: false, italic: false, struck: false, underlined: false, fence: false }));
+  const styles: Style[] = Array.from({ length: text.length }, () => ({
+    color: null,
+    bold: false,
+    italic: false,
+    struck: false,
+    underlined: false,
+    fence: false,
+  }));
   const paint = (regex: RegExp, apply: (style: Style) => void, group?: number) => {
     regex.lastIndex = 0;
     for (const match of text.matchAll(regex)) {
-      const indices = group !== undefined ? (match as RegExpMatchArray & { indices?: [number, number][] }).indices?.[group] : undefined;
-      const start = indices ? indices[0] : match.index ?? 0;
+      const indices =
+        group !== undefined
+          ? (match as RegExpMatchArray & { indices?: [number, number][] }).indices?.[group]
+          : undefined;
+      const start = indices ? indices[0] : (match.index ?? 0);
       const end = indices ? indices[1] : start + match[0].length;
       for (const style of styles.slice(start, end)) apply(style);
     }
@@ -85,7 +98,8 @@ function styleLine(text: string, fences: { from: number; to: number }[], offset:
   for (const fence of fences) {
     const start = Math.max(fence.from - offset, 0);
     const end = Math.min(fence.to - offset, text.length);
-    for (let i = start; i < end; i++) styles[i] = { color: "purple", bold: false, italic: false, struck: false, underlined: false, fence: true };
+    for (let i = start; i < end; i++)
+      styles[i] = { color: "purple", bold: false, italic: false, struck: false, underlined: false, fence: true };
   }
   return styles;
 }
@@ -98,7 +112,11 @@ function buildDecorations(view: EditorView, fences: { from: number; to: number }
     let position = from;
     while (position <= to) {
       const line = doc.lineAt(position);
-      const styles = styleLine(line.text, fences.filter((f) => f.from < line.to + 1 && f.to > line.from), line.from);
+      const styles = styleLine(
+        line.text,
+        fences.filter((f) => f.from < line.to + 1 && f.to > line.from),
+        line.from,
+      );
       // Runs of characters with the same classes become one decoration each.
       const names = styles.map(classes);
       let runStart = 0;

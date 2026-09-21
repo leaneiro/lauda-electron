@@ -24,8 +24,7 @@ export const previewContentSecurityPolicy = [
 
 /// Exported documents load whatever the document references but, like the
 /// preview, never run its scripts.
-export const exportContentSecurityPolicy =
-  "script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
+export const exportContentSecurityPolicy = "script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
 
 /// The face behind the `.wordmark` class: Newsreader SemiBold at the 72 pt
 /// optical size, the typeface of the app icon's L, cut down to the letters

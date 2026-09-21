@@ -32,18 +32,32 @@ function anchors(markdown: string): [string, number][] {
 describe("anchor lines", () => {
   it("follow nested list items in document order", () => {
     expect(anchors("- a\n  - b\n  - c\n- d\n\n1. x\n2. y")).toEqual([
-      ["ul", 0], ["li", 0], ["li", 1], ["li", 2], ["li", 3],
-      ["ol", 5], ["li", 5], ["li", 6],
+      ["ul", 0],
+      ["li", 0],
+      ["li", 1],
+      ["li", 2],
+      ["li", 3],
+      ["ol", 5],
+      ["li", 5],
+      ["li", 6],
     ]);
   });
 
   it("anchor task items like any other item", () => {
-    expect(anchors("- [ ] a\n- [x] b\n  more")).toEqual([["ul", 0], ["li", 0], ["li", 1]]);
+    expect(anchors("- [ ] a\n- [x] b\n  more")).toEqual([
+      ["ul", 0],
+      ["li", 0],
+      ["li", 1],
+    ]);
   });
 
   it("anchor a table's head row and each body row", () => {
     expect(anchors("| h | i |\n| - | - |\n| 1 | 2 |\n| 3 |\n\nafter")).toEqual([
-      ["table", 0], ["tr", 0], ["tr", 2], ["tr", 3], ["p", 5],
+      ["table", 0],
+      ["tr", 0],
+      ["tr", 2],
+      ["tr", 3],
+      ["p", 5],
     ]);
   });
 
@@ -51,20 +65,35 @@ describe("anchor lines", () => {
     // cmark splits the paragraph off above the table without a position,
     // so it takes the line of the anchor before it.
     expect(anchors("# T\ntext\n| a |\n| - |\n| 1 |")).toEqual([
-      ["h1", 0], ["p", 0], ["table", 1], ["tr", 1], ["tr", 4],
+      ["h1", 0],
+      ["p", 0],
+      ["table", 1],
+      ["tr", 1],
+      ["tr", 4],
     ]);
   });
 
   it("find rows and items inside block quotes and list items", () => {
     expect(anchors("> - a\n> - b\n\n- item\n\n  | a |\n  | - |\n  | 1 |")).toEqual([
-      ["blockquote", 0], ["li", 0], ["li", 1],
-      ["ul", 3], ["li", 3], ["tr", 5], ["tr", 7],
+      ["blockquote", 0],
+      ["li", 0],
+      ["li", 1],
+      ["ul", 3],
+      ["li", 3],
+      ["tr", 5],
+      ["tr", 7],
     ]);
   });
 
   it("keep raw HTML blocks as one element, whatever they hold", () => {
-    expect(anchors("<ul><li>raw</li></ul>\n<table><tr><td>x</td></tr></table>\n\ntext\n\n<!-- note -->\n\n- real")).toEqual([
-      ["div", 0], ["p", 3], ["div", 5], ["ul", 7], ["li", 7],
+    expect(
+      anchors("<ul><li>raw</li></ul>\n<table><tr><td>x</td></tr></table>\n\ntext\n\n<!-- note -->\n\n- real"),
+    ).toEqual([
+      ["div", 0],
+      ["p", 3],
+      ["div", 5],
+      ["ul", 7],
+      ["li", 7],
     ]);
   });
 
@@ -98,9 +127,20 @@ describe("anchor lines", () => {
       "Last [link][ref].",
     ].join("\n");
     expect(anchors(markdown)).toEqual([
-      ["h1", 0], ["p", 2], ["blockquote", 5], ["pre", 7], ["hr", 11],
-      ["ol", 13], ["li", 13], ["li", 14], ["li", 15],
-      ["div", 17], ["table", 19], ["tr", 19], ["tr", 21], ["p", 25],
+      ["h1", 0],
+      ["p", 2],
+      ["blockquote", 5],
+      ["pre", 7],
+      ["hr", 11],
+      ["ol", 13],
+      ["li", 13],
+      ["li", 14],
+      ["li", 15],
+      ["div", 17],
+      ["table", 19],
+      ["tr", 19],
+      ["tr", 21],
+      ["p", 25],
     ]);
   });
 

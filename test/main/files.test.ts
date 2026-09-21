@@ -52,30 +52,46 @@ describe("a file another program holds for a moment", () => {
 
   it("is tried again until it lets go", async () => {
     let attempts = 0;
-    const result = await retryingTransientErrors(async () => {
-      attempts += 1;
-      if (attempts < 3) throw failure("EBUSY");
-      return "done";
-    }, [1, 1, 1, 1], noWait);
+    const result = await retryingTransientErrors(
+      async () => {
+        attempts += 1;
+        if (attempts < 3) throw failure("EBUSY");
+        return "done";
+      },
+      [1, 1, 1, 1],
+      noWait,
+    );
     expect(result).toBe("done");
     expect(attempts).toBe(3);
   });
 
   it("gives up once the tries run out", async () => {
     let attempts = 0;
-    await expect(retryingTransientErrors(async () => {
-      attempts += 1;
-      throw failure("EPERM");
-    }, [1, 1], noWait)).rejects.toThrow("EPERM");
+    await expect(
+      retryingTransientErrors(
+        async () => {
+          attempts += 1;
+          throw failure("EPERM");
+        },
+        [1, 1],
+        noWait,
+      ),
+    ).rejects.toThrow("EPERM");
     expect(attempts).toBe(3);
   });
 
   it("doesn't retry a failure that won't pass", async () => {
     let attempts = 0;
-    await expect(retryingTransientErrors(async () => {
-      attempts += 1;
-      throw failure("ENOSPC");
-    }, [1, 1, 1], noWait)).rejects.toThrow("ENOSPC");
+    await expect(
+      retryingTransientErrors(
+        async () => {
+          attempts += 1;
+          throw failure("ENOSPC");
+        },
+        [1, 1, 1],
+        noWait,
+      ),
+    ).rejects.toThrow("ENOSPC");
     expect(attempts).toBe(1);
   });
 });

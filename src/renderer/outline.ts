@@ -8,11 +8,18 @@ export class OutlinePopover {
   private popover: HTMLElement | null = null;
   private readonly dismiss = (event: Event) => {
     if (event instanceof KeyboardEvent && event.key !== "Escape") return;
-    if (event instanceof MouseEvent && (this.popover?.contains(event.target as Node) || this.anchor.contains(event.target as Node))) return;
+    if (
+      event instanceof MouseEvent &&
+      (this.popover?.contains(event.target as Node) || this.anchor.contains(event.target as Node))
+    )
+      return;
     this.close();
   };
 
-  constructor(private readonly anchor: HTMLElement, private readonly workspace: Workspace) {}
+  constructor(
+    private readonly anchor: HTMLElement,
+    private readonly workspace: Workspace,
+  ) {}
 
   toggle(): void {
     if (this.popover) this.close();
@@ -58,7 +65,10 @@ export class OutlinePopover {
     const left = Math.min(Math.max(anchor.left + anchor.width / 2 - width + 20, 8), window.innerWidth - width - 8);
     popover.style.left = `${left}px`;
     popover.style.top = `${anchor.bottom + 10}px`;
-    popover.style.setProperty("--arrow-right", `${Math.max(left + width - (anchor.left + anchor.width / 2) - 6, 14)}px`);
+    popover.style.setProperty(
+      "--arrow-right",
+      `${Math.max(left + width - (anchor.left + anchor.width / 2) - 6, 14)}px`,
+    );
     this.popover = popover;
     popover.querySelector<HTMLElement>(".outline-row")?.focus({ preventScroll: true });
     setTimeout(() => {

@@ -8,8 +8,9 @@ describe("HTML renderer", () => {
   });
 
   it("renders a paragraph with inline styles", () => {
-    expect(render("Some **bold**, *italic* and `code`."))
-      .toBe("<p>Some <strong>bold</strong>, <em>italic</em> and <code>code</code>.</p>\n");
+    expect(render("Some **bold**, *italic* and `code`.")).toBe(
+      "<p>Some <strong>bold</strong>, <em>italic</em> and <code>code</code>.</p>\n",
+    );
   });
 
   it("renders strikethrough", () => {

@@ -8,11 +8,21 @@ export function messageOf(error: unknown): string {
 }
 
 /// A warning on the window, with one button to dismiss it.
-export async function showWarning(window: BrowserWindow, message: string, detail: string, strings: Strings): Promise<void> {
+export async function showWarning(
+  window: BrowserWindow,
+  message: string,
+  detail: string,
+  strings: Strings,
+): Promise<void> {
   await dialog.showMessageBox(window, { type: "warning", message, detail, buttons: [strings.t("OK")] });
 }
 
 /// A warning that something failed, with the error as its detail.
-export async function showError(window: BrowserWindow, message: string, error: unknown, strings: Strings): Promise<void> {
+export async function showError(
+  window: BrowserWindow,
+  message: string,
+  error: unknown,
+  strings: Strings,
+): Promise<void> {
   await showWarning(window, message, messageOf(error), strings);
 }

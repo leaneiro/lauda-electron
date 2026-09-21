@@ -210,7 +210,9 @@ class HTMLRenderer {
   }
 
   private childrenHTML(markup: Markup): string {
-    return childrenOf(markup).map((child) => this.visit(child)).join("");
+    return childrenOf(markup)
+      .map((child) => this.visit(child))
+      .join("");
   }
 
   private codeBlock(codeBlock: CodeBlock): string {

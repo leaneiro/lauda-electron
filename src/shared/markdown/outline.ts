@@ -61,4 +61,3 @@ function isInline(markup: Markup): markup is Parameters<typeof plainText>[0] {
       return false;
   }
 }
-

@@ -216,9 +216,7 @@ export class OpenPairs {
   }
 
   selectionDidChange(selection: TextRange): void {
-    this.stack = this.stack.filter(
-      (pair) => !(selection.location <= pair.opener || maxRange(selection) > pair.closer),
-    );
+    this.stack = this.stack.filter((pair) => !(selection.location <= pair.opener || maxRange(selection) > pair.closer));
   }
 
   removeAll(): void {

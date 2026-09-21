@@ -44,7 +44,24 @@ export async function exportHTML(window: BrowserWindow, request: ExportRequest, 
 
 /// Countries that print on US Letter; everywhere else prints on A4, as the
 /// native export follows the region's paper.
-const letterCountries = new Set(["US", "CA", "MX", "PH", "CL", "CO", "VE", "PR", "CR", "GT", "PA", "DO", "SV", "NI", "HN", "BZ"]);
+const letterCountries = new Set([
+  "US",
+  "CA",
+  "MX",
+  "PH",
+  "CL",
+  "CO",
+  "VE",
+  "PR",
+  "CR",
+  "GT",
+  "PA",
+  "DO",
+  "SV",
+  "NI",
+  "HN",
+  "BZ",
+]);
 
 export async function exportPDF(window: BrowserWindow, request: ExportRequest, settings: Settings, strings: Strings) {
   const result = await dialog.showSaveDialog(window, {

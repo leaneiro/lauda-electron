@@ -21,6 +21,7 @@
     "dist:mac": "node scripts/build.mjs --production && electron-builder --mac --config.appId=com.carneirolabs.lauda.electron --config.productName=\"Lauda Electron\""
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.14",
     "@codemirror/commands": "^6.11.1",
     "@codemirror/search": "^6.7.2",
     "@codemirror/state": "^6.7.5",

@@ -37,7 +37,11 @@ export const findField = StateField.define<FindState>({
     for (const effect of transaction.effects) if (effect.is(setFind)) return effect.value;
     if (!transaction.docChanged || !value.query) return value;
     const matches = matchesOf(transaction.state, value.query);
-    return { query: value.query, matches, current: matches.length ? Math.min(Math.max(value.current, 0), matches.length - 1) : -1 };
+    return {
+      query: value.query,
+      matches,
+      current: matches.length ? Math.min(Math.max(value.current, 0), matches.length - 1) : -1,
+    };
   },
   provide: (field) => EditorView.decorations.from(field, decorationsFor),
 });
@@ -50,7 +54,12 @@ function counts(find: FindState): FindCounts {
 export function findUpdate(view: EditorView, query: string): FindCounts {
   const matches = matchesOf(view.state, query);
   const caret = view.state.selection.main.from;
-  const index = matches.length ? Math.max(matches.findIndex((m) => m.from >= caret), 0) : -1;
+  const index = matches.length
+    ? Math.max(
+        matches.findIndex((m) => m.from >= caret),
+        0,
+      )
+    : -1;
   const find = { query, matches, current: index };
   view.dispatch({ effects: [setFind.of(find), ...scrollTo(find)] });
   return counts(find);

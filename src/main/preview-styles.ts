@@ -14,7 +14,9 @@ export function previewStylesheet(distDirectory: string): string {
       .join("\n");
     let face = "";
     try {
-      face = wordmarkFontFace(readFileSync(join(distDirectory, "resources/preview/LaudaWordmark.woff")).toString("base64"));
+      face = wordmarkFontFace(
+        readFileSync(join(distDirectory, "resources/preview/LaudaWordmark.woff")).toString("base64"),
+      );
     } catch {}
     cached = previewStyles(face, css);
   }

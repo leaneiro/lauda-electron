@@ -18,7 +18,8 @@ mkdirSync(dist, { recursive: true });
 let gitHash = "dev";
 try {
   gitHash = execSync("git rev-parse --short HEAD", { cwd: root, stdio: ["ignore", "pipe", "ignore"] })
-    .toString().trim();
+    .toString()
+    .trim();
 } catch {}
 
 const common = {

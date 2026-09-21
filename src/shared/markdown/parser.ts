@@ -12,16 +12,7 @@ import type { CompileContext, Extension, Options, Token } from "mdast-util-from-
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
 import type * as mdast from "mdast";
-import type {
-  BlockMarkup,
-  CodeBlock,
-  Document,
-  InlineMarkup,
-  ListItem,
-  SourceLine,
-  Table,
-  TableCell,
-} from "./markup";
+import type { BlockMarkup, CodeBlock, Document, InlineMarkup, ListItem, SourceLine, Table, TableCell } from "./markup";
 import { smartPunctuation, type Piece, type Replacement, type SmartSource } from "./smart-punctuation";
 
 /// Parses `markdown` into the tree the native renderer walks.
@@ -45,8 +36,12 @@ type MicromarkExtension = NonNullable<Options["extensions"]>[number];
 const disabledConstructs: MicromarkExtension = {
   disable: {
     null: [
-      "wwwAutolink", "protocolAutolink", "emailAutolink",
-      "gfmFootnoteDefinition", "gfmFootnoteCall", "gfmPotentialFootnoteCall",
+      "wwwAutolink",
+      "protocolAutolink",
+      "emailAutolink",
+      "gfmFootnoteDefinition",
+      "gfmFootnoteCall",
+      "gfmPotentialFootnoteCall",
       "tasklistCheck",
     ],
   },
@@ -325,9 +320,10 @@ class Converter {
       }
       case "table": {
         // The table keeps the position of the paragraph it grew out of.
-        const line = previous?.type === "paragraph" && isSplitAbove(previous, node)
-          ? paragraphStart(siblings, index - 1)
-          : lineOf(node);
+        const line =
+          previous?.type === "paragraph" && isSplitAbove(previous, node)
+            ? paragraphStart(siblings, index - 1)
+            : lineOf(node);
         return this.table(node, line);
       }
       default:
@@ -367,7 +363,11 @@ class Converter {
     const head = paragraph.children[0];
     if (head?.type === "text" && head.position?.start.offset === box && /^\[[ xX]\]/.test(head.value)) {
       this.provenance.dropLeading(head, 3);
-    } else if (head?.type === "linkReference" && head.position?.start.offset === box && head.position.end.offset === box + 3) {
+    } else if (
+      head?.type === "linkReference" &&
+      head.position?.start.offset === box &&
+      head.position.end.offset === box + 3
+    ) {
       // `[x]` read as a link, because the document defines "x".
       paragraph.children.shift();
     } else {
@@ -421,9 +421,10 @@ class Converter {
   /// cmark's info string: the whole text after the fence, trimmed, where
   /// micromark splits it into a language and the rest.
   private infoString(node: mdast.Code, fenced: FencedCode): string | null {
-    const gap = fenced.infoEnd !== undefined && fenced.metaStart !== undefined
-      ? this.markdown.slice(fenced.infoEnd, fenced.metaStart)
-      : "";
+    const gap =
+      fenced.infoEnd !== undefined && fenced.metaStart !== undefined
+        ? this.markdown.slice(fenced.infoEnd, fenced.metaStart)
+        : "";
     const info = ((node.lang ?? "") + gap + (node.meta ?? "")).replace(/[ \t\r\n]+$/, "");
     return info.length > 0 ? info : null;
   }
@@ -434,7 +435,9 @@ class Converter {
     const column = <T>(make: (index: number) => T): T[] => Array.from({ length: columns }, (_, index) => make(index));
     // With CMARK_OPT_TABLE_SPANS, a body cell holding just `^` merges into
     // the cell above; cmark empties it, and the renderer shows it empty.
-    const markers = [head, ...body].map((row) => column((index) => isRowSpanMarker(row?.children[index], this.markdown)));
+    const markers = [head, ...body].map((row) =>
+      column((index) => isRowSpanMarker(row?.children[index], this.markdown)),
+    );
     return {
       kind: "table",
       line,
@@ -444,7 +447,8 @@ class Converter {
         kind: "tableRow",
         line: lineOf(row),
         cells: column((index) => {
-          const spansUp = markers[rowIndex + 1]?.[index] && markers.slice(0, rowIndex + 1).some((above) => !above[index]);
+          const spansUp =
+            markers[rowIndex + 1]?.[index] && markers.slice(0, rowIndex + 1).some((above) => !above[index]);
           return this.cell(spansUp ? undefined : row.children[index]);
         }),
       })),
@@ -486,7 +490,13 @@ class Converter {
       case "link":
         return [{ kind: "link", ...target(node), children: this.phrasing(node.children, smart) }];
       case "linkReference":
-        return [{ kind: "link", ...target(this.definitions.get(node.identifier)), children: this.phrasing(node.children, smart) }];
+        return [
+          {
+            kind: "link",
+            ...target(this.definitions.get(node.identifier)),
+            children: this.phrasing(node.children, smart),
+          },
+        ];
       case "image":
         return this.image(node, target(node), smart);
       case "imageReference":
@@ -508,7 +518,10 @@ class Converter {
     // the alt text has none.
     const start = node.position?.start.offset;
     if (start !== undefined && this.markdown.startsWith("![^", start) && !children.some(holdsLink)) {
-      return [{ kind: "text", string: "!" }, { kind: "link", destination, title, children }];
+      return [
+        { kind: "text", string: "!" },
+        { kind: "link", destination, title, children },
+      ];
     }
     return [{ kind: "image", source: destination, title, children }];
   }
@@ -564,8 +577,10 @@ function paragraphStart(siblings: readonly mdast.RootContent[], index: number): 
   let first = siblings[index];
   if (!first) return null;
   for (const sibling of siblings.slice(0, index).reverse()) {
-    const touches = sibling.position !== undefined && first.position !== undefined
-      && sibling.position.end.line + 1 === first.position.start.line;
+    const touches =
+      sibling.position !== undefined &&
+      first.position !== undefined &&
+      sibling.position.end.line + 1 === first.position.start.line;
     if (sibling.type !== "definition" || !touches) break;
     first = sibling;
   }
@@ -598,7 +613,10 @@ function isRowSpanMarker(cell: mdast.TableCell | undefined, markdown: string): b
 }
 
 /// A link's destination and title, where swift-markdown reads empty as none.
-function target(node: { url: string; title?: string | null } | undefined): { destination: string | null; title: string | null } {
+function target(node: { url: string; title?: string | null } | undefined): {
+  destination: string | null;
+  title: string | null;
+} {
   return { destination: node?.url || null, title: node?.title || null };
 }
 

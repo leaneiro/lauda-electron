@@ -23,7 +23,9 @@ test("typing updates the preview and autosaves the file", async () => {
   await window.keyboard.type("\nNew line here");
   await expect(preview.locator("p")).toHaveText("New line here");
   await expect(window.locator(".save-status")).toHaveAttribute("data-status", "editing");
-  await expect.poll(() => readFileSync(join(folder, "notes.md"), "utf8"), { timeout: 6000 }).toBe("# Title\n\nNew line here");
+  await expect
+    .poll(() => readFileSync(join(folder, "notes.md"), "utf8"), { timeout: 6000 })
+    .toBe("# Title\n\nNew line here");
   await expect(window.locator(".save-status")).toHaveAttribute("data-status", "saved");
   await app.close();
 });
@@ -88,7 +90,9 @@ test("no control in the title bar sits in the window's drag region", async () =>
   await expect(window.locator(".tab")).toHaveCount(2);
   const inTheRegion = await window.evaluate(() => {
     const found: string[] = [];
-    for (const element of document.querySelectorAll("#titlebar button, #titlebar .tab, #titlebar .glass, #titlebar input")) {
+    for (const element of document.querySelectorAll(
+      "#titlebar button, #titlebar .tab, #titlebar .glass, #titlebar input",
+    )) {
       for (const pseudo of [undefined, "::before", "::after"]) {
         if (getComputedStyle(element, pseudo).getPropertyValue("-webkit-app-region") === "drag") {
           found.push(`${element.tagName.toLowerCase()}.${element.className}${pseudo ?? ""}`);
@@ -100,7 +104,9 @@ test("no control in the title bar sits in the window's drag region", async () =>
   expect(inTheRegion).toEqual([]);
   // The bar itself still carries the window: what stays in the region is its
   // empty room, which is what the reader drags.
-  const bar = await window.evaluate(() => getComputedStyle(document.getElementById("titlebar")!).getPropertyValue("-webkit-app-region"));
+  const bar = await window.evaluate(() =>
+    getComputedStyle(document.getElementById("titlebar")!).getPropertyValue("-webkit-app-region"),
+  );
   expect(bar).toBe("drag");
   await app.close();
 });

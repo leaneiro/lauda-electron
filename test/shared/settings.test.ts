@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { cssFontFamily, defaultSettings, nextPreviewWidthLevel, previewWidthShowing, sanitizeSettings } from "../../src/shared/settings";
+import {
+  cssFontFamily,
+  defaultSettings,
+  nextPreviewWidthLevel,
+  previewWidthShowing,
+  sanitizeSettings,
+} from "../../src/shared/settings";
 import { clampSplit, isSmoothModeChange } from "../../src/shared/layout";
 
 describe("settings", () => {
@@ -19,7 +25,13 @@ describe("settings", () => {
   });
 
   test("anything stored wrong falls back to its default", () => {
-    const settings = sanitizeSettings({ editorFontSize: 99, appearanceMode: "sepia", splitFraction: 0.3, previewWidthLevel: 5, strictLineBreaks: "yes" });
+    const settings = sanitizeSettings({
+      editorFontSize: 99,
+      appearanceMode: "sepia",
+      splitFraction: 0.3,
+      previewWidthLevel: 5,
+      strictLineBreaks: "yes",
+    });
     expect(settings.editorFontSize).toBe(14);
     expect(settings.appearanceMode).toBe("auto");
     expect(settings.splitFraction).toBe(0.3);

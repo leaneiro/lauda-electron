@@ -51,12 +51,13 @@ describe("code highlighter", () => {
     expect(html).toContain("&lt;script&gt;");
   });
 
-  it.each([["ts", "const a = 1"], ["sh", "echo hi"], ["sql", "SELECT 1"]])(
-    "knows the alias %s",
-    (alias, code) => {
-      expect(highlightCode(code, alias)).not.toBeNull();
-    },
-  );
+  it.each([
+    ["ts", "const a = 1"],
+    ["sh", "echo hi"],
+    ["sql", "SELECT 1"],
+  ])("knows the alias %s", (alias, code) => {
+    expect(highlightCode(code, alias)).not.toBeNull();
+  });
 
   it("doesn't crash or loop on an unterminated string", () => {
     expect(highlighted('let s = "unclosed', "swift")).toContain("hl-str");
@@ -69,8 +70,9 @@ describe("code highlighter", () => {
   });
 
   it("wraps each number, with underscores and a fraction, and leaves identifiers alone", () => {
-    expect(highlighted("let n = 1_000.5 + x2", "swift"))
-      .toBe('<span class="hl-kw">let</span> n = <span class="hl-num">1_000.5</span> + x2');
+    expect(highlighted("let n = 1_000.5 + x2", "swift")).toBe(
+      '<span class="hl-kw">let</span> n = <span class="hl-num">1_000.5</span> + x2',
+    );
   });
 
   it("treats a delimiter followed by a combining mark as one character, as Swift does", () => {

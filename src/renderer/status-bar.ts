@@ -32,7 +32,9 @@ export class StatusBar {
     const spacer = window.document.createElement("span");
     spacer.className = "spacer";
     this.save.className = "save-status";
-    this.save.title = isMac() ? t("macOS saves automatically; ⌘S saves right away.") : t("Lauda saves automatically; %@ saves right away.", shortcut("S"));
+    this.save.title = isMac()
+      ? t("macOS saves automatically; ⌘S saves right away.")
+      : t("Lauda saves automatically; %@ saves right away.", shortcut("S"));
     this.element.append(this.words, this.characters, this.reading, spacer, this.save);
     this.unsubscribe = document.onChange(() => this.update(false));
     // "Saved · 10:42" names a time, which the clock can make stale only by

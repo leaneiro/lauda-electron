@@ -27,24 +27,34 @@
   color-scheme: dark;
 }
 
-* { box-sizing: border-box; }
-html, body {
+* {
+  box-sizing: border-box;
+}
+html,
+body {
   margin: 0;
   background: var(--window-bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", system-ui, "Noto Sans", Ubuntu, Cantarell, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", system-ui, "Noto Sans", Ubuntu, Cantarell,
+    sans-serif;
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
   user-select: none;
 }
-form { padding: 20px; width: 480px; }
+form {
+  padding: 20px;
+  width: 480px;
+}
 
 .section-title {
   font-size: 13px;
   font-weight: 600;
   margin: 18px 10px 6px;
 }
-.section-title:first-child { margin-top: 0; }
+.section-title:first-child {
+  margin-top: 0;
+}
 .card {
   background: var(--card);
   border-radius: 10px;
@@ -57,9 +67,19 @@ form { padding: 20px; width: 480px; }
   min-height: 40px;
   padding: 6px 12px;
 }
-.row + .row { border-top: 1px solid var(--separator); }
-.row label, .row .label { flex: 1; }
-.row .label small { display: block; color: var(--text-secondary); font-size: 11px; margin-top: 2px; }
+.row + .row {
+  border-top: 1px solid var(--separator);
+}
+.row label,
+.row .label {
+  flex: 1;
+}
+.row .label small {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 11px;
+  margin-top: 2px;
+}
 .value {
   width: 44px;
   text-align: right;
@@ -76,7 +96,10 @@ select {
   padding: 3px 8px;
   max-width: 220px;
 }
-input[type="range"] { width: 190px; accent-color: var(--accent); }
+input[type="range"] {
+  width: 190px;
+  accent-color: var(--accent);
+}
 input[type="checkbox"] {
   appearance: none;
   width: 32px;
@@ -99,8 +122,12 @@ input[type="checkbox"]::after {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   transition: transform 0.15s;
 }
-input[type="checkbox"]:checked { background: var(--accent); }
-input[type="checkbox"]:checked::after { transform: translateX(13px); }
+input[type="checkbox"]:checked {
+  background: var(--accent);
+}
+input[type="checkbox"]:checked::after {
+  transform: translateX(13px);
+}
 
 .segmented {
   display: flex;
@@ -134,4 +161,6 @@ input[type="checkbox"]:checked::after { transform: translateX(13px); }
   border-radius: 6px;
   padding: 4px 14px;
 }
-.restore button:active { filter: brightness(0.95); }
+.restore button:active {
+  filter: brightness(0.95);
+}

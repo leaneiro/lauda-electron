@@ -49,7 +49,11 @@ export function pairDeleteBackward(selection: Range, openPair: Pair | null): Edi
 }
 
 /// `->` becomes → and `<-` becomes ← as the second character is typed.
-export function arrowSubstitution(text: string, range: Range, typed: string): { from: number; to: number; insert: string } | null {
+export function arrowSubstitution(
+  text: string,
+  range: Range,
+  typed: string,
+): { from: number; to: number; insert: string } | null {
   const result = editing.substitution(text, toTextRange(range), typed);
   return result ? { ...toRange(result.range), insert: result.replacement } : null;
 }

@@ -97,8 +97,13 @@ function rememberTopOfPage(): void {
     lastPosition = { atEnd: true };
   } else if (points) {
     lastPosition = {
-      line: interpolate(points, y, 1, 0), hasLine: true, endLine: 0, hasEndLine: false,
-      fraction: max > 0 ? y / max : 0, toEndDistance: 0, convergence: 1,
+      line: interpolate(points, y, 1, 0),
+      hasLine: true,
+      endLine: 0,
+      hasEndLine: false,
+      fraction: max > 0 ? y / max : 0,
+      toEndDistance: 0,
+      convergence: 1,
     };
   }
 }
@@ -173,8 +178,13 @@ function interpolate(points: [number, number][], value: number, from: 0 | 1, to:
 }
 
 function setScrollPosition(
-  line: number, hasLine: boolean, endLine: number, hasEndLine: boolean,
-  fraction: number, toEndDistance: number, convergence: number,
+  line: number,
+  hasLine: boolean,
+  endLine: number,
+  hasEndLine: boolean,
+  fraction: number,
+  toEndDistance: number,
+  convergence: number,
 ): void {
   lastPosition = { line, hasLine, endLine, hasEndLine, fraction, toEndDistance, convergence };
   const max = maxScroll();
@@ -269,7 +279,15 @@ window.addEventListener(
     lastPosition =
       max > 0 && y >= max - 1
         ? { atEnd: true }
-        : { line: line ?? 0, hasLine: line !== null, endLine: 0, hasEndLine: false, fraction, toEndDistance: 0, convergence: 1 };
+        : {
+            line: line ?? 0,
+            hasLine: line !== null,
+            endLine: 0,
+            hasEndLine: false,
+            fraction,
+            toEndDistance: 0,
+            convergence: 1,
+          };
     post({ type: "previewScrolled", line, endLine, fraction, toEndDistance });
   },
   { passive: true },
@@ -297,7 +315,16 @@ type Message =
   | { type: "setContent"; html: string; lines: number[]; lineCount: number; id: number }
   | { type: "setStyle"; family: string; size: number; lineHeight: number }
   | { type: "setContentWidth"; rem: number }
-  | { type: "setScrollPosition"; line: number; hasLine: boolean; endLine: number; hasEndLine: boolean; fraction: number; toEndDistance: number; convergence: number }
+  | {
+      type: "setScrollPosition";
+      line: number;
+      hasLine: boolean;
+      endLine: number;
+      hasEndLine: boolean;
+      fraction: number;
+      toEndDistance: number;
+      convergence: number;
+    }
   | { type: "realign" }
   | { type: "find"; query: string; forward: boolean; restart: boolean; id: number }
   | { type: "findClear" }
@@ -318,7 +345,15 @@ window.addEventListener("message", (event: MessageEvent<Message>) => {
       setContentWidth(message.rem);
       break;
     case "setScrollPosition":
-      setScrollPosition(message.line, message.hasLine, message.endLine, message.hasEndLine, message.fraction, message.toEndDistance, message.convergence);
+      setScrollPosition(
+        message.line,
+        message.hasLine,
+        message.endLine,
+        message.hasEndLine,
+        message.fraction,
+        message.toEndDistance,
+        message.convergence,
+      );
       break;
     case "realign":
       suppressScrollEventsUntil = Date.now() + 300;

@@ -61,7 +61,8 @@ export function sanitizeSettings(stored: unknown): Settings {
   const input = (stored && typeof stored === "object" ? stored : {}) as Record<string, unknown>;
   const pick = <K extends keyof Settings>(key: K, valid: (value: unknown) => boolean): Settings[K] =>
     (valid(input[key]) ? input[key] : defaultSettings[key]) as Settings[K];
-  const inRange = (min: number, max: number) => (v: unknown) => typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
+  const inRange = (min: number, max: number) => (v: unknown) =>
+    typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
   const isString = (v: unknown) => typeof v === "string" && v.length > 0;
   return {
     appearanceMode: pick("appearanceMode", (v) => appearanceModes.includes(v as AppearanceMode)),

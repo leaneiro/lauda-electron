@@ -42,7 +42,10 @@ export class Strings {
   private readonly numbers: Intl.NumberFormat;
   private readonly plurals: Intl.PluralRules;
 
-  constructor(readonly locale: Locale, private readonly isMac: boolean) {
+  constructor(
+    readonly locale: Locale,
+    private readonly isMac: boolean,
+  ) {
     this.numbers = new Intl.NumberFormat(locale);
     this.plurals = new Intl.PluralRules(locale);
   }

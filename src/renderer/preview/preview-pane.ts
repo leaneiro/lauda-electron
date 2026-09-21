@@ -110,7 +110,12 @@ export class PreviewPane implements PreviewFinding {
       this.pendingContent = content;
       return;
     }
-    await this.request({ type: "setContent", html: content.html, lines: content.anchorLines, lineCount: content.lineCount });
+    await this.request({
+      type: "setContent",
+      html: content.html,
+      lines: content.anchorLines,
+      lineCount: content.lineCount,
+    });
     this.alignScrollAfterContentChange();
   }
 

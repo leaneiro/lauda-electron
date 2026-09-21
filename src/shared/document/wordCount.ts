@@ -27,8 +27,37 @@ export function wordCount(text: string): number {
 /// "3.14", "1,000". The system's segmenter keeps such words whole; the one
 /// in Chromium's build of ICU splits some of them at the full stop, so the
 /// pieces are joined again here to count as the native app does.
-const joiners = new Set([".", "'", "’", ":", "·", "\u2024", "\uFE52", "\uFF07", "\uFF0E", "\uFE13", "\uFE55", "\uFF1A", ",", ";"]);
-const numericJoiners = new Set([",", ";", "\u037E", "\u0589", "\u060C", "\u060D", "\u066C", "\u07F8", "\u2044", "\uFE10", "\uFE14", "\uFF0C", "\uFF1B"]);
+const joiners = new Set([
+  ".",
+  "'",
+  "’",
+  ":",
+  "·",
+  "\u2024",
+  "\uFE52",
+  "\uFF07",
+  "\uFF0E",
+  "\uFE13",
+  "\uFE55",
+  "\uFF1A",
+  ",",
+  ";",
+]);
+const numericJoiners = new Set([
+  ",",
+  ";",
+  "\u037E",
+  "\u0589",
+  "\u060C",
+  "\u060D",
+  "\u066C",
+  "\u07F8",
+  "\u2044",
+  "\uFE10",
+  "\uFE14",
+  "\uFF0C",
+  "\uFF1B",
+]);
 
 function isLetterWord(segment: string): boolean {
   return /^\p{L}/u.test(segment);
@@ -50,12 +79,22 @@ export function countWords(segments: Iterable<{ segment: string; isWordLike?: bo
       const joined =
         previous !== null &&
         joiner !== null &&
-        ((isLetterWord(previous.segment) && isLetterWord(current.segment) && joiners.has(joiner) && !numericJoiners.has(joiner)) ||
-          (isNumberWord(previous.segment) && isNumberWord(current.segment) && (joiner === "." || numericJoiners.has(joiner))));
+        ((isLetterWord(previous.segment) &&
+          isLetterWord(current.segment) &&
+          joiners.has(joiner) &&
+          !numericJoiners.has(joiner)) ||
+          (isNumberWord(previous.segment) &&
+            isNumberWord(current.segment) &&
+            (joiner === "." || numericJoiners.has(joiner))));
       if (!joined) count += 1;
       previous = current;
       joiner = null;
-    } else if (previous !== null && joiner === null && [...current.segment].length === 1 && (joiners.has(current.segment) || numericJoiners.has(current.segment))) {
+    } else if (
+      previous !== null &&
+      joiner === null &&
+      [...current.segment].length === 1 &&
+      (joiners.has(current.segment) || numericJoiners.has(current.segment))
+    ) {
       joiner = current.segment;
     } else {
       previous = null;

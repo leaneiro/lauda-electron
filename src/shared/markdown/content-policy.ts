@@ -5,7 +5,18 @@
 /// File extensions the app treats as images: dropped or pasted into the
 /// editor, and served to the preview from the document's folder.
 export const imageFileExtensions: ReadonlySet<string> = new Set([
-  "png", "jpg", "jpeg", "gif", "webp", "bmp", "tiff", "tif", "heic", "avif", "svg", "ico",
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "webp",
+  "bmp",
+  "tiff",
+  "tif",
+  "heic",
+  "avif",
+  "svg",
+  "ico",
 ]);
 
 /// Whether a file path names an image, by its extension (ImageFileTypes.isImage).
@@ -26,7 +37,11 @@ export const allowedLinkSchemes: ReadonlySet<string> = new Set(["http", "https",
 /// where a leading dot (".png", a hidden file) starts no extension. Both
 /// separators count, since the main process also runs on Windows.
 function pathExtension(path: string): string {
-  const component = path.replace(/[\\/]+$/, "").split(/[\\/]/).pop() ?? "";
+  const component =
+    path
+      .replace(/[\\/]+$/, "")
+      .split(/[\\/]/)
+      .pop() ?? "";
   const dot = component.lastIndexOf(".");
   return dot > 0 ? component.slice(dot + 1) : "";
 }

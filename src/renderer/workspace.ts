@@ -280,7 +280,12 @@ export class Workspace {
         await document.save();
         return;
       case "duplicate":
-        this.open({ filePath: null, text: document.text, title: t("%@ copy", withoutExtension(document.title)), edited: true });
+        this.open({
+          filePath: null,
+          text: document.text,
+          title: t("%@ copy", withoutExtension(document.title)),
+          edited: true,
+        });
         return;
       case "rename":
       case "move": {
@@ -334,8 +339,17 @@ export class Workspace {
 
   private reportToMain(): void {
     const document = this.selected;
-    const windowInfo = { title: document?.title ?? "Lauda", filePath: document?.filePath ?? null, edited: document?.isEdited ?? false };
-    const menu = { hasDocument: !!document, hasFile: !!document?.filePath, documentCount: this.documents.length, viewMode: this.viewMode };
+    const windowInfo = {
+      title: document?.title ?? "Lauda",
+      filePath: document?.filePath ?? null,
+      edited: document?.isEdited ?? false,
+    };
+    const menu = {
+      hasDocument: !!document,
+      hasFile: !!document?.filePath,
+      documentCount: this.documents.length,
+      viewMode: this.viewMode,
+    };
     const session = {
       files: this.documents.flatMap((d) => (d.filePath ? [d.filePath] : [])),
       selected: this.selected?.filePath ?? null,

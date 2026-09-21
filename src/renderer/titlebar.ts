@@ -31,7 +31,10 @@ export class TitleBar {
   private readonly tabs = new Map<string, HTMLElement>();
   private readonly outline: OutlinePopover;
 
-  constructor(private readonly root: HTMLElement, private readonly workspace: Workspace) {
+  constructor(
+    private readonly root: HTMLElement,
+    private readonly workspace: Workspace,
+  ) {
     if (!isMac()) {
       const menu = element("button", "menu-button");
       menu.innerHTML = icons.menu;
@@ -79,7 +82,12 @@ export class TitleBar {
 
     if (isMac()) {
       root.addEventListener("dblclick", (event) => {
-        if (event.target === root || event.target === this.spacer || event.target === this.title || event.target === this.strip) {
+        if (
+          event.target === root ||
+          event.target === this.spacer ||
+          event.target === this.title ||
+          event.target === this.strip
+        ) {
           void lauda.invoke("window:title-bar-double-click");
         }
       });
@@ -206,7 +214,15 @@ export class TitleBar {
   /// Windows and Linux draw the window's buttons over the right end of the
   /// title bar; the controls stop short of them.
   private watchWindowControls(): void {
-    const overlay = (navigator as Navigator & { windowControlsOverlay?: { visible: boolean; getTitlebarAreaRect(): DOMRect; addEventListener(type: string, listener: () => void): void } }).windowControlsOverlay;
+    const overlay = (
+      navigator as Navigator & {
+        windowControlsOverlay?: {
+          visible: boolean;
+          getTitlebarAreaRect(): DOMRect;
+          addEventListener(type: string, listener: () => void): void;
+        };
+      }
+    ).windowControlsOverlay;
     if (!overlay || isMac()) return;
     // Until the system reports where its buttons are, the room measured for
     // them on each system (set at startup) stands.

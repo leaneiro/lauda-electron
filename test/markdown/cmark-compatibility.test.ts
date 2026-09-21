@@ -6,8 +6,9 @@ import { render, renderWithLines } from "../../src/shared/markdown";
 
 describe("cmark compatibility: smart punctuation", () => {
   it("curls quotes and turns dashes and ellipses into their characters", () => {
-    expect(render('"Hello," she said -- it\'s fine... or not---really.'))
-      .toBe("<p>“Hello,” she said – it’s fine… or not—really.</p>\n");
+    expect(render('"Hello," she said -- it\'s fine... or not---really.')).toBe(
+      "<p>“Hello,” she said – it’s fine… or not—really.</p>\n",
+    );
   });
 
   it("pairs single quotes on cmark's delimiter stack", () => {
@@ -28,13 +29,13 @@ describe("cmark compatibility: task lists", () => {
     // `[X]` counts, a box ending its line doesn't, and "[x]" anywhere on the
     // line checks the item.
     expect(render("- [ ] a\n- [x] b\n- [X] c\n- [ ]\n- [ ] a [x] b")).toBe(
-      "<ul>\n"
-      + '<li class="task"><input type="checkbox" disabled> a</li>\n'
-      + '<li class="task"><input type="checkbox" disabled checked> b</li>\n'
-      + '<li class="task"><input type="checkbox" disabled checked> c</li>\n'
-      + "<li>[ ]</li>\n"
-      + '<li class="task"><input type="checkbox" disabled checked> a [x] b</li>\n'
-      + "</ul>\n",
+      "<ul>\n" +
+        '<li class="task"><input type="checkbox" disabled> a</li>\n' +
+        '<li class="task"><input type="checkbox" disabled checked> b</li>\n' +
+        '<li class="task"><input type="checkbox" disabled checked> c</li>\n' +
+        "<li>[ ]</li>\n" +
+        '<li class="task"><input type="checkbox" disabled checked> a [x] b</li>\n' +
+        "</ul>\n",
     );
   });
 
@@ -43,8 +44,9 @@ describe("cmark compatibility: task lists", () => {
   });
 
   it("reads the box even when the document defines its label", () => {
-    expect(render("- [x] done\n\n[x]: http://e.com"))
-      .toBe('<ul>\n<li class="task"><input type="checkbox" disabled checked> done</li>\n</ul>\n');
+    expect(render("- [x] done\n\n[x]: http://e.com")).toBe(
+      '<ul>\n<li class="task"><input type="checkbox" disabled checked> done</li>\n</ul>\n',
+    );
   });
 });
 
@@ -59,13 +61,13 @@ describe("cmark compatibility: tables", () => {
 
   it("completes short rows and drops extra cells", () => {
     expect(render("| a | b |\n|:--|--:|\n| 1 | 2 |\n| 3 |\n| 4 | 5 | 6 |")).toBe(
-      "<table>\n<thead>\n"
-      + '<tr><th style="text-align:left">a</th><th style="text-align:right">b</th></tr>\n'
-      + "</thead>\n<tbody>\n"
-      + '<tr><td style="text-align:left">1</td><td style="text-align:right">2</td></tr>\n'
-      + '<tr><td style="text-align:left">3</td><td style="text-align:right"></td></tr>\n'
-      + '<tr><td style="text-align:left">4</td><td style="text-align:right">5</td></tr>\n'
-      + "</tbody>\n</table>\n",
+      "<table>\n<thead>\n" +
+        '<tr><th style="text-align:left">a</th><th style="text-align:right">b</th></tr>\n' +
+        "</thead>\n<tbody>\n" +
+        '<tr><td style="text-align:left">1</td><td style="text-align:right">2</td></tr>\n' +
+        '<tr><td style="text-align:left">3</td><td style="text-align:right"></td></tr>\n' +
+        '<tr><td style="text-align:left">4</td><td style="text-align:right">5</td></tr>\n' +
+        "</tbody>\n</table>\n",
     );
   });
 
@@ -81,8 +83,8 @@ describe("cmark compatibility: tables", () => {
 describe("cmark compatibility: code", () => {
   it("uses the whole info string as the language class", () => {
     expect(render("```swift  title=x  \nlet x = 1\n```")).toBe(
-      '<pre class="keep"><code class="language-swift  title=x">'
-      + '<span class="hl-kw">let</span> x = <span class="hl-num">1</span>\n</code></pre>\n',
+      '<pre class="keep"><code class="language-swift  title=x">' +
+        '<span class="hl-kw">let</span> x = <span class="hl-num">1</span>\n</code></pre>\n',
     );
   });
 
@@ -114,8 +116,9 @@ describe("cmark compatibility: inlines", () => {
   });
 
   it("links autolinks but not bare URLs", () => {
-    expect(render("https://bare.link and <https://auto.link>"))
-      .toBe('<p>https://bare.link and <a href="https://auto.link">https://auto.link</a></p>\n');
+    expect(render("https://bare.link and <https://auto.link>")).toBe(
+      '<p>https://bare.link and <a href="https://auto.link">https://auto.link</a></p>\n',
+    );
   });
 
   it("reads ![^ as text followed by a link", () => {

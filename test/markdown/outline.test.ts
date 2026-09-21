@@ -54,7 +54,9 @@ describe("outline", () => {
   });
 
   it("lists headings inside block quotes and list items", () => {
-    expect(outlineItems("> # Quoted\n\n- ## Listed").map((item) => [item.title, item.line]))
-      .toEqual([["Quoted", 0], ["Listed", 2]]);
+    expect(outlineItems("> # Quoted\n\n- ## Listed").map((item) => [item.title, item.line])).toEqual([
+      ["Quoted", 0],
+      ["Listed", 2],
+    ]);
   });
 });

@@ -36,7 +36,9 @@ describe("Strings", () => {
   });
 
   test("arguments fill in order", () => {
-    expect(new Strings("pt-BR", true).t("Text width: %@. Next: %@", "Normal", "Média")).toBe("Largura do texto: Normal. Próxima: Média");
+    expect(new Strings("pt-BR", true).t("Text width: %@. Next: %@", "Normal", "Média")).toBe(
+      "Largura do texto: Normal. Próxima: Média",
+    );
   });
 
   test("a missing key reads as itself", () => {
@@ -49,7 +51,9 @@ describe("Strings", () => {
   });
 
   test("the app's own strings exist in every language", async () => {
-    const app = (await import("../../resources/locales/app.json")).default as { strings: Record<string, Record<string, string>> };
+    const app = (await import("../../resources/locales/app.json")).default as {
+      strings: Record<string, Record<string, string>>;
+    };
     for (const [key, translations] of Object.entries(app.strings)) {
       for (const locale of ["en", "pt-BR", "de", "es", "fr", "ja", "zh-Hans"]) {
         expect(translations[locale], `${key} in ${locale}`).toBeTruthy();

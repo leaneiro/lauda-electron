@@ -18,11 +18,14 @@ describe("WordCount", () => {
 
   /// Japanese and Chinese have no spaces between words; splitting on
   /// whitespace would count a whole sentence as one word.
-  it.each(["今日は良い天気です。", "我们今天去公园散步。"])("counts words in languages without spaces: %s", (sentence) => {
-    const count = wordCount(sentence);
-    expect(count).toBeGreaterThan(2);
-    expect(count).toBeLessThan(characterCount(sentence));
-  });
+  it.each(["今日は良い天気です。", "我们今天去公园散步。"])(
+    "counts words in languages without spaces: %s",
+    (sentence) => {
+      const count = wordCount(sentence);
+      expect(count).toBeGreaterThan(2);
+      expect(count).toBeLessThan(characterCount(sentence));
+    },
+  );
 });
 
 // The status bar's character count (Swift's String.count), which has no

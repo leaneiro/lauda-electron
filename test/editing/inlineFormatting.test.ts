@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { boldMarker, italicMarker, link, strikethroughMarker, toggle, togglePair, underlineTags, type TextEdit } from "../../src/shared/editing";
+import {
+  boldMarker,
+  italicMarker,
+  link,
+  strikethroughMarker,
+  toggle,
+  togglePair,
+  underlineTags,
+  type TextEdit,
+} from "../../src/shared/editing";
 
 function apply(edit: TextEdit, text: string): string {
   return text.slice(0, edit.range.location) + edit.replacement + text.slice(edit.range.location + edit.range.length);

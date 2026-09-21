@@ -20,7 +20,9 @@ export function installedFontFamilies(): Promise<string[]> {
       const json = await run("system_profiler", ["SPFontsDataType", "-json"]);
       try {
         const data = JSON.parse(json) as { SPFontsDataType?: { typefaces?: { family?: string }[] }[] };
-        families = (data.SPFontsDataType ?? []).flatMap((font) => (font.typefaces ?? []).map((face) => face.family ?? ""));
+        families = (data.SPFontsDataType ?? []).flatMap((font) =>
+          (font.typefaces ?? []).map((face) => face.family ?? ""),
+        );
       } catch {}
     } else if (process.platform === "win32") {
       const output = await run("powershell.exe", [
@@ -33,7 +35,9 @@ export function installedFontFamilies(): Promise<string[]> {
       const output = await run("fc-list", [":", "family"]);
       families = output.split("\n").map((line) => line.split(",")[0] ?? "");
     }
-    const unique = new Set(families.map((family) => family.trim()).filter((family) => family && !family.startsWith(".")));
+    const unique = new Set(
+      families.map((family) => family.trim()).filter((family) => family && !family.startsWith(".")),
+    );
     return [...unique].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
   })();
   return cached;

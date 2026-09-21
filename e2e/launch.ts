@@ -11,7 +11,9 @@ export interface Launched {
 
 /// Starts the built app with a data folder of its own (so nothing the
 /// reader has is touched) and, optionally, files to open.
-export async function launch(options: { files?: Record<string, string>; settings?: object; locale?: string } = {}): Promise<Launched> {
+export async function launch(
+  options: { files?: Record<string, string>; settings?: object; locale?: string } = {},
+): Promise<Launched> {
   const folder = mkdtempSync(join(tmpdir(), "lauda-e2e-"));
   const userData = join(folder, "user-data");
   const documents = join(folder, "docs");
@@ -39,7 +41,10 @@ export async function launch(options: { files?: Record<string, string>; settings
 
 /// The preview's frame, once its page has loaded.
 export async function previewFrame(window: Page, index = 0) {
-  await window.waitForFunction((i) => document.querySelectorAll(".document:not([hidden]) .preview-frame").length > i, index);
+  await window.waitForFunction(
+    (i) => document.querySelectorAll(".document:not([hidden]) .preview-frame").length > i,
+    index,
+  );
   const handle = await window.locator(".document:not([hidden]) .preview-frame").nth(index).elementHandle();
   const frame = await handle!.contentFrame();
   await frame!.waitForSelector("#content");

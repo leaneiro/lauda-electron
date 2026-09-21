@@ -1,6 +1,16 @@
 import { Annotation, EditorSelection, type Extension, Transaction } from "@codemirror/state";
 import { EditorView, keymap, ViewPlugin, type ViewUpdate, type KeyBinding } from "@codemirror/view";
-import { history, historyKeymap, insertNewline, insertTab, isolateHistory, redo, redoSelection, undo, undoSelection } from "@codemirror/commands";
+import {
+  history,
+  historyKeymap,
+  insertNewline,
+  insertTab,
+  isolateHistory,
+  redo,
+  redoSelection,
+  undo,
+  undoSelection,
+} from "@codemirror/commands";
 import { lauda } from "../api";
 import type { LaudaDocument } from "../document";
 import * as rules from "./rules";
@@ -41,7 +51,10 @@ export const historyBindings: KeyBinding[] = [
 ];
 
 export const wordUndo: Extension = [
-  history({ newGroupDelay: 60_000, joinToEvent: (transaction, isAdjacent) => isAdjacent && !startsNewWord(transaction) }),
+  history({
+    newGroupDelay: 60_000,
+    joinToEvent: (transaction, isAdjacent) => isAdjacent && !startsNewWord(transaction),
+  }),
   keymap.of(historyBindings),
 ];
 
@@ -94,11 +107,17 @@ const typing = EditorView.inputHandler.of((view, from, to, text) => {
   // where `->` and `*` are meant literally.
   const pairing = rules.pairTyping(text, { from, to }, doc, openPair(view), () => rules.isInsideCode(doc, from));
   if (pairing) {
-    const changes = pairing.from === pairing.to && pairing.insert === "" ? [] : [{ from: pairing.from, to: pairing.to, insert: pairing.insert }];
+    const changes =
+      pairing.from === pairing.to && pairing.insert === ""
+        ? []
+        : [{ from: pairing.from, to: pairing.to, insert: pairing.insert }];
     view.dispatch({
       changes,
       selection: EditorSelection.range(pairing.selection.from, pairing.selection.to),
-      annotations: [Transaction.userEvent.of("input.type"), ...(pairing.opensPairAt !== undefined ? [opensPair.of(pairing.opensPairAt)] : [])],
+      annotations: [
+        Transaction.userEvent.of("input.type"),
+        ...(pairing.opensPairAt !== undefined ? [opensPair.of(pairing.opensPairAt)] : []),
+      ],
       scrollIntoView: true,
     });
     return true;
@@ -131,12 +150,22 @@ const composedPairs = EditorView.domEventHandlers({
       const from = head - typed.length;
       if (from < 0 || view.state.sliceDoc(from, head) !== typed || !view.state.selection.main.empty) return;
       const doc = view.state.doc.toString();
-      const pairing = rules.pairTyping(typed, { from, to: head }, doc, openPair(view), () => rules.isInsideCode(doc, from), true);
+      const pairing = rules.pairTyping(
+        typed,
+        { from, to: head },
+        doc,
+        openPair(view),
+        () => rules.isInsideCode(doc, from),
+        true,
+      );
       if (!pairing) return;
       view.dispatch({
         changes: [{ from: pairing.from, to: pairing.to, insert: pairing.insert }],
         selection: EditorSelection.range(pairing.selection.from, pairing.selection.to),
-        annotations: [Transaction.userEvent.of("input.type.compose"), ...(pairing.opensPairAt !== undefined ? [opensPair.of(pairing.opensPairAt)] : [])],
+        annotations: [
+          Transaction.userEvent.of("input.type.compose"),
+          ...(pairing.opensPairAt !== undefined ? [opensPair.of(pairing.opensPairAt)] : []),
+        ],
       });
     });
     return false;
@@ -158,9 +187,11 @@ function listEdit(view: EditorView, make: (text: string, selection: rules.Range)
 }
 
 const newline = (view: EditorView) => listEdit(view, rules.newlineEdit) || insertNewline(view);
-const indent = (view: EditorView) => listEdit(view, (text, selection) => rules.indentEdit(text, selection, false)) || insertTab(view);
+const indent = (view: EditorView) =>
+  listEdit(view, (text, selection) => rules.indentEdit(text, selection, false)) || insertTab(view);
 // Shift-Tab outside a list does nothing, rather than leave the editor.
-const outdent = (view: EditorView) => listEdit(view, (text, selection) => rules.indentEdit(text, selection, true)) || true;
+const outdent = (view: EditorView) =>
+  listEdit(view, (text, selection) => rules.indentEdit(text, selection, true)) || true;
 
 /// Deleting into an empty pair the editor typed takes both characters.
 function deleteBackward(view: EditorView): boolean {
@@ -201,14 +232,23 @@ async function pngBytes(file: File): Promise<Uint8Array | null> {
 
 /// Images are copied into the document's folder, so a document without
 /// one asks to be saved first.
-async function insertImages(view: EditorView, document: LaudaDocument, files: File[], at: number | null): Promise<void> {
+async function insertImages(
+  view: EditorView,
+  document: LaudaDocument,
+  files: File[],
+  at: number | null,
+): Promise<void> {
   if (!document.filePath) {
     await lauda.invoke("images:ask-save-first");
     return;
   }
   const withPaths = files.map((file) => ({ file, path: lauda.pathForFile(file) }));
   const result = withPaths.every((item) => item.path)
-    ? await lauda.invoke("images:import", document.filePath, withPaths.map((item) => item.path))
+    ? await lauda.invoke(
+        "images:import",
+        document.filePath,
+        withPaths.map((item) => item.path),
+      )
     : await (async () => {
         const first = files[0];
         const png = first ? await pngBytes(first) : null;

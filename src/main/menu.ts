@@ -50,7 +50,12 @@ export function buildMenu(context: MenuContext): Menu {
       { type: "separator" },
       { label: t("Revert to Saved"), click: command("revert"), enabled: hasFile },
       { type: "separator" },
-      { label: t("Export as PDF…"), accelerator: "CmdOrCtrl+Shift+E", click: command("export-pdf"), enabled: hasDocument },
+      {
+        label: t("Export as PDF…"),
+        accelerator: "CmdOrCtrl+Shift+E",
+        click: command("export-pdf"),
+        enabled: hasDocument,
+      },
       {
         label: t("Export as HTML…"),
         accelerator: isMac ? "Cmd+Alt+Shift+E" : undefined,
@@ -81,7 +86,12 @@ export function buildMenu(context: MenuContext): Menu {
       { type: "separator" },
       { label: t("Find…"), accelerator: "CmdOrCtrl+F", click: command("find"), enabled: hasDocument },
       { label: t("Find Next"), accelerator: "CmdOrCtrl+G", click: command("find-next"), enabled: hasDocument },
-      { label: t("Find Previous"), accelerator: "CmdOrCtrl+Shift+G", click: command("find-previous"), enabled: hasDocument },
+      {
+        label: t("Find Previous"),
+        accelerator: "CmdOrCtrl+Shift+G",
+        click: command("find-previous"),
+        enabled: hasDocument,
+      },
       {
         label: t("Find and Replace…"),
         accelerator: isMac ? "Cmd+Alt+F" : "Ctrl+H",
@@ -97,7 +107,12 @@ export function buildMenu(context: MenuContext): Menu {
       { label: t("Bold"), accelerator: "CmdOrCtrl+B", click: command("bold"), enabled: hasDocument },
       { label: t("Italic"), accelerator: "CmdOrCtrl+I", click: command("italic"), enabled: hasDocument },
       { label: t("Underline"), accelerator: "CmdOrCtrl+U", click: command("underline"), enabled: hasDocument },
-      { label: t("Strikethrough"), accelerator: "CmdOrCtrl+Shift+X", click: command("strikethrough"), enabled: hasDocument },
+      {
+        label: t("Strikethrough"),
+        accelerator: "CmdOrCtrl+Shift+X",
+        click: command("strikethrough"),
+        enabled: hasDocument,
+      },
       { type: "separator" },
       { label: t("Add Link"), accelerator: "CmdOrCtrl+K", click: command("link"), enabled: hasDocument },
     ],
@@ -116,8 +131,18 @@ export function buildMenu(context: MenuContext): Menu {
   };
 
   const tabs: MenuItemConstructorOptions[] = [
-    { label: t("Show Next Tab"), accelerator: "CmdOrCtrl+Shift+]", click: command("next-tab"), enabled: state.documentCount > 1 },
-    { label: t("Show Previous Tab"), accelerator: "CmdOrCtrl+Shift+[", click: command("previous-tab"), enabled: state.documentCount > 1 },
+    {
+      label: t("Show Next Tab"),
+      accelerator: "CmdOrCtrl+Shift+]",
+      click: command("next-tab"),
+      enabled: state.documentCount > 1,
+    },
+    {
+      label: t("Show Previous Tab"),
+      accelerator: "CmdOrCtrl+Shift+[",
+      click: command("previous-tab"),
+      enabled: state.documentCount > 1,
+    },
   ];
   if (!isMac) {
     // Windows and Linux move between tabs with Ctrl+Tab as well.
@@ -146,7 +171,12 @@ export function buildMenu(context: MenuContext): Menu {
     role: isMac ? "help" : undefined,
     submenu: [
       { label: t("Welcome Guide"), click: context.showWelcomeGuide },
-      ...(isMac ? [] : ([{ type: "separator" }, { label: t("About Lauda"), click: context.showAbout }] as MenuItemConstructorOptions[])),
+      ...(isMac
+        ? []
+        : ([
+            { type: "separator" },
+            { label: t("About Lauda"), click: context.showAbout },
+          ] as MenuItemConstructorOptions[])),
     ],
   };
 

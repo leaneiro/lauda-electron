@@ -1,4 +1,16 @@
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeTheme, session, shell, systemPreferences, type IpcMainInvokeEvent } from "electron";
+import {
+  app,
+  BrowserWindow,
+  clipboard,
+  dialog,
+  ipcMain,
+  Menu,
+  nativeTheme,
+  session,
+  shell,
+  systemPreferences,
+  type IpcMainInvokeEvent,
+} from "electron";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { copyFile, rename, rm } from "node:fs/promises";
 import { basename, dirname, extname, join } from "node:path";
@@ -384,7 +396,10 @@ function isFromTheApp(event: IpcMainInvokeEvent): boolean {
 
 function handle<C extends RequestChannel>(
   channel: C,
-  handler: (event: IpcMainInvokeEvent, ...args: Requests[C]["args"]) => Promise<Requests[C]["result"]> | Requests[C]["result"],
+  handler: (
+    event: IpcMainInvokeEvent,
+    ...args: Requests[C]["args"]
+  ) => Promise<Requests[C]["result"]> | Requests[C]["result"],
 ): void {
   ipcMain.handle(channel, (event, ...args) => {
     if (!isFromTheApp(event)) throw new Error(`${channel} refused: not asked by the app`);
@@ -586,7 +601,10 @@ function registerRequests(): void {
 
   handle("images:import", (_event, documentPath, files) => {
     if (!granted.has(documentPath)) return { paths: [], error: notGranted.error };
-    return importImages(documentPath, files.filter((file) => typeof file === "string" && isImagePath(file)));
+    return importImages(
+      documentPath,
+      files.filter((file) => typeof file === "string" && isImagePath(file)),
+    );
   });
   handle("images:save-pasted", (_event, documentPath, png) => {
     if (!granted.has(documentPath)) return { paths: [], error: notGranted.error };
@@ -608,7 +626,8 @@ function registerRequests(): void {
   handle("settings:restore-defaults", () => settings.restoreDefaults());
   /// The Settings window is as tall as its form, as the native one is.
   handle("settings:fit-window", (_event, height) => {
-    if (settingsWindow && Number.isFinite(height)) settingsWindow.setContentSize(480, Math.ceil(Math.min(Math.max(height, 200), 900)));
+    if (settingsWindow && Number.isFinite(height))
+      settingsWindow.setContentSize(480, Math.ceil(Math.min(Math.max(height, 200), 900)));
   });
 
   handle("menu:set-state", (_event, state) => {

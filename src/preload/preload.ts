@@ -19,4 +19,3 @@ const api: LaudaAPI = {
 };
 
 contextBridge.exposeInMainWorld("lauda", api);
-

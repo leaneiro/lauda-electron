@@ -6,7 +6,11 @@ import { appearanceModes, limits, specialFontOptions, type Settings } from "../.
 /// then Restore Defaults. Every change is stored at once and every window
 /// follows it.
 
-function element<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
+function element<K extends keyof HTMLElementTagNameMap>(
+  tag: K,
+  className?: string,
+  text?: string,
+): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
@@ -90,7 +94,10 @@ function render(): void {
   strict.checked = current.strictLineBreaks;
   strict.addEventListener("change", () => set({ strictLineBreaks: strict.checked }));
   const strictLabel = element("label", "label");
-  strictLabel.append(t("Strict line breaks"), element("small", undefined, t("A single Return doesn't break the line, as in standard Markdown.")));
+  strictLabel.append(
+    t("Strict line breaks"),
+    element("small", undefined, t("A single Return doesn't break the line, as in standard Markdown.")),
+  );
   strictLabel.addEventListener("click", (event) => {
     event.preventDefault();
     strict.click();
@@ -105,15 +112,32 @@ function render(): void {
   form.replaceChildren(
     ...section(t("General"), [row(t("Appearance"), appearance)]),
     ...section(t("Editor"), [
-      row(t("Font"), fontPicker(current.editorFontName, (font) => set({ editorFontName: font }))),
-      row(t("Size"), ...slider(current.editorFontSize, limits.editorFontSize, points, (size) => set({ editorFontSize: size }))),
+      row(
+        t("Font"),
+        fontPicker(current.editorFontName, (font) => set({ editorFontName: font })),
+      ),
+      row(
+        t("Size"),
+        ...slider(current.editorFontSize, limits.editorFontSize, points, (size) => set({ editorFontSize: size })),
+      ),
     ]),
     ...section(t("Preview"), [
-      row(t("Font"), fontPicker(current.previewFontName, (font) => set({ previewFontName: font }))),
-      row(t("Size"), ...slider(current.previewFontSize, limits.previewFontSize, points, (size) => set({ previewFontSize: size }))),
+      row(
+        t("Font"),
+        fontPicker(current.previewFontName, (font) => set({ previewFontName: font })),
+      ),
+      row(
+        t("Size"),
+        ...slider(current.previewFontSize, limits.previewFontSize, points, (size) => set({ previewFontSize: size })),
+      ),
       row(
         t("Line height"),
-        ...slider(current.previewLineHeight, limits.previewLineHeight, (value) => strings2(value), (value) => set({ previewLineHeight: value })),
+        ...slider(
+          current.previewLineHeight,
+          limits.previewLineHeight,
+          (value) => strings2(value),
+          (value) => set({ previewLineHeight: value }),
+        ),
       ),
       row(strictLabel, strict),
     ]),
@@ -124,7 +148,10 @@ function render(): void {
 
 /// The line height with two decimals, as the language writes numbers.
 function strings2(value: number): string {
-  return new Intl.NumberFormat(document.documentElement.lang || "en", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+  return new Intl.NumberFormat(document.documentElement.lang || "en", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 }
 
 async function start(): Promise<void> {

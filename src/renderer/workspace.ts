@@ -49,6 +49,9 @@ export class Workspace {
   private remembersSession = true;
 
   private readonly views = new Map<string, DocumentView>();
+  /// Documents whose file another app changed while they had changes of
+  /// their own, with what the file holds now, while the reader chooses.
+  private readonly conflicts = new Map<LaudaDocument, string>();
   private readonly listeners = new Set<Listener>();
   private readonly container: HTMLElement;
   private sessionTimer: number | undefined;
@@ -337,12 +340,31 @@ export class Workspace {
     }
   }
 
-  /// Another program changed an open file. Unless the reader has changes
-  /// of their own waiting to be written, the tab shows the new text.
-  fileChangedOnDisk(filePath: string, text: string): void {
+  /// Another app changed an open file. The tab shows the new text, unless
+  /// the reader has changes of their own waiting to be written: then, as
+  /// NSDocument does, they choose which to keep, and nothing is written
+  /// over the file until they have.
+  async fileChangedOnDisk(filePath: string, text: string): Promise<void> {
     const document = this.documents.find((d) => d.filePath === filePath);
-    if (!document || document.isEdited || document.text === text) return;
-    this.views.get(document.id)?.replaceText(text, true);
+    if (!document || document.text === text) return;
+    if (this.conflicts.has(document)) {
+      // Changed again while the question is up: the answer is about this.
+      this.conflicts.set(document, text);
+      return;
+    }
+    if (!document.isEdited) {
+      this.views.get(document.id)?.replaceText(text, true);
+      return;
+    }
+    this.conflicts.set(document, text);
+    document.holdWrites();
+    this.select(document);
+    const answer = await this.context.lauda.invoke("doc:ask-changed-elsewhere", document.title);
+    const onDisk = this.conflicts.get(document) ?? text;
+    this.conflicts.delete(document);
+    document.releaseWrites();
+    if (answer === "revert") this.views.get(document.id)?.replaceText(onDisk, true);
+    else await document.autosave();
   }
 
   /// Writes every document with a file; the window lost focus.

@@ -154,6 +154,46 @@ test("a file changed by another program shows its new text", async () => {
   await app.close();
 });
 
+/// Another app changes a file the reader has changes of their own to: as
+/// NSDocument does, the reader chooses which to keep, and nothing is written
+/// over the file before they have.
+test("a file changed elsewhere under unsaved changes asks which to keep", async () => {
+  const { app, window, folder } = await launch({ files: { "both.md": "# Start\n" } });
+  await previewFrame(window);
+  const file = join(folder, "both.md");
+  const answerWith = (response: number) =>
+    app.evaluate(({ dialog }, response) => {
+      (globalThis as { asked?: string }).asked = "";
+      dialog.showMessageBox = (async (_window: unknown, options: Electron.MessageBoxOptions) => {
+        (globalThis as { asked?: string }).asked = options.message;
+        return { response, checkboxChecked: false };
+      }) as typeof dialog.showMessageBox;
+    }, response);
+  const asked = () => app.evaluate(() => (globalThis as { asked?: string }).asked);
+  const editor = window.locator(".cm-content");
+  await editor.click();
+
+  // Revert: the other app's text, in the editor and in the file.
+  await answerWith(1);
+  await window.keyboard.press(process.platform === "darwin" ? "Meta+End" : "Control+End");
+  await window.keyboard.type("mine");
+  writeFileSync(file, "# Theirs\n");
+  await expect.poll(asked).toContain("both.md");
+  await expect(editor).toHaveText("# Theirs");
+  await expect(window.locator(".save-status")).toHaveAttribute("data-status", "saved");
+  expect(readFileSync(file, "utf8")).toBe("# Theirs\n");
+
+  // Save Anyway: the reader's text replaces the file.
+  await answerWith(0);
+  await window.keyboard.press(process.platform === "darwin" ? "Meta+End" : "Control+End");
+  await window.keyboard.type("mine");
+  writeFileSync(file, "# Theirs again\n");
+  await expect.poll(asked).toContain("both.md");
+  await expect.poll(() => readFileSync(file, "utf8")).toBe("# Theirs\nmine");
+  await expect.poll(() => editor.innerText()).toBe("# Theirs\nmine");
+  await app.close();
+});
+
 test("duplicate, revert, rename and move", async () => {
   const { app, window, folder } = await launch({ files: { "draft.md": "# Draft\n" } });
   await window.locator(".cm-content").click();

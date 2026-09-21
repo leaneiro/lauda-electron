@@ -143,6 +143,22 @@ describe("LaudaDocument", () => {
     expect(document.savedText).toBe("# Notes\n");
   });
 
+  /// While the reader chooses between their text and a file another app
+  /// changed, nothing is written over the file.
+  it("writes nothing while its writes are held", async () => {
+    const { document, requests } = fileDocument();
+    document.edit("mine");
+    document.holdWrites();
+    await vi.advanceTimersByTimeAsync(autosaveDelay);
+    document.edit("mine, still");
+    await vi.advanceTimersByTimeAsync(autosaveDelay);
+    expect(await document.autosave()).toBe(false);
+    expect(writes(requests)).toEqual([]);
+    document.releaseWrites();
+    expect(await document.autosave()).toBe(true);
+    expect(writes(requests)).toEqual([["/docs/notes.md", "mine, still"]]);
+  });
+
   it("an unchanged document has nothing to write", async () => {
     const { document, requests } = fileDocument();
     expect(await document.autosave()).toBe(true);

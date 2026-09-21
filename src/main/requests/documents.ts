@@ -133,6 +133,21 @@ export function registerDocumentRequests({
     });
     return result.response === 0;
   });
+  // As NSDocument asks when its file changed under unsaved changes. Save
+  // Anyway comes first and answers Escape: it keeps what the reader sees.
+  handle("doc:ask-changed-elsewhere", async (event, title) => {
+    const result = await dialog.showMessageBox(windowFor(event), {
+      type: "warning",
+      message: strings.t("“%@” was changed by another app.", title),
+      detail: strings.t(
+        "Save Anyway keeps your changes and replaces the other app's. Revert keeps the other app's changes and discards yours.",
+      ),
+      buttons: [strings.t("Save Anyway"), strings.t("Revert")],
+      defaultId: 0,
+      cancelId: 0,
+    });
+    return result.response === 1 ? "revert" : "saveAnyway";
+  });
   handle("doc:watch", (_event, filePath) => {
     if (granted.has(filePath)) watcher.watch(filePath);
   });

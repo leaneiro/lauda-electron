@@ -32,6 +32,9 @@ export class LaudaDocument {
   private readonly listeners = new Set<Listener>();
   private autosaveTimer: number | undefined;
   private writing: Promise<void> = Promise.resolve();
+  /// Set while the reader chooses between their text and a file another
+  /// app changed: nothing is written until they have.
+  private writesAreHeld = false;
 
   constructor(
     private readonly context: WindowContext,
@@ -91,7 +94,7 @@ export class LaudaDocument {
   }
 
   private scheduleAutosave(): void {
-    if (!this.filePath) return;
+    if (!this.filePath || this.writesAreHeld) return;
     window.clearTimeout(this.autosaveTimer);
     this.autosaveTimer = window.setTimeout(() => void this.autosave(), autosaveDelay);
   }
@@ -100,6 +103,7 @@ export class LaudaDocument {
   /// loses focus and before closing.
   async autosave(): Promise<boolean> {
     window.clearTimeout(this.autosaveTimer);
+    if (this.writesAreHeld) return false;
     if (!this.filePath || this.text === this.savedText) return true;
     return this.write(this.filePath);
   }
@@ -151,6 +155,16 @@ export class LaudaDocument {
     });
     this.writing = result.then(() => undefined);
     return result;
+  }
+
+  /// Holds every write, the autosave's included, until `releaseWrites`.
+  holdWrites(): void {
+    this.writesAreHeld = true;
+    window.clearTimeout(this.autosaveTimer);
+  }
+
+  releaseWrites(): void {
+    this.writesAreHeld = false;
   }
 
   /// The file moved (Rename, Move To): the document follows it.

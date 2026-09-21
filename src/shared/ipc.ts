@@ -25,6 +25,9 @@ export interface Requests {
   "doc:move": { args: [filePath: string]; result: string | null };
   "doc:ask-save-changes": { args: [title: string]; result: "save" | "dontSave" | "cancel" };
   "doc:ask-revert": { args: [title: string]; result: boolean };
+  /// Another app changed a file the reader has changes of their own to:
+  /// which of the two to keep.
+  "doc:ask-changed-elsewhere": { args: [title: string]; result: "saveAnyway" | "revert" };
   "doc:watch": { args: [filePath: string]; result: void };
   "doc:unwatch": { args: [filePath: string]; result: void };
   "doc:show-error": { args: [message: string, detail: string]; result: void };

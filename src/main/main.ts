@@ -1,13 +1,11 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
-import { copyFile, rename, rm } from "node:fs/promises";
-import { basename, dirname, extname, join } from "node:path";
+import { basename, join } from "node:path";
 import {
   app,
   BrowserWindow,
   clipboard,
   dialog,
   type IpcMainInvokeEvent,
-  ipcMain,
   Menu,
   nativeTheme,
   session,
@@ -16,26 +14,20 @@ import {
 } from "electron";
 import { withCtrlShortcuts } from "../shared/document";
 import { pickLocale, Strings } from "../shared/i18n";
-import type { Events, MenuCommand, MenuState, OpenDocument, RequestChannel, Requests } from "../shared/ipc";
+import type { Events, MenuCommand, MenuState, OpenDocument } from "../shared/ipc";
 import { allowedLinkSchemes } from "../shared/markdown";
-import { isImagePath } from "../shared/markdown/content-policy";
 import type { AppearanceMode } from "../shared/settings";
-import { messageOf, showError, showWarning } from "./dialogs";
+import { showError } from "./dialogs";
 import { exportHTML, exportPDF } from "./export";
-import { DocumentWatcher, readText, writeText } from "./files";
+import { DocumentWatcher, readText } from "./files";
 import { installedFontFamilies } from "./fonts";
 import { GrantedFiles, isOpenableByPath } from "./granted-files";
-import { freePathIn, importImages, savePastedImage } from "./images";
 import { buildMenu } from "./menu";
-import {
-  appOrigin,
-  distDirectory,
-  forgetDocumentFolder,
-  handleProtocols,
-  registerDocumentFolder,
-  registerSchemes,
-} from "./protocols";
-import { RecentFiles, readSession, readWindowState, SettingsStore, sessionFile, windowStateFile } from "./store";
+import { guardPages } from "./navigation";
+import { appOrigin, distDirectory, handleProtocols, registerSchemes } from "./protocols";
+import { registerDocumentRequests } from "./requests/documents";
+import { handle } from "./requests/handle";
+import { RecentFiles, readSession, readWindowState, SettingsStore, windowStateFile } from "./store";
 
 const isMac = process.platform === "darwin";
 const isWindows = process.platform === "win32";
@@ -387,46 +379,8 @@ function applyAppearance(mode: AppearanceMode): void {
 
 // MARK: - Requests from the window
 
-/// Requests come from the app's own pages only: the window and Settings.
-/// The preview is a frame of another origin, with no bridge, and a page that
-/// somehow navigated elsewhere gets nothing either.
-function isFromTheApp(event: IpcMainInvokeEvent): boolean {
-  return event.senderFrame?.url.startsWith(`${appOrigin}/`) ?? false;
-}
-
-function handle<C extends RequestChannel>(
-  channel: C,
-  handler: (
-    event: IpcMainInvokeEvent,
-    ...args: Requests[C]["args"]
-  ) => Promise<Requests[C]["result"]> | Requests[C]["result"],
-): void {
-  ipcMain.handle(channel, (event, ...args) => {
-    if (!isFromTheApp(event)) throw new Error(`${channel} refused: not asked by the app`);
-    return handler(event, ...(args as Requests[C]["args"]));
-  });
-}
-
-/// What a request about a file the window wasn't handed gets back.
-const notGranted = { ok: false as const, error: "Not a file this window opened" };
-
 function windowFor(event: IpcMainInvokeEvent): BrowserWindow {
   return BrowserWindow.fromWebContents(event.sender) ?? ensureWindow();
-}
-
-const saveFilters = () => [
-  { name: strings.t("Markdown Document"), extensions: ["md", "markdown"] },
-  { name: strings.t("Plain Text"), extensions: ["txt"] },
-];
-
-async function moveFile(from: string, to: string): Promise<void> {
-  try {
-    await rename(from, to);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "EXDEV") throw error;
-    await copyFile(from, to);
-    await rm(from);
-  }
 }
 
 function registerRequests(): void {
@@ -487,137 +441,7 @@ function registerRequests(): void {
     workspaceWindow?.close();
   });
 
-  handle("doc:register-folder", (_event, documentId, filePath) =>
-    registerDocumentFolder(documentId, granted.has(filePath) ? dirname(filePath) : null),
-  );
-  handle("doc:forget-folder", (_event, documentId) => forgetDocumentFolder(documentId));
-  handle("doc:write", async (_event, filePath, text) => {
-    if (!granted.has(filePath)) return notGranted;
-    try {
-      watcher.noteWritten(filePath, text);
-      await writeText(filePath, text);
-      return { ok: true };
-    } catch (error) {
-      return { ok: false, error: messageOf(error) };
-    }
-  });
-  handle("doc:save-as", async (event, request) => {
-    const window = windowFor(event);
-    const directory = request.directory ?? app.getPath("documents");
-    const name = extname(request.title) ? request.title : `${request.title}.md`;
-    const result = await dialog.showSaveDialog(window, {
-      defaultPath: join(directory, name),
-      filters: saveFilters(),
-    });
-    if (result.canceled || !result.filePath) return null;
-    try {
-      watcher.noteWritten(result.filePath, request.text);
-      await writeText(result.filePath, request.text);
-      recentFiles.note(result.filePath);
-      granted.grant(result.filePath);
-      return result.filePath;
-    } catch (error) {
-      await showError(window, strings.t("Couldn't save “%@”", basename(result.filePath)), error, strings);
-      return null;
-    }
-  });
-  handle("doc:rename", async (event, filePath) => {
-    if (!granted.has(filePath)) return null;
-    const window = windowFor(event);
-    const result = await dialog.showSaveDialog(window, {
-      title: strings.t("Rename"),
-      buttonLabel: strings.t("Rename"),
-      defaultPath: filePath,
-      filters: saveFilters(),
-    });
-    if (result.canceled || !result.filePath || result.filePath === filePath) return null;
-    try {
-      await moveFile(filePath, result.filePath);
-      recentFiles.forget(filePath);
-      recentFiles.note(result.filePath);
-      granted.revoke(filePath);
-      granted.grant(result.filePath);
-      return result.filePath;
-    } catch (error) {
-      await showError(window, strings.t("Couldn't rename “%@”", basename(filePath)), error, strings);
-      return null;
-    }
-  });
-  handle("doc:move", async (event, filePath) => {
-    if (!granted.has(filePath)) return null;
-    const window = windowFor(event);
-    const result = await dialog.showOpenDialog(window, {
-      title: strings.t("Move To…").replace(/…$/, ""),
-      buttonLabel: strings.t("Move"),
-      defaultPath: dirname(filePath),
-      properties: ["openDirectory", "createDirectory"],
-    });
-    const folder = result.filePaths[0];
-    if (result.canceled || !folder || folder === dirname(filePath)) return null;
-    const destination = freePathIn(folder, basename(filePath));
-    try {
-      await moveFile(filePath, destination);
-      recentFiles.forget(filePath);
-      recentFiles.note(destination);
-      granted.revoke(filePath);
-      granted.grant(destination);
-      return destination;
-    } catch (error) {
-      await showError(window, strings.t("Couldn't move “%@”", basename(filePath)), error, strings);
-      return null;
-    }
-  });
-  handle("doc:ask-save-changes", async (event, title) => {
-    const result = await dialog.showMessageBox(windowFor(event), {
-      type: "warning",
-      message: strings.t("Do you want to save the changes you made to “%@”?", title),
-      detail: strings.t("Your changes will be lost if you don't save them."),
-      buttons: [strings.t("Save…"), strings.t("Don't Save"), strings.t("Cancel")],
-      defaultId: 0,
-      cancelId: 2,
-    });
-    return (["save", "dontSave", "cancel"] as const)[result.response] ?? "cancel";
-  });
-  handle("doc:ask-revert", async (event, title) => {
-    const result = await dialog.showMessageBox(windowFor(event), {
-      type: "warning",
-      message: strings.t("Revert to the last saved version of “%@”?", title),
-      detail: strings.t("Your current changes will be lost."),
-      buttons: [strings.t("Revert"), strings.t("Cancel")],
-      defaultId: 0,
-      cancelId: 1,
-    });
-    return result.response === 0;
-  });
-  handle("doc:watch", (_event, filePath) => {
-    if (granted.has(filePath)) watcher.watch(filePath);
-  });
-  handle("doc:unwatch", (_event, filePath) => watcher.unwatch(filePath));
-  handle("doc:show-error", async (event, message, detail) => {
-    await showWarning(windowFor(event), message, detail, strings);
-  });
-
-  handle("session:store", (_event, session) => sessionFile.write(session));
-
-  handle("images:import", (_event, documentPath, files) => {
-    if (!granted.has(documentPath)) return { paths: [], error: notGranted.error };
-    return importImages(
-      documentPath,
-      files.filter((file) => typeof file === "string" && isImagePath(file)),
-    );
-  });
-  handle("images:save-pasted", (_event, documentPath, png) => {
-    if (!granted.has(documentPath)) return { paths: [], error: notGranted.error };
-    return savePastedImage(documentPath, png, strings);
-  });
-  handle("images:ask-save-first", async (event) => {
-    await dialog.showMessageBox(windowFor(event), {
-      type: "info",
-      message: strings.t("Save the document first"),
-      detail: strings.t("Images are copied to the document's folder, so save the file before adding images."),
-      buttons: [strings.t("OK")],
-    });
-  });
+  registerDocumentRequests({ granted, watcher, recentFiles, strings, windowFor });
 
   handle("export:html", (event, request) => exportHTML(windowFor(event), request, settings.value, strings));
   handle("export:pdf", (event, request) => exportPDF(windowFor(event), request, settings.value, strings));
@@ -638,44 +462,7 @@ function registerRequests(): void {
 
 // MARK: - Guarding the pages
 
-/// Nothing navigates away from the app's own pages. The preview frame loads
-/// its page once; links open in the browser through the preview's script,
-/// never inside the app, and web embeds in a document (https iframes) still
-/// load inside the preview.
-app.on("web-contents-created", (_event, contents) => {
-  // Editable text gets the menu a text view has on a secondary click.
-  contents.on("context-menu", (_menuEvent, params) => {
-    if (!params.isEditable && !params.selectionText) return;
-    const t = strings.t.bind(strings);
-    const menu = Menu.buildFromTemplate(
-      params.isEditable
-        ? [
-            { label: t("Cut"), role: "cut", enabled: params.editFlags.canCut },
-            { label: t("Copy"), role: "copy", enabled: params.editFlags.canCopy },
-            { label: t("Paste"), role: "paste", enabled: params.editFlags.canPaste },
-            { type: "separator" },
-            { label: t("Select All"), role: "selectAll" },
-          ]
-        : [{ label: t("Copy"), role: "copy" }],
-    );
-    const window = BrowserWindow.fromWebContents(contents) ?? workspaceWindow;
-    if (window) menu.popup({ window });
-  });
-  contents.setWindowOpenHandler(() => ({ action: "deny" }));
-  contents.on("will-navigate", (event) => event.preventDefault());
-  contents.on("will-frame-navigate", (event) => {
-    if (event.isMainFrame) {
-      event.preventDefault();
-      return;
-    }
-    const url = event.url;
-    if (url.startsWith("lauda-doc://") && url.endsWith("/.lauda-preview")) return;
-    const parent = event.frame?.parent;
-    if (parent?.url.startsWith("lauda-doc://") && url.startsWith("https://")) return;
-    if (parent && !parent.url.startsWith(appOrigin) && !parent.url.startsWith("lauda-doc://")) return;
-    event.preventDefault();
-  });
-});
+guardPages(app, { strings: () => strings, window: () => workspaceWindow });
 
 // MARK: - The app's life
 

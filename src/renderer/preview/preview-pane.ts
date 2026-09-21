@@ -1,4 +1,4 @@
-import type { LaudaAPI } from "../../preload/bridge";
+import type { RenderedDocument } from "../../shared/markdown";
 import type { FromPreview, PreviewReplies, ToPreview } from "../../shared/preview-protocol";
 import type { WindowContext } from "../context";
 import type { LaudaDocument } from "../document";
@@ -10,40 +10,6 @@ import { differs, endConvergence, type ScrollSync, startingScroll } from "../scr
 type Request = { [T in keyof PreviewReplies]: Omit<Extract<ToPreview, { type: T }>, "id"> }[keyof PreviewReplies];
 type Reply = PreviewReplies[keyof PreviewReplies];
 
-interface RenderedContent {
-  html: string;
-  anchorLines: number[];
-  lineCount: number;
-}
-
-/// One worker renders for every document; each request carries an id.
-class RenderClient {
-  private readonly worker = new Worker("render-worker.js");
-  private nextId = 1;
-  private readonly waiting = new Map<number, (content: RenderedContent | null) => void>();
-
-  constructor(lauda: LaudaAPI) {
-    this.worker.onmessage = (event: MessageEvent<RenderedContent & { id: number; error?: string }>) => {
-      const { id, error, ...content } = event.data;
-      const resolve = this.waiting.get(id);
-      this.waiting.delete(id);
-      if (error) void lauda.invoke("app:log-failure", "Rendering a document", error);
-      resolve?.(error ? null : content);
-    };
-  }
-
-  render(markdown: string, strictLineBreaks: boolean): Promise<RenderedContent | null> {
-    const id = this.nextId++;
-    return new Promise((resolve) => {
-      this.waiting.set(id, resolve);
-      this.worker.postMessage({ id, markdown, strictLineBreaks });
-    });
-  }
-}
-
-let sharedClient: RenderClient | undefined;
-const renderer = (lauda: LaudaAPI) => (sharedClient ??= new RenderClient(lauda));
-
 /// The rendered Markdown (PreviewWebView.swift): a page loaded once with the
 /// preview's stylesheet, then updated in place (no flicker, the scroll
 /// position kept) through messages to its script.
@@ -54,7 +20,7 @@ export class PreviewPane implements PreviewFinding {
   private lastStrict = false;
   private needsRender = false;
   private isRendering = false;
-  private pendingContent: RenderedContent | null = null;
+  private pendingContent: RenderedDocument | null = null;
   private lastStyle: { family: string; size: number; lineHeight: number } | null = null;
   private lastWidth: number | null = null;
   private lastScroll: ScrollSync = startingScroll();
@@ -104,16 +70,14 @@ export class PreviewPane implements PreviewFinding {
     if (!this.needsRender || this.isRendering || this.lastMarkdown === null) return;
     this.needsRender = false;
     this.isRendering = true;
-    void renderer(this.context.lauda)
-      .render(this.lastMarkdown, this.lastStrict)
-      .then(async (content) => {
-        if (content) await this.pushContent(content);
-        this.isRendering = false;
-        this.renderNextIfIdle();
-      });
+    void this.context.worker.render(this.lastMarkdown, this.lastStrict).then(async (content) => {
+      if (content) await this.pushContent(content);
+      this.isRendering = false;
+      this.renderNextIfIdle();
+    });
   }
 
-  private async pushContent(content: RenderedContent): Promise<void> {
+  private async pushContent(content: RenderedDocument): Promise<void> {
     if (!this.isReady) {
       this.pendingContent = content;
       return;

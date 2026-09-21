@@ -59,7 +59,7 @@ await Promise.all([
   // parser's entity decoder does) must use that one.
   build({
     ...common,
-    entryPoints: { "renderer/render-worker": "src/worker/render-worker.ts" },
+    entryPoints: { "renderer/document-worker": "src/worker/document-worker.ts" },
     outdir: dist,
     platform: "browser",
     conditions: ["worker"],

@@ -12,6 +12,7 @@ test("opens a file and renders its preview", async () => {
   await expect(preview.locator("h1")).toHaveText("Title");
   await expect(preview.locator("strong")).toHaveText("bold");
   await expect(window.locator(".status-bar")).toContainText("6 words");
+  await expect(window.locator(".status-bar")).toContainText("41 characters");
   await app.close();
 });
 
@@ -38,6 +39,9 @@ test("typing updates the preview and autosaves the file", async () => {
   await window.keyboard.type("\nNew line here");
   await expect(preview.locator("p")).toHaveText("New line here");
   await expect(window.locator(".save-status")).toHaveAttribute("data-status", "editing");
+  // The counts follow once the typing pauses.
+  await expect(window.locator(".status-bar")).toContainText("4 words");
+  await expect(window.locator(".status-bar")).toContainText("22 characters");
   await expect
     .poll(() => readFileSync(join(folder, "notes.md"), "utf8"), { timeout: 6000 })
     .toBe("# Title\n\nNew line here");

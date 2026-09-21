@@ -6,6 +6,7 @@ import type { WindowContext } from "./context";
 import type { LaudaDocument } from "./document";
 import { Editor } from "./editor/editor";
 import { FindSession } from "./find";
+import { FindBar } from "./find-bar";
 import { PreviewPane } from "./preview/preview-pane";
 import { farFromTheEnd, type ScrollSync } from "./scroll-sync";
 import { StatusBar } from "./status-bar";
@@ -56,7 +57,8 @@ export class DocumentView {
     this.preview = new PreviewPane(context, this.previewPane, document, {
       publishScroll: (sync) => this.publishScroll(sync),
     });
-    this.find = new FindSession(context, this.panes, this.editor, this.preview, () => this.mode);
+    this.find = new FindSession(this.editor, this.preview, () => this.mode);
+    new FindBar(context, this.panes, this.find, this.editor, () => this.mode);
     this.status = new StatusBar(context, document);
     this.element.append(this.status.element);
 
@@ -107,7 +109,7 @@ export class DocumentView {
     if (animates) this.awayTimer = window.setTimeout(settle, modeChangeMs + 20);
     else settle();
     this.preview.setContentWidth(this.workspace.previewWidth.rem);
-    this.find.modeChanged(mode);
+    this.find.modeChanged();
   }
 
   setSplit(fraction: number): void {

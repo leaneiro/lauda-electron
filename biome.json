@@ -1,14 +1,7 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
-    "includes": [
-      "src/**",
-      "test/**",
-      "e2e/**",
-      "scripts/**",
-      "*.ts",
-      "*.mts"
-    ]
+    "includes": ["src/**", "test/**", "e2e/**", "scripts/**", "*.ts", "*.mts"]
   },
   "formatter": {
     "indentStyle": "space",
@@ -24,7 +17,7 @@
   },
   "linter": {
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "suspicious": {
         "noConfusingVoidType": "off",
         "noDuplicateCustomProperties": "off"
@@ -39,10 +32,7 @@
   },
   "overrides": [
     {
-      "includes": [
-        "test/**",
-        "e2e/**"
-      ],
+      "includes": ["test/**", "e2e/**"],
       "linter": {
         "rules": {
           "style": {

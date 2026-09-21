@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { extname, join, resolve, sep } from "node:path";
+import { extname, join } from "node:path";
 import { app, protocol } from "electron";
 import { exportContentSecurityPolicy, previewContentSecurityPolicy } from "../shared/markdown";
 import { resolveAppFile, resolveDocumentFile } from "./document-files";

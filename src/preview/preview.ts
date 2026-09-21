@@ -3,6 +3,8 @@
 // the app's own scheme; the document's raw HTML shares the page but, under
 // the page's Content-Security-Policy, can't run any script.
 
+import type { FromPreview, PreviewPosition, ToPreview } from "../shared/preview-protocol";
+
 const appOrigin = "lauda-app://app";
 
 // The page's own elements and the document methods the script calls, taken
@@ -15,33 +17,28 @@ const createElement = document.createElement.bind(document);
 const createTextNode = document.createTextNode.bind(document);
 const createTreeWalker = document.createTreeWalker.bind(document);
 
+// How long scroll events are taken as echoes of something the app did
+// rather than the reader scrolling: after a change of content or position,
+// and longer after a reflow, which settles in more than one frame.
+const echoWindow = 200;
+const reflowEchoWindow = 300;
+
 // Timestamp of the last programmatic change; scroll events shortly after
 // one are echoes (or reflows), not the reader scrolling the preview.
 let suppressScrollEventsUntil = 0;
-
-interface Position {
-  atEnd?: boolean;
-  line: number;
-  hasLine: boolean;
-  endLine: number;
-  hasEndLine: boolean;
-  fraction: number;
-  toEndDistance: number;
-  convergence: number;
-}
 
 // Where the page should stay when its text reflows (a narrower or wider
 // pane, the column width, the font): the last position asked for, the line
 // the reader scrolled to here, or the end. The browser keeps the pixel
 // offset instead, which by then shows another line.
-let lastPosition: Position | { atEnd: true } | null = null;
+let lastPosition: PreviewPosition | "end" | null = null;
 
 // Source line of each element the scroll sync anchors on (parallel to
 // anchorElements()) and the document's line count.
 let anchorLines: number[] = [];
 let totalLines = 1;
 
-function post(message: unknown): void {
+function post(message: FromPreview): void {
   window.parent.postMessage(message, appOrigin);
 }
 
@@ -50,9 +47,9 @@ function post(message: unknown): void {
 // through a detached element keeps <script> tags inert, and the page's
 // policy blocks inline handlers as well.
 function setContent(html: string, lines: number[], lineCount: number): void {
-  suppressScrollEventsUntil = Date.now() + 200;
-  anchorLines = lines || [];
-  totalLines = Math.max(lineCount || 1, 1);
+  suppressScrollEventsUntil = Date.now() + echoWindow;
+  anchorLines = lines;
+  totalLines = Math.max(lineCount, 1);
   const parsed = createElement("div");
   parsed.innerHTML = html;
 
@@ -86,7 +83,7 @@ function setContentWidth(rem: number): void {
 // moving the text after the page was put back.
 function reflowing(change: () => void): void {
   if (!lastPosition) rememberTopOfPage();
-  suppressScrollEventsUntil = Date.now() + 300;
+  suppressScrollEventsUntil = Date.now() + reflowEchoWindow;
   root.classList.add("reflowing");
   change();
   // Lays out the new text now.
@@ -95,35 +92,33 @@ function reflowing(change: () => void): void {
   root.classList.remove("reflowing");
 }
 
+// A position the page takes from where the reader left it: no other pane
+// leads, so there is no end to converge on.
+function ownPosition(line: number | null, fraction: number): PreviewPosition {
+  return { line, endLine: null, fraction, toEndDistance: 0, convergence: 1 };
+}
+
+// Takes the current position as lastPosition: the end of the page, or the
+// line at the top.
 function rememberTopOfPage(): void {
   const max = maxScroll();
   const y = window.scrollY;
   const points = lineAnchors();
   if (max > 0 && y >= max - 1) {
-    lastPosition = { atEnd: true };
+    lastPosition = "end";
   } else if (points) {
-    lastPosition = {
-      line: interpolate(points, y, 1, 0),
-      hasLine: true,
-      endLine: 0,
-      hasEndLine: false,
-      fraction: max > 0 ? y / max : 0,
-      toEndDistance: 0,
-      convergence: 1,
-    };
+    lastPosition = ownPosition(interpolate(points, y, 1, 0), max > 0 ? y / max : 0);
   }
 }
 
 // Puts the page back at lastPosition after its text reflowed.
 function realign(): void {
-  if (!lastPosition) return;
-  if (lastPosition.atEnd) {
-    suppressScrollEventsUntil = Date.now() + 200;
+  if (lastPosition === "end") {
+    suppressScrollEventsUntil = Date.now() + echoWindow;
     window.scrollTo(0, maxScroll());
-    return;
+  } else if (lastPosition) {
+    setScrollPosition(lastPosition);
   }
-  const p = lastPosition as Position;
-  setScrollPosition(p.line, p.hasLine, p.endLine, p.hasEndLine, p.fraction, p.toEndDistance, p.convergence);
 }
 
 function maxScroll(): number {
@@ -183,34 +178,28 @@ function interpolate(points: [number, number][], value: number, from: 0 | 1, to:
   return a[to];
 }
 
-function setScrollPosition(
-  line: number,
-  hasLine: boolean,
-  endLine: number,
-  hasEndLine: boolean,
-  fraction: number,
-  toEndDistance: number,
-  convergence: number,
-): void {
-  lastPosition = { line, hasLine, endLine, hasEndLine, fraction, toEndDistance, convergence };
+// Where the top of the page goes for a position: at its line, where the page
+// can place lines, else at its fraction of the way down.
+function scrollTarget(at: PreviewPosition, max: number): number {
+  const points = at.line === null ? null : lineAnchors();
+  if (at.line === null || !points) return at.fraction * max;
+  const target = interpolate(points, at.line, 0, 1);
+  if (at.endLine === null) return target;
+  // Over the leader's last `convergence` points, absorb the gap between
+  // where its final line lands here and this pane's end, so both panes
+  // reach the bottom together while staying line-aligned before that.
+  const gap = Math.max(max - interpolate(points, at.endLine, 0, 1), 0);
+  const stretch = Math.max(Math.min(at.convergence, window.innerHeight), 1);
+  return target + gap * Math.max(0, 1 - at.toEndDistance / stretch);
+}
+
+function setScrollPosition(at: PreviewPosition): void {
+  lastPosition = at;
   const max = maxScroll();
   if (max <= 0) return;
-  const points = hasLine ? lineAnchors() : null;
-  let target = fraction * max;
-  if (points) {
-    target = interpolate(points, line, 0, 1);
-    // Over the leader's last `convergence` points, absorb the gap between
-    // where its final line lands here and this pane's end, so both panes
-    // reach the bottom together while staying line-aligned before that.
-    if (hasEndLine) {
-      const gap = Math.max(max - interpolate(points, endLine, 0, 1), 0);
-      const stretch = Math.max(Math.min(convergence, window.innerHeight), 1);
-      target += gap * Math.max(0, 1 - toEndDistance / stretch);
-    }
-  }
-  target = Math.min(Math.max(target, 0), max);
+  const target = Math.min(Math.max(scrollTarget(at, max), 0), max);
   if (Math.abs(target - window.scrollY) < 2) return;
-  suppressScrollEventsUntil = Date.now() + 200;
+  suppressScrollEventsUntil = Date.now() + echoWindow;
   window.scrollTo(0, target);
 }
 
@@ -228,11 +217,11 @@ function findClear(): void {
   findState = { query: "", marks: [], index: -1 };
 }
 
-function findRun(query: string, forward: boolean, restart: boolean): [number, number] {
+function findRun(query: string, forward: boolean, restart: boolean): { current: number; total: number } {
   if (restart || query !== findState.query) {
     findClear();
     findState.query = query;
-    if (!query) return [0, 0];
+    if (!query) return { current: 0, total: 0 };
     const lowered = query.toLowerCase();
     const walker = createTreeWalker(content, NodeFilter.SHOW_TEXT);
     const nodes: Text[] = [];
@@ -260,17 +249,17 @@ function findRun(query: string, forward: boolean, restart: boolean): [number, nu
     mark.classList.toggle("current", i === findState.index);
   });
   if (findState.index >= 0) {
-    suppressScrollEventsUntil = Date.now() + 200;
+    suppressScrollEventsUntil = Date.now() + echoWindow;
     findState.marks[findState.index]?.scrollIntoView({ block: "center" });
   }
-  return [findState.index + 1, findState.marks.length];
+  return { current: findState.index + 1, total: findState.marks.length };
 }
 
 // A resize (a view mode switch, the divider, the window) reflows the text:
 // stay at lastPosition, and don't report the drifted offsets as the reader
 // scrolling.
 window.addEventListener("resize", () => {
-  suppressScrollEventsUntil = Date.now() + 300;
+  suppressScrollEventsUntil = Date.now() + reflowEchoWindow;
   realign();
 });
 
@@ -285,18 +274,7 @@ window.addEventListener(
     const points = lineAnchors();
     const line = points ? interpolate(points, y, 1, 0) : null;
     const endLine = points ? interpolate(points, max, 1, 0) : null;
-    lastPosition =
-      max > 0 && y >= max - 1
-        ? { atEnd: true }
-        : {
-            line: line ?? 0,
-            hasLine: line !== null,
-            endLine: 0,
-            hasEndLine: false,
-            fraction,
-            toEndDistance: 0,
-            convergence: 1,
-          };
+    lastPosition = max > 0 && y >= max - 1 ? "end" : ownPosition(line, fraction);
     post({ type: "previewScrolled", line, endLine, fraction, toEndDistance });
   },
   { passive: true },
@@ -320,26 +298,7 @@ for (const type of ["dragover", "drop"]) {
   document.addEventListener(type, (event) => event.preventDefault());
 }
 
-type Message =
-  | { type: "setContent"; html: string; lines: number[]; lineCount: number; id: number }
-  | { type: "setStyle"; family: string; size: number; lineHeight: number }
-  | { type: "setContentWidth"; rem: number }
-  | {
-      type: "setScrollPosition";
-      line: number;
-      hasLine: boolean;
-      endLine: number;
-      hasEndLine: boolean;
-      fraction: number;
-      toEndDistance: number;
-      convergence: number;
-    }
-  | { type: "realign" }
-  | { type: "find"; query: string; forward: boolean; restart: boolean; id: number }
-  | { type: "findClear" }
-  | { type: "focus" };
-
-window.addEventListener("message", (event: MessageEvent<Message>) => {
+window.addEventListener("message", (event: MessageEvent<ToPreview>) => {
   if (event.source !== window.parent || event.origin !== appOrigin) return;
   const message = event.data;
   switch (message.type) {
@@ -354,25 +313,15 @@ window.addEventListener("message", (event: MessageEvent<Message>) => {
       setContentWidth(message.rem);
       break;
     case "setScrollPosition":
-      setScrollPosition(
-        message.line,
-        message.hasLine,
-        message.endLine,
-        message.hasEndLine,
-        message.fraction,
-        message.toEndDistance,
-        message.convergence,
-      );
+      setScrollPosition(message.position);
       break;
     case "realign":
-      suppressScrollEventsUntil = Date.now() + 300;
+      suppressScrollEventsUntil = Date.now() + reflowEchoWindow;
       realign();
       break;
-    case "find": {
-      const [current, total] = findRun(message.query, message.forward, message.restart);
-      post({ type: "findResult", id: message.id, current, total });
+    case "find":
+      post({ type: "findResult", id: message.id, ...findRun(message.query, message.forward, message.restart) });
       break;
-    }
     case "findClear":
       findClear();
       break;

@@ -1,7 +1,13 @@
+import type { FromPreview, PreviewReplies, ToPreview } from "../../shared/preview-protocol";
 import { lauda } from "../api";
 import type { LaudaDocument } from "../document";
 import type { FindCounts, PreviewFinding } from "../find";
 import { differs, endConvergence, type ScrollSync, startingScroll } from "../scroll-sync";
+
+/// A message the pane waits on, as it is written: the id its reply comes
+/// back with is added on the way out.
+type Request = { [T in keyof PreviewReplies]: Omit<Extract<ToPreview, { type: T }>, "id"> }[keyof PreviewReplies];
+type Reply = PreviewReplies[keyof PreviewReplies];
 
 interface RenderedContent {
   html: string;
@@ -53,8 +59,8 @@ export class PreviewPane implements PreviewFinding {
   private lastScroll: ScrollSync = startingScroll();
   private pendingScroll: ScrollSync | null = null;
   private nextRequest = 1;
-  private readonly waiting = new Map<number, (value: unknown) => void>();
-  private readonly onMessage = (event: MessageEvent) => this.receive(event);
+  private readonly waiting = new Map<number, (reply: Reply) => void>();
+  private readonly onMessage = (event: MessageEvent<FromPreview>) => this.receive(event);
 
   constructor(
     host: HTMLElement,
@@ -180,15 +186,10 @@ export class PreviewPane implements PreviewFinding {
   }
 
   private applyScroll(sync: ScrollSync): void {
+    const { line, endLine, fraction, toEndDistance } = sync;
     this.post({
       type: "setScrollPosition",
-      line: sync.line ?? 0,
-      hasLine: sync.line !== null,
-      endLine: sync.endLine ?? 0,
-      hasEndLine: sync.endLine !== null,
-      fraction: sync.fraction,
-      toEndDistance: sync.toEndDistance,
-      convergence: endConvergence,
+      position: { line, endLine, fraction, toEndDistance, convergence: endConvergence },
     });
   }
 
@@ -196,8 +197,8 @@ export class PreviewPane implements PreviewFinding {
 
   async find(query: string, forward: boolean, restart: boolean): Promise<FindCounts> {
     if (!this.isReady) return { current: 0, total: 0 };
-    const result = (await this.request({ type: "find", query, forward, restart })) as FindCounts;
-    return { current: result.current, total: result.total };
+    const { current, total } = await this.request({ type: "find", query, forward, restart });
+    return { current, total };
   }
 
   clearFind(): void {
@@ -206,21 +207,23 @@ export class PreviewPane implements PreviewFinding {
 
   // MARK: - Messages
 
-  private post(message: Record<string, unknown>): void {
+  private post(message: ToPreview): void {
     this.frame.contentWindow?.postMessage(message, "*");
   }
 
-  private request(message: Record<string, unknown>): Promise<unknown> {
+  /// Posts a message the page answers, and resolves with the answer.
+  private request<R extends Request>(message: R): Promise<PreviewReplies[R["type"]]> {
     const id = this.nextRequest++;
     return new Promise((resolve) => {
-      this.waiting.set(id, resolve);
+      // The page answers each request with the reply of its kind.
+      this.waiting.set(id, (reply) => resolve(reply as PreviewReplies[R["type"]]));
       this.post({ ...message, id });
     });
   }
 
-  private receive(event: MessageEvent): void {
+  private receive(event: MessageEvent<FromPreview>): void {
     if (event.source !== this.frame.contentWindow) return;
-    const message = event.data as { type: string; id?: number; [key: string]: unknown };
+    const message = event.data;
     switch (message.type) {
       case "ready":
         this.isReady = true;
@@ -236,26 +239,19 @@ export class PreviewPane implements PreviewFinding {
         }
         break;
       case "contentApplied":
-      case "findResult": {
-        const resolve = this.waiting.get(message.id ?? -1);
-        this.waiting.delete(message.id ?? -1);
-        resolve?.(message);
+      case "findResult":
+        this.waiting.get(message.id)?.(message);
+        this.waiting.delete(message.id);
         break;
-      }
       case "previewScrolled": {
-        const sync: ScrollSync = {
-          line: typeof message.line === "number" ? message.line : null,
-          fraction: Math.min(Math.max(Number(message.fraction) || 0, 0), 1),
-          endLine: typeof message.endLine === "number" ? message.endLine : null,
-          toEndDistance: Math.max(Number(message.toEndDistance) || 0, 0),
-          source: "preview",
-        };
+        const { line, endLine, fraction, toEndDistance } = message;
+        const sync: ScrollSync = { line, endLine, fraction, toEndDistance, source: "preview" };
         this.lastScroll = sync;
         this.callbacks.publishScroll(sync);
         break;
       }
       case "openLink":
-        if (typeof message.href === "string") void lauda.invoke("app:open-external", message.href);
+        void lauda.invoke("app:open-external", message.href);
         break;
     }
   }

@@ -319,6 +319,25 @@ test("only the app's own pages may list the installed fonts", async () => {
   await app.close();
 });
 
+/// The preview page runs its own script and nothing else: the app's other
+/// scripts, or its own a second time, would answer the window twice.
+test("the preview page loads no script but its own", async () => {
+  const { app, window } = await launch({ files: { "a.md": "# A\n" } });
+  const preview = await previewFrame(window);
+  const outcome = (source: string) =>
+    new Promise<string>((resolve) => {
+      const script = document.createElement("script");
+      script.src = source;
+      script.onload = () => resolve("loaded");
+      script.onerror = () => resolve("refused");
+      document.body.append(script);
+    });
+  expect(await preview.evaluate(outcome, "lauda-app://app/preview/preview.js")).toBe("refused");
+  expect(await preview.evaluate(outcome, "lauda-app://app/renderer/app.js")).toBe("refused");
+  await expect(preview.locator("h1")).toHaveText("A");
+  await app.close();
+});
+
 test("the window can only write the files it was handed", async () => {
   const { app, window, folder } = await launch({ files: { "mine.md": "# Mine\n" } });
   await expect(window.locator(".window-title")).toHaveText("mine.md");

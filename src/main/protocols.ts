@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 import { app, protocol } from "electron";
@@ -88,24 +88,25 @@ export function serveExportPage(folder: string | null, html: string): { url: str
 }
 
 /// The live preview's page. Like the native one it carries no document
-/// script: the app's script comes from the app's own scheme, the only
-/// source the policy allows, and the document's raw HTML can't run any.
-let previewPage: string | undefined;
-function previewPageHTML(locale: string): string {
-  previewPage ??= `<!DOCTYPE html>
+/// script: its policy lets only the script tag carrying this response's
+/// nonce run, so the document's raw HTML can run none, not even the app's
+/// own scripts a second time.
+let previewStyles: string | undefined;
+function previewPageHTML(locale: string, nonce: string): string {
+  previewStyles ??= previewStylesheet(distDirectory);
+  return `<!DOCTYPE html>
 <html lang="${locale}">
 <head>
 <meta charset="utf-8">
 <style>
-${previewStylesheet(distDirectory)}
+${previewStyles}
 </style>
 </head>
 <body>
 <article id="content"></article>
-<script src="${appOrigin}/preview/preview.js"></script>
+<script nonce="${nonce}" src="${appOrigin}/preview/preview.js"></script>
 </body>
 </html>`;
-  return previewPage;
 }
 
 export function handleProtocols(locale: string): void {
@@ -127,10 +128,11 @@ export function handleProtocols(locale: string): void {
     const url = new URL(request.url);
     const token = url.host;
     if (url.pathname === "/.lauda-preview" && documentFolders.has(token)) {
-      return new Response(previewPageHTML(locale), {
+      const nonce = randomBytes(16).toString("base64");
+      return new Response(previewPageHTML(locale, nonce), {
         headers: {
           "content-type": "text/html; charset=utf-8",
-          "content-security-policy": `${previewContentSecurityPolicy}; script-src ${appOrigin}`,
+          "content-security-policy": `${previewContentSecurityPolicy}; script-src 'nonce-${nonce}'`,
         },
       });
     }

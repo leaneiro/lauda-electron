@@ -90,9 +90,24 @@ test("view modes, tabs and the outline", async () => {
   await window.locator('.view-modes button[data-mode="split"]').click();
   await expect(window.locator(".width-button")).toHaveClass(/is-out/);
 
-  await window.locator(".toolbar-right .glass-button").last().click();
+  const outline = window.locator(".toolbar-right .glass-button").last();
+  await outline.click();
   await expect(window.locator(".outline-row")).toHaveText(["One", "Two"]);
+  await expect(window.locator(".outline-row").first()).toBeFocused();
   await window.keyboard.press("Escape");
+  await expect(window.locator(".popover")).toBeHidden();
+  // The button opens it again, and a click elsewhere closes it.
+  await outline.click();
+  await expect(window.locator(".popover")).toBeVisible();
+  await window.locator(".document:not([hidden]) .cm-content").click();
+  await expect(window.locator(".popover")).toBeHidden();
+  // Picking a heading closes it and takes the caret there.
+  await outline.click();
+  await window.locator(".outline-row", { hasText: "Two" }).click();
+  await expect(window.locator(".popover")).toBeHidden();
+  await expect
+    .poll(() => window.evaluate(() => getSelection()?.anchorNode?.parentElement?.closest(".cm-line")?.textContent))
+    .toBe("## Two");
 
   await window.locator(".tab").nth(1).click({ button: "middle" });
   await expect(window.locator(".tab")).toHaveCount(0);

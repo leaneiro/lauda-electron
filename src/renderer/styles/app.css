@@ -736,9 +736,21 @@ body.platform-darwin .window-title {
 
 /* MARK: - Outline */
 
+/* The browser's popover, anchored under the outline button: its right edge
+   a little past the button's centre, where its arrow points. */
+.outline-button {
+  anchor-name: --outline-button;
+}
 .popover {
-  position: fixed;
-  z-index: 20;
+  position-anchor: --outline-button;
+  inset: auto;
+  top: calc(anchor(bottom) + 10px);
+  right: calc(anchor(center) - 20px);
+  margin: 0;
+  padding: 0;
+  border: none;
+  overflow: visible;
+  color: inherit;
   background: var(--popover-bg);
   backdrop-filter: blur(24px) saturate(1.8);
   border-radius: 12px;
@@ -757,7 +769,7 @@ body.platform-darwin .window-title {
   content: "";
   position: absolute;
   top: -6px;
-  right: var(--arrow-right, 14px);
+  right: 14px;
   width: 12px;
   height: 12px;
   background: inherit;

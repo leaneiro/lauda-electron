@@ -23,9 +23,8 @@ export class TitleBar {
   private readonly right = element("div", "toolbar-right");
   private readonly viewModes = element("div", "view-modes glass");
   private readonly widthButton = element("button", "glass-button glass width-button is-out");
-  private readonly outlineButton = element("button", "glass-button glass");
+  private readonly outlineButton = element("button", "glass-button glass outline-button");
   private readonly tabs = new Map<string, HTMLElement>();
-  private readonly outline: OutlinePopover;
 
   constructor(
     private readonly context: WindowContext,
@@ -70,8 +69,7 @@ export class TitleBar {
     this.outlineButton.innerHTML = icons.outline;
     this.outlineButton.title = t("Document outline");
     this.outlineButton.setAttribute("aria-label", t("Outline"));
-    this.outline = new OutlinePopover(context, this.outlineButton, workspace);
-    this.outlineButton.addEventListener("click", () => this.outline.toggle());
+    new OutlinePopover(context, this.outlineButton, workspace);
 
     root.append(this.title, this.strip, this.spacer, this.center, this.right);
     this.right.append(this.widthButton, this.outlineButton);

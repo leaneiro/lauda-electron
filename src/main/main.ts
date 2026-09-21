@@ -353,6 +353,10 @@ app.on("before-quit", (event) => {
   if (documentWindow.askToQuit()) event.preventDefault();
 });
 
+app.on("will-quit", () => {
+  if (isReady) settings.flush();
+});
+
 app.on("window-all-closed", () => {
   if (!isMac || documentWindow.isQuitting) app.quit();
 });

@@ -36,13 +36,16 @@ class JSONFile<T> {
   }
 }
 
-/// Every setting, with the native app's defaults.
+/// Every setting, with the native app's defaults. A change reaches the
+/// windows at once; the file is written once the changes pause, since a
+/// slider sends one with each step, and when the app quits.
 export class SettingsStore {
   private readonly file = new JSONFile<Settings>("settings.json");
   private current: Settings;
   private readonly listeners = new Set<(settings: Settings) => void>();
+  private writeTimer: NodeJS.Timeout | undefined;
 
-  constructor() {
+  constructor(private readonly writePause = 300) {
     this.current = sanitizeSettings(this.file.read());
   }
 
@@ -52,8 +55,17 @@ export class SettingsStore {
 
   update(changes: Partial<Settings>): void {
     this.current = sanitizeSettings({ ...this.current, ...changes });
-    this.file.write(this.current);
+    clearTimeout(this.writeTimer);
+    this.writeTimer = setTimeout(() => this.flush(), this.writePause);
     for (const listener of this.listeners) listener(this.current);
+  }
+
+  /// Writes a change still waiting for its pause, as the app quits.
+  flush(): void {
+    if (this.writeTimer === undefined) return;
+    clearTimeout(this.writeTimer);
+    this.writeTimer = undefined;
+    this.file.write(this.current);
   }
 
   /// Restore Defaults: every preference goes back to its default; what the

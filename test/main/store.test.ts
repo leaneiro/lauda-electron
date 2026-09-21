@@ -49,9 +49,34 @@ describe("what the app keeps between launches", () => {
     settings.update({ previewFontSize: 18 });
     expect(settings.value.previewFontSize).toBe(18);
     expect(heard).toEqual([18]);
+    settings.flush();
     expect(JSON.parse(readFileSync(join(userData, "settings.json"), "utf8")).previewFontSize).toBe(18);
     // A new store reads what was written.
     expect(new SettingsStore().value.previewFontSize).toBe(18);
+  });
+
+  /// A slider sends a change with each step: every window hears each one at
+  /// once, and the file is written once they pause.
+  it("writes the file once the changes pause", () => {
+    vi.useFakeTimers();
+    try {
+      const file = join(userData, "settings.json");
+      const settings = new SettingsStore(300);
+      settings.update({ editorFontSize: 15 });
+      settings.flush();
+      const heard: number[] = [];
+      settings.onChange((value) => heard.push(value.editorFontSize));
+      for (const size of [16, 17, 18]) {
+        settings.update({ editorFontSize: size });
+        vi.advanceTimersByTime(100);
+      }
+      expect(heard).toEqual([16, 17, 18]);
+      expect(JSON.parse(readFileSync(file, "utf8")).editorFontSize).toBe(15);
+      vi.advanceTimersByTime(200);
+      expect(JSON.parse(readFileSync(file, "utf8")).editorFontSize).toBe(18);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("lists recent files most recent first, once each, ten at most", () => {

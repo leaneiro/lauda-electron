@@ -154,6 +154,21 @@ test("a file changed by another program shows its new text", async () => {
   await app.close();
 });
 
+/// The settings file is written once changes pause, and at the latest as
+/// the app quits.
+test("a setting changed just before quitting is kept", async () => {
+  const { app, window, folder } = await launch({ files: { "a.md": "# A\n" } });
+  await window.evaluate(() =>
+    (globalThis as unknown as { lauda: { invoke: (...args: unknown[]) => Promise<void> } }).lauda.invoke(
+      "settings:set",
+      { previewFontSize: 21 },
+    ),
+  );
+  await app.close();
+  const stored = JSON.parse(readFileSync(join(folder, "..", "user-data", "settings.json"), "utf8"));
+  expect(stored.previewFontSize).toBe(21);
+});
+
 /// Another app changes a file the reader has changes of their own to: as
 /// NSDocument does, the reader chooses which to keep, and nothing is written
 /// over the file before they have.

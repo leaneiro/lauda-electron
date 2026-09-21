@@ -1,6 +1,7 @@
 import type { MenuCommand, OpenDocument } from "../shared/ipc";
 import { modeChangeMs } from "../shared/layout";
 import { nextPreviewWidthLevel, previewWidthShowing, type Settings, type ViewMode } from "../shared/settings";
+import { TabList } from "../shared/tab-list";
 import { lauda, t } from "./api";
 import { LaudaDocument } from "./document";
 import { DocumentView } from "./document-view";
@@ -23,8 +24,19 @@ function withoutExtension(title: string): string {
 /// document keeps panes of its own, and selecting a tab brings its panes
 /// forward, which is why switching is instant.
 export class Workspace {
-  documents: LaudaDocument[] = [];
-  selected: LaudaDocument | null = null;
+  /// The tabs and the one showing; which takes over when one closes is the
+  /// list's rule (TabList, as natively).
+  private readonly tabs = new TabList<LaudaDocument>();
+  /// The document whose panes last took the keyboard.
+  private focusedId: string | null = null;
+
+  get documents(): readonly LaudaDocument[] {
+    return this.tabs.items;
+  }
+
+  get selected(): LaudaDocument | null {
+    return this.tabs.selected;
+  }
   viewMode: ViewMode;
   settings: Settings;
   /// Whether the title bar is laid out for tabs, and whether they have come
@@ -106,22 +118,29 @@ export class Workspace {
   }
 
   add(document: LaudaDocument): void {
-    this.documents.push(document);
+    this.tabs.add(document);
     const view = new DocumentView(document, this);
     this.views.set(document.id, view);
     this.container.append(view.element);
     document.onChange(() => this.changed());
     if (document.filePath) void lauda.invoke("doc:watch", document.filePath);
     this.tabsChanged();
-    this.select(document);
+    this.showSelected();
   }
 
   select(document: LaudaDocument): void {
-    if (!this.documents.includes(document)) return;
-    const previous = this.selected;
-    this.selected = document;
-    for (const [id, view] of this.views) view.setVisible(id === document.id);
-    if (previous !== document) this.views.get(document.id)?.focus();
+    if (!this.tabs.contains(document)) return;
+    this.tabs.select(document);
+    this.showSelected();
+  }
+
+  /// The selected document's panes show, and take the keyboard when they
+  /// weren't the ones that had it.
+  private showSelected(): void {
+    const document = this.tabs.selected;
+    for (const [id, view] of this.views) view.setVisible(id === document?.id);
+    if (document && document.id !== this.focusedId) this.views.get(document.id)?.focus();
+    this.focusedId = document?.id ?? null;
     this.changed();
   }
 
@@ -162,18 +181,13 @@ export class Workspace {
   }
 
   private remove(document: LaudaDocument): void {
-    const index = this.documents.indexOf(document);
-    if (index < 0) return;
-    this.documents.splice(index, 1);
+    if (!this.tabs.contains(document)) return;
+    this.tabs.remove(document);
     this.views.get(document.id)?.destroy();
     this.views.delete(document.id);
     if (document.filePath) void lauda.invoke("doc:unwatch", document.filePath);
-    if (this.selected === document) {
-      this.selected = this.documents[Math.min(index, this.documents.length - 1)] ?? null;
-      if (this.selected) this.select(this.selected);
-    }
+    this.showSelected();
     this.tabsChanged();
-    this.changed();
   }
 
   /// The window is closing, or the app quits: every document in turn. On

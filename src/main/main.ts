@@ -154,11 +154,15 @@ function welcomeGuideText(): string {
 }
 
 /// The guide opens as an untitled document holding its text, so people can
-/// experiment freely and save it only if they want to.
-function showWelcomeGuide(): void {
+/// experiment freely and save it only if they want to. `delivered` runs once
+/// the page has it.
+function showWelcomeGuide(delivered?: () => void): void {
   documentWindow.ensure();
   const document: OpenDocument = { filePath: null, text: welcomeGuideText(), title: strings.t("Welcome") };
-  withWindow(() => send("workspace:open", document));
+  withWindow(() => {
+    send("workspace:open", document);
+    delivered?.();
+  });
 }
 
 /// A launch with nothing to open: the guide the first time, then the tabs
@@ -167,8 +171,9 @@ function showWelcomeGuide(): void {
 /// since a Save dialog with no window reads as the app failing to start.
 async function launchWithoutFiles(): Promise<void> {
   if (!settings.value.hasShownWelcomeGuide) {
-    settings.update({ hasShownWelcomeGuide: true });
-    showWelcomeGuide();
+    // Shown once the page has it: a launch that never got that far (a
+    // window an earlier build left hidden) leaves the guide for the next.
+    showWelcomeGuide(() => settings.update({ hasShownWelcomeGuide: true }));
     return;
   }
   const session = readSession();
@@ -236,7 +241,7 @@ function refreshMenu(): void {
         openRecent: (filePath) => void openFiles([filePath]),
         clearRecent: () => recentFiles.clear(),
         showSettings: () => settingsWindow.show(),
-        showWelcomeGuide,
+        showWelcomeGuide: () => showWelcomeGuide(),
         showAbout,
       }),
     );

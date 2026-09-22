@@ -1,8 +1,8 @@
-import { existsSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron as electron, expect, test } from "@playwright/test";
-import { forceQuit, launch, previewFrame } from "./launch";
+import { clickMenu, forceQuit, launch, previewFrame } from "./launch";
 
 test("a backtick from a dead key pairs and closes, as on a Brazilian keyboard", async () => {
   const { app, window } = await launch({ files: { "dead.md": "" } });
@@ -36,11 +36,27 @@ test("the welcome guide opens on the first launch", async () => {
   await expect(window.locator(".save-status")).toHaveAttribute("data-status", "notSavedYet");
   // On a Mac it reads with the Mac's keys, as the menus around it do.
   await expect(window.locator(".cm-content")).toContainText("⌘B");
+  // It counts as shown once the page has it, and the next launch knows.
+  const settingsFile = join(folder, "settings.json");
+  await expect
+    .poll(() =>
+      existsSync(settingsFile) ? JSON.parse(readFileSync(settingsFile, "utf8")).hasShownWelcomeGuide : false,
+    )
+    .toBe(true);
   await forceQuit(app);
 });
 
 /// Windows and Linux read the same guide with their own keys: it comes from
 /// the native app, written with the Mac's.
+test("Help > Welcome Guide opens the guide as a tab", async () => {
+  const { app, window } = await launch({ files: { "notes.md": "# Notes\n" } });
+  await expect(window.locator(".window-title")).toHaveText("notes.md");
+  await clickMenu(app, "Help", "Welcome Guide");
+  await expect(window.locator(".tab")).toHaveCount(2);
+  await expect(window.locator(".tab.is-selected .tab-title")).toHaveText("Welcome");
+  await forceQuit(app);
+});
+
 test("the welcome guide speaks the system's shortcuts", async () => {
   const folder = mkdtempSync(join(tmpdir(), "lauda-first-"));
   const app = await electron.launch({

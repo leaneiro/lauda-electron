@@ -1,11 +1,28 @@
 import { join } from "node:path";
 import { app, BrowserWindow, nativeTheme, screen, type WebContents } from "electron";
 import type { Events } from "../shared/ipc";
+import { firstFrameWait, showWhenDrawn } from "./first-show";
+import { logNote } from "./log";
 import { placeWindow } from "./placement";
 import { appOrigin, distDirectory } from "./protocols";
 import { readWindowState, windowStateFile } from "./store";
 
 const isMac = process.platform === "darwin";
+
+/// A page that took long to draw its first frame, for the log: with the
+/// GPU's state when its window showed without it, since a page that doesn't
+/// draw most often means a GPU that doesn't either.
+function noteSlowPage(windowName: string, took: number | null): void {
+  if (took === null) {
+    const compositing = app.getGPUFeatureStatus().gpu_compositing;
+    logNote(
+      "app",
+      `The ${windowName} showed before its page drew, after ${firstFrameWait / 1000} s (GPU compositing: ${compositing})`,
+    );
+  } else {
+    logNote("app", `The ${windowName}'s page drew its first frame after ${(took / 1000).toFixed(1)} s`);
+  }
+}
 
 /// The windows' background before their pages draw: the page's own colour
 /// (--window-bg in app.css; Settings is the lighter grey of a sheet).
@@ -101,6 +118,9 @@ export class DocumentWindow {
   /// when there is no window to bring.
   bringForward(): boolean {
     if (!this.window) return false;
+    // Still waiting for its page to draw: the reader asked for it, so it
+    // shows now.
+    if (!this.window.isVisible()) this.window.show();
     if (this.window.isMinimized()) this.window.restore();
     this.window.focus();
     return true;
@@ -136,10 +156,8 @@ export class DocumentWindow {
     this.closeIsConfirmed = false;
     if (!isMac) window.setMenuBarVisibility(false);
     window.loadURL(`${appOrigin}/renderer/index.html`);
-    window.once("ready-to-show", () => {
-      if (state?.maximized) window.maximize();
-      window.show();
-    });
+    showWhenDrawn(window, state?.maximized === true, (took) => noteSlowPage("window", took));
+    window.on("unresponsive", () => logNote("app", "The window stopped responding"));
     this.rememberBounds(window);
     this.reportState(window);
 
@@ -216,7 +234,7 @@ export class SettingsWindow {
     this.window = window;
     window.setMenu(null);
     window.loadURL(`${appOrigin}/renderer/settings.html`);
-    window.once("ready-to-show", () => window.show());
+    showWhenDrawn(window, false, (took) => noteSlowPage("Settings window", took));
     window.on("closed", () => {
       this.window = null;
     });

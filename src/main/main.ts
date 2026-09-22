@@ -21,7 +21,7 @@ import { showError } from "./dialogs";
 import { exportHTML, exportPDF } from "./export";
 import { DocumentWatcher, readText } from "./files";
 import { GrantedFiles, isOpenableByPath } from "./granted-files";
-import { logWindowFailure } from "./log";
+import { logProcessesGone, logWindowFailure } from "./log";
 import { buildMenu } from "./menu";
 import { guardPages } from "./navigation";
 import { appOrigin, distDirectory, handleProtocols, registerSchemes } from "./protocols";
@@ -43,6 +43,7 @@ registerSchemes();
 // Every page the app opens runs sandboxed, whatever its window says; the
 // windows say so too, but a new one can't forget.
 app.enableSandbox();
+logProcessesGone();
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();

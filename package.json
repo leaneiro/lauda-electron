@@ -18,7 +18,7 @@
     "measure": "node scripts/build.mjs && playwright test -c playwright.measure.config.ts",
     "sync-native": "node scripts/sync-native.mjs",
     "dist:linux": "node scripts/build.mjs --production && electron-builder --linux",
-    "dist:win": "node scripts/build.mjs --production && electron-builder --win",
+    "dist:win": "node scripts/build.mjs --production && node scripts/dist-win.mjs",
     "dist:mac": "node scripts/build.mjs --production && electron-builder --mac --config.appId=com.carneirolabs.lauda.electron --config.productName=\"Lauda Electron\"",
     "lint": "biome check --error-on-warnings",
     "format": "biome check --write",

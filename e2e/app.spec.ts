@@ -7,6 +7,9 @@ const mod = process.platform === "darwin" ? "Meta" : "Control";
 
 test("opens a file and renders its preview", async () => {
   const { app, window } = await launch({ files: { "notes.md": "# Title\n\nA paragraph with **bold** text.\n" } });
+  // The window shows at once, not once its page has drawn: that frame
+  // never came on a Windows virtual machine, and the window stayed hidden.
+  expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isVisible())).toBe(true);
   await expect(window.locator(".window-title")).toHaveText("notes.md");
   const preview = await previewFrame(window);
   await expect(preview.locator("h1")).toHaveText("Title");

@@ -126,6 +126,10 @@ test("the Settings window stores each change, and Restore Defaults shows the def
   const opened = app.waitForEvent("window");
   await clickMenu(app, ...(process.platform === "darwin" ? ["Lauda", "Settings…"] : ["File", "Settings…"]));
   const settings = await opened;
+  // It shows once its form has said how tall it is.
+  await expect
+    .poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().every((w) => w.isVisible())))
+    .toBe(true);
   const size = settings.locator('input[type="range"]').first();
   await expect(size).toHaveValue("14");
   // The special fonts, a line, then the system's, as the system lists them

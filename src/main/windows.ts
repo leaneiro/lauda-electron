@@ -1,28 +1,12 @@
 import { join } from "node:path";
 import { app, BrowserWindow, nativeTheme, screen, type WebContents } from "electron";
 import type { Events } from "../shared/ipc";
-import { firstFrameWait, showWhenDrawn } from "./first-show";
 import { logNote } from "./log";
 import { placeWindow } from "./placement";
 import { appOrigin, distDirectory } from "./protocols";
 import { readWindowState, windowStateFile } from "./store";
 
 const isMac = process.platform === "darwin";
-
-/// A page that took long to draw its first frame, for the log: with the
-/// GPU's state when its window showed without it, since a page that doesn't
-/// draw most often means a GPU that doesn't either.
-function noteSlowPage(windowName: string, took: number | null): void {
-  if (took === null) {
-    const compositing = app.getGPUFeatureStatus().gpu_compositing;
-    logNote(
-      "app",
-      `The ${windowName} showed before its page drew, after ${firstFrameWait / 1000} s (GPU compositing: ${compositing})`,
-    );
-  } else {
-    logNote("app", `The ${windowName}'s page drew its first frame after ${(took / 1000).toFixed(1)} s`);
-  }
-}
 
 /// The windows' background before their pages draw: the page's own colour
 /// (--window-bg in app.css; Settings is the lighter grey of a sheet).
@@ -156,7 +140,12 @@ export class DocumentWindow {
     this.closeIsConfirmed = false;
     if (!isMac) window.setMenuBarVisibility(false);
     window.loadURL(`${appOrigin}/renderer/index.html`);
-    showWhenDrawn(window, state?.maximized === true, (took) => noteSlowPage("window", took));
+    // Shown at once, in the page's own background colour, rather than once
+    // the page has drawn: waiting for that left the window hidden for good
+    // when the first frame never came (a Windows virtual machine), and
+    // Electron advises showing at once where it may come late.
+    if (state?.maximized) window.maximize();
+    window.show();
     window.on("unresponsive", () => logNote("app", "The window stopped responding"));
     this.rememberBounds(window);
     this.reportState(window);
@@ -209,6 +198,7 @@ export class DocumentWindow {
 /// Settings, one window at a time, over the document window.
 export class SettingsWindow {
   private window: BrowserWindow | null = null;
+  private isRevealed = false;
 
   constructor(private readonly context: { title: () => string; parent: () => BrowserWindow | null }) {}
 
@@ -232,9 +222,13 @@ export class SettingsWindow {
       webPreferences,
     });
     this.window = window;
+    this.isRevealed = false;
     window.setMenu(null);
     window.loadURL(`${appOrigin}/renderer/settings.html`);
-    showWhenDrawn(window, false, (took) => noteSlowPage("Settings window", took));
+    // It shows once its form has said how tall it is (fitContent), so it
+    // opens at its size; the form says so as soon as it is laid out, frame
+    // or no frame. The first frame shows it too, should the form not speak.
+    window.once("ready-to-show", () => this.reveal());
     window.on("closed", () => {
       this.window = null;
     });
@@ -248,5 +242,14 @@ export class SettingsWindow {
   fitContent(height: number): void {
     if (!this.window || !Number.isFinite(height)) return;
     this.window.setContentSize(480, Math.ceil(Math.min(Math.max(height, 200), 900)));
+    this.reveal();
+  }
+
+  /// Shows the window the first time it is ready, and only then: later
+  /// fittings (the fonts arriving) leave it as the reader has it.
+  private reveal(): void {
+    if (this.isRevealed || !this.window || this.window.isDestroyed()) return;
+    this.isRevealed = true;
+    this.window.show();
   }
 }

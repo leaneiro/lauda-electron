@@ -42,7 +42,7 @@ export function logFailure(category: LogCategory, what: string, error: unknown):
 }
 
 /// Something that went wrong without an error to describe, in words that
-/// name no file (a page slow to draw, a window that stopped responding).
+/// name no file (a window that stopped responding).
 export function logNote(category: LogCategory, message: string): void {
   write(logLine(category, message));
 }

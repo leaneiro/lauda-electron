@@ -1,6 +1,7 @@
 // HTMLRendererTests.swift, with the same expected strings.
 import { describe, expect, it } from "vitest";
 import { render, renderForPrint, renderWithLines } from "../../src/shared/markdown";
+import { openElements } from "../../src/shared/markdown/raw-html";
 
 describe("HTML renderer", () => {
   it("renders a heading", () => {
@@ -127,6 +128,35 @@ describe("HTML renderer", () => {
   // the anchors that follow them.
   it("skips items inside raw HTML", () => {
     expect(renderWithLines("<ul><li>raw</li></ul>\n\n- real").anchorLines).toEqual([0, 2, 2]);
+  });
+
+  // GitHub's way of folding Markdown away: a blank line after the summary, so
+  // what follows is Markdown. The blocks up to </details> share one wrapper,
+  // or the browser would close the element at the summary.
+  it("keeps details whole across blank lines", () => {
+    const result = renderWithLines("<details>\n<summary>More</summary>\n\nHidden **text**.\n</details>\n\nAfter");
+    expect(result.html.split('class="raw"')).toHaveLength(2);
+    expect(result.html).toContain("<summary>More</summary>\n<p>Hidden <strong>text</strong>.</p>\n</details>\n</div>");
+    // One anchor for the wrapper, one for the paragraph after it.
+    expect(result.anchorLines).toEqual([0, 6]);
+  });
+
+  it("keeps a centred image in its div", () => {
+    const result = renderWithLines('<div align="center">\n\n![Logo](logo.png)\n\n</div>\n\n- item');
+    expect(result.html.startsWith('<div class="raw"><div align="center">\n<p><img')).toBe(true);
+    expect(result.anchorLines).toEqual([0, 6, 6]);
+  });
+
+  // An element that never closes joins nothing: every block keeps its wrapper
+  // and its anchor, as before.
+  it("leaves an element no block closes alone", () => {
+    expect(renderWithLines("<div>\n\ntext\n\n- item").anchorLines).toEqual([0, 2, 4, 4]);
+  });
+
+  it("finds the elements raw HTML leaves open", () => {
+    expect(openElements('<details open><summary>a</summary><br><img src="x" />')).toEqual(["details"]);
+    expect(openElements("<!-- <div> --><p>text")).toEqual([]);
+    expect(openElements("</section>", ["section", "div"])).toEqual([]);
   });
 
   it("still starts a new paragraph at a blank line", () => {

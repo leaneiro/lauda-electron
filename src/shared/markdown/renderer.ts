@@ -19,6 +19,7 @@ import {
   type Table,
 } from "./markup";
 import { parseDocument } from "./parser";
+import { closingIndex } from "./raw-html";
 import { sourceLineCount } from "./source-lines";
 
 export interface RenderOptions {
@@ -50,17 +51,29 @@ export function render(markdown: string, options: RenderOptions = {}): string {
 export function renderWithLines(markdown: string, options: RenderOptions = {}): RenderedDocument {
   const document = parseDocument(markdown);
   const renderer = new HTMLRenderer(options.strictLineBreaks ?? false);
+  const children = document.children;
+  const pieces = children.map((child) => renderer.visit(child));
   let html = "";
   const anchorLines: number[] = [];
-  for (const child of document.children) {
-    const piece = renderer.visit(child);
+  let index = 0;
+  while (index < children.length) {
+    const child = children[index] as BlockMarkup;
+    anchorLines.push(child.line ?? lastOf(anchorLines));
+    if (child.kind !== "htmlBlock") {
+      html += pieces[index];
+      appendInnerAnchors(child, anchorLines);
+      index += 1;
+      continue;
+    }
     // Raw HTML can hold zero or several top-level elements; a wrapper keeps
     // the one-element-per-block correspondence. Its class tells the preview
     // not to look for anchors inside, where the elements are the
-    // document's own and map to no source line of ours.
-    html += child.kind === "htmlBlock" ? `<div class="raw">${piece}</div>\n` : piece;
-    anchorLines.push(child.line ?? lastOf(anchorLines));
-    if (child.kind !== "htmlBlock") appendInnerAnchors(child, anchorLines);
+    // document's own and map to no source line of ours. An element it
+    // leaves open for a later block to close takes the blocks between into
+    // the same wrapper, as the page whole would.
+    const end = closingIndex(pieces, index);
+    html += `<div class="raw">${pieces.slice(index, end + 1).join("")}</div>\n`;
+    index = end + 1;
   }
   return { html, anchorLines, lineCount: sourceLineCount(markdown) };
 }

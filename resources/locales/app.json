@@ -58,7 +58,20 @@
     "Couldn't export “%@”": { "en": "Couldn't export “%@”", "pt-BR": "Não foi possível exportar “%@”", "de": "„%@“ konnte nicht exportiert werden", "es": "No se ha podido exportar “%@”", "fr": "Impossible d’exporter « %@ »", "ja": "“%@”を書き出せませんでした", "zh-Hans": "无法导出“%@”" },
     "Lauda saves automatically; %@ saves right away.": { "en": "Lauda saves automatically; %@ saves right away.", "pt-BR": "O Lauda salva automaticamente; %@ salva na hora.", "de": "Lauda speichert automatisch; %@ speichert sofort.", "es": "Lauda guarda automáticamente; %@ guarda al instante.", "fr": "Lauda enregistre automatiquement ; %@ enregistre immédiatement.", "ja": "Laudaは自動的に保存します。%@ですぐに保存できます。", "zh-Hans": "Lauda 会自动保存；按 %@ 可立即保存。" },
     "Next (%@)": { "en": "Next (%@)", "pt-BR": "Seguinte (%@)", "de": "Nächster (%@)", "es": "Siguiente (%@)", "fr": "Suivant (%@)", "ja": "次へ（%@）", "zh-Hans": "下一个 (%@)" },
-    "Previous (%@)": { "en": "Previous (%@)", "pt-BR": "Anterior (%@)", "de": "Vorheriger (%@)", "es": "Anterior (%@)", "fr": "Précédent (%@)", "ja": "前へ（%@）", "zh-Hans": "上一个 (%@)" }
+    "Previous (%@)": { "en": "Previous (%@)", "pt-BR": "Anterior (%@)", "de": "Vorheriger (%@)", "es": "Anterior (%@)", "fr": "Précédent (%@)", "ja": "前へ（%@）", "zh-Hans": "上一个 (%@)" },
+    "Replace": { "en": "Replace", "pt-BR": "Substituir", "de": "Ersetzen", "es": "Reemplazar", "fr": "Remplacer", "ja": "置換", "zh-Hans": "替换" },
+    "Replace All": { "en": "Replace All", "pt-BR": "Substituir Tudo", "de": "Alle ersetzen", "es": "Reemplazar todo", "fr": "Tout remplacer", "ja": "すべて置換", "zh-Hans": "全部替换" },
+    "Next": { "en": "Next", "pt-BR": "Seguinte", "de": "Nächster", "es": "Siguiente", "fr": "Suivant", "ja": "次へ", "zh-Hans": "下一个" },
+    "Previous": { "en": "Previous", "pt-BR": "Anterior", "de": "Vorheriger", "es": "Anterior", "fr": "Précédent", "ja": "前へ", "zh-Hans": "上一个" },
+    "All": { "en": "All", "pt-BR": "Todas", "de": "Alle", "es": "Todas", "fr": "Toutes", "ja": "すべて", "zh-Hans": "全部" },
+    "Match Case": { "en": "Match Case", "pt-BR": "Diferenciar maiúsculas", "de": "Groß-/Kleinschreibung", "es": "Distinguir mayúsculas", "fr": "Respecter la casse", "ja": "大文字と小文字を区別", "zh-Hans": "区分大小写" },
+    "Regular Expression": { "en": "Regular Expression", "pt-BR": "Expressão regular", "de": "Regulärer Ausdruck", "es": "Expresión regular", "fr": "Expression régulière", "ja": "正規表現", "zh-Hans": "正则表达式" },
+    "Whole Word": { "en": "Whole Word", "pt-BR": "Palavra inteira", "de": "Ganzes Wort", "es": "Palabra completa", "fr": "Mot entier", "ja": "単語単位", "zh-Hans": "全字匹配" },
+    "current match": { "en": "current match", "pt-BR": "ocorrência atual", "de": "aktueller Treffer", "es": "coincidencia actual", "fr": "occurrence actuelle", "ja": "現在の一致", "zh-Hans": "当前匹配项" },
+    "on line": { "en": "on line", "pt-BR": "na linha", "de": "in Zeile", "es": "en la línea", "fr": "à la ligne", "ja": "行", "zh-Hans": "位于行" },
+    "replaced $ matches": { "en": "replaced $ matches", "pt-BR": "ocorrências substituídas: $", "de": "$ Treffer ersetzt", "es": "coincidencias reemplazadas: $", "fr": "occurrences remplacées : $", "ja": "$ 件を置換しました", "zh-Hans": "已替换 $ 处" },
+    "replaced match on line $": { "en": "replaced match on line $", "pt-BR": "ocorrência substituída na linha $", "de": "Treffer in Zeile $ ersetzt", "es": "coincidencia reemplazada en la línea $", "fr": "occurrence remplacée à la ligne $", "ja": "$ 行目の一致を置換しました", "zh-Hans": "已替换第 $ 行的匹配项" },
+    "Selection deleted": { "en": "Selection deleted", "pt-BR": "Seleção apagada", "de": "Auswahl gelöscht", "es": "Selección eliminada", "fr": "Sélection supprimée", "ja": "選択範囲を削除しました", "zh-Hans": "已删除所选内容" }
   },
   "outsideMac": {
     "de": {

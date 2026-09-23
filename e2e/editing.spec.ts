@@ -206,3 +206,30 @@ test("dropping a Markdown file on the window opens it as a tab", async () => {
   expect(existsSync(second)).toBe(true);
   await app.close();
 });
+
+/// Find and Replace… opens CodeMirror's own panel, whose words are English
+/// unless the editor gives it the reader's.
+test("find and replace speaks the reader's language", async () => {
+  const { app, window, folder } = await launch({
+    locale: "pt-BR",
+    files: { "semana.md": "uma semana, outra semana\n" },
+  });
+  await window.locator(".cm-content").click();
+  await clickMenu(app, "Editar", "Localizar e Substituir…");
+  const panel = window.locator(".document:not([hidden]) .cm-search");
+  await expect(panel.locator("input[name=search]")).toHaveAttribute("placeholder", "Localizar");
+  await expect(panel.locator("input[name=replace]")).toHaveAttribute("placeholder", "Substituir");
+  await expect(panel.locator("button[name=next]")).toHaveText("Seguinte");
+  await expect(panel.locator("button[name=replaceAll]")).toHaveText("Substituir Tudo");
+  await expect(panel.locator("label").first()).toHaveText("Diferenciar maiúsculas");
+  await expect(panel.locator("button[name=close]")).toHaveAttribute("aria-label", "Fechar");
+
+  await panel.locator("input[name=search]").click();
+  await window.keyboard.type("semana");
+  await panel.locator("input[name=replace]").click();
+  await window.keyboard.type("SEMANA");
+  await panel.locator("button[name=replaceAll]").click();
+  await expect(window.locator(".document:not([hidden]) .cm-content")).toHaveText("uma SEMANA, outra SEMANA");
+  await expect.poll(() => readFileSync(join(folder, "semana.md"), "utf8")).toBe("uma SEMANA, outra SEMANA\n");
+  await app.close();
+});

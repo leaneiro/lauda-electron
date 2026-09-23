@@ -9,6 +9,7 @@ import type { ScrollSync } from "../scroll-sync";
 import { behaviors, programmaticEdit } from "./behaviors";
 import { findClear, findCounts, findField, findStep, findUpdate } from "./find";
 import { markdownHighlighting } from "./highlight";
+import { editorPhrases } from "./phrases";
 import * as rules from "./rules";
 import { EditorScrolling } from "./scrolling";
 
@@ -49,6 +50,7 @@ export class Editor implements EditorFinding {
           // The editor's own find-and-replace (Find and Replace…), as the
           // native editor shows its text view's bar.
           search({ top: true }),
+          editorPhrases(context.t),
           keymap.of(searchKeymap.filter((binding) => binding.key === "Escape")),
           EditorView.updateListener.of((update) => {
             if (update.docChanged && !this.isReplacing) this.document.edit(update.state.doc.toString());

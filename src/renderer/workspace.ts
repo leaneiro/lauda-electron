@@ -8,6 +8,12 @@ import { DocumentView } from "./document-view";
 
 type Listener = () => void;
 
+/// Where the keyboard goes when a tab or a view mode is chosen: into the
+/// document's panes (a click, a menu, a shortcut), or nowhere, left where
+/// it is (the tabs and the view modes walked with the arrows, which keep
+/// the keyboard on them).
+export type KeyboardAfterChoice = "follows" | "stays";
+
 /// The menu commands about a document rather than the window.
 type DocumentCommand = Exclude<MenuCommand, { name: "new" | "view-mode" | "next-tab" | "previous-tab" }>;
 
@@ -138,19 +144,21 @@ export class Workspace {
     this.showSelected();
   }
 
-  select(document: LaudaDocument): void {
+  select(document: LaudaDocument, keyboard: KeyboardAfterChoice = "follows"): void {
     if (!this.tabs.contains(document)) return;
     this.tabs.select(document);
-    this.showSelected();
+    this.showSelected(keyboard);
   }
 
   /// The selected document's panes show, and take the keyboard when they
-  /// weren't the ones that had it.
-  private showSelected(): void {
+  /// weren't the ones that had it, unless it stays where it is.
+  private showSelected(keyboard: KeyboardAfterChoice = "follows"): void {
     const document = this.tabs.selected;
     for (const [id, view] of this.views) view.setVisible(id === document?.id);
-    if (document && document.id !== this.focusedId) this.views.get(document.id)?.focus();
-    this.focusedId = document?.id ?? null;
+    if (keyboard === "follows") {
+      if (document && document.id !== this.focusedId) this.views.get(document.id)?.focus();
+      this.focusedId = document?.id ?? null;
+    }
     this.notifyChanged();
   }
 
@@ -245,14 +253,14 @@ export class Workspace {
 
   // MARK: - View mode and settings
 
-  setViewMode(mode: ViewMode): void {
+  setViewMode(mode: ViewMode, keyboard: KeyboardAfterChoice = "follows"): void {
     if (mode === this.viewMode) return;
     this.viewMode = mode;
     void this.context.lauda.invoke("settings:set", { lastViewMode: mode });
     for (const [id, view] of this.views) {
       view.setViewMode(mode, id === this.selected?.id);
     }
-    this.selected && this.views.get(this.selected.id)?.focus();
+    if (keyboard === "follows" && this.selected) this.views.get(this.selected.id)?.focus();
     this.notifyChanged();
   }
 

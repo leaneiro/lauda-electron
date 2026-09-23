@@ -162,6 +162,33 @@ test("a file changed by another program shows its new text", async () => {
 
 /// The settings file is written once changes pause, and at the latest as
 /// the app quits.
+/// The appearance is the same kind of control as the view modes, and walks
+/// the same way: one stop, the arrows choosing as they go. The keyboard
+/// stays on it while the change comes back from the main process.
+test("the appearance can be chosen with the keyboard", async () => {
+  const { app, window } = await launch({ files: { "a.md": "# A\n" } });
+  const opened = app.waitForEvent("window");
+  await clickMenu(app, ...(process.platform === "darwin" ? ["Lauda", "Settings…"] : ["File", "Settings…"]));
+  const settings = await opened;
+  const theme = () => window.evaluate(() => document.documentElement.dataset.theme);
+  const initial = await theme();
+  await expect(settings.getByRole("radiogroup", { name: "Appearance" })).toBeVisible();
+  await expect(settings.getByRole("radio", { checked: true })).toHaveAccessibleName("Automatic");
+
+  await settings.getByRole("radio", { name: "Automatic" }).focus();
+  await settings.keyboard.press("End");
+  await expect.poll(theme).toBe("dark");
+  await expect(settings.getByRole("radio", { checked: true })).toHaveAccessibleName("Dark");
+  await expect(settings.getByRole("radio", { name: "Dark" })).toBeFocused();
+  await settings.keyboard.press("ArrowLeft");
+  await expect.poll(theme).toBe("light");
+  await expect(settings.getByRole("radio", { name: "Light" })).toBeFocused();
+  await settings.keyboard.press("Home");
+  await expect.poll(theme).toBe(initial);
+  await expect(settings.getByRole("radio", { name: "Automatic" })).toBeFocused();
+  await app.close();
+});
+
 test("a setting changed just before quitting is kept", async () => {
   const { app, window, folder } = await launch({ files: { "a.md": "# A\n" } });
   await window.evaluate(() =>

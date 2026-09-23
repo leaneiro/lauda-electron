@@ -315,8 +315,16 @@ body.platform-darwin .window-title {
 .view-modes button:hover::before {
   background: var(--pill-hover);
 }
-.view-modes button[aria-pressed="true"]::before {
+.view-modes button[aria-checked="true"]::before {
   background: var(--pill-selected);
+}
+/* The keyboard's ring sits on the choice's own pill: the group's glass
+   clips whatever a button draws outside itself. */
+.view-modes button:focus-visible {
+  outline: none;
+}
+.view-modes button:focus-visible::before {
+  outline: 2px solid var(--accent);
 }
 .view-modes svg {
   position: relative;
@@ -846,12 +854,12 @@ body.platform-darwin .window-title {
   /* Painted with the system's own highlight colours, so the system leaves
      them as they are, and draws no backplate behind their text. */
   .tab.is-selected,
-  .view-modes button[aria-pressed="true"] {
+  .view-modes button[aria-checked="true"] {
     forced-color-adjust: none;
     color: HighlightText;
   }
   .tab.is-selected,
-  .view-modes button[aria-pressed="true"]::before {
+  .view-modes button[aria-checked="true"]::before {
     background: Highlight;
   }
   .divider {

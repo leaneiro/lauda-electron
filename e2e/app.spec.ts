@@ -87,10 +87,10 @@ test("view modes, tabs and the outline", async () => {
   await window.locator(".tab").first().click();
   await expect(window.locator(".tab.is-selected .tab-title")).toHaveText("a.md");
 
-  await window.locator('.view-modes button[data-mode="previewOnly"]').click();
+  await window.getByRole("radio", { name: "Preview Only" }).click();
   await expect(window.locator(".document:not([hidden]) .panes")).toHaveAttribute("data-mode", "previewOnly");
   await expect(window.locator(".width-button")).not.toHaveClass(/is-out/);
-  await window.locator('.view-modes button[data-mode="split"]').click();
+  await window.getByRole("radio", { name: "Editor and Preview" }).click();
   await expect(window.locator(".width-button")).toHaveClass(/is-out/);
 
   const outline = window.locator(".toolbar-right .glass-button").last();
@@ -141,6 +141,51 @@ test("the tabs can be read and walked with the keyboard", async () => {
 
   await window.keyboard.press("Enter");
   await expect(window.locator(".document:not([hidden]) .cm-content")).toBeFocused();
+
+  // In preview-only mode too, where a document's preview takes the keyboard
+  // a moment later: walking the tabs must not hand it over.
+  await window.getByRole("radio", { name: "Preview Only" }).click();
+  await expect.poll(() => window.evaluate(() => document.activeElement?.tagName)).toBe("IFRAME");
+  await window.getByRole("tab", { selected: true }).focus();
+  await window.keyboard.press("ArrowRight");
+  await expect(window.getByRole("tab", { selected: true })).toHaveAccessibleName("c.md");
+  await window.waitForTimeout(300);
+  await expect(window.getByRole("tab", { selected: true })).toBeFocused();
+  await app.close();
+});
+
+/// The view modes read as one group of choices and are one stop for the Tab
+/// key; the arrows choose as they go, as in the tab strip. From the editor,
+/// Escape lets the next Tab leave it, and the tabs are three stops away.
+test("the view modes can be read and chosen with the keyboard", async () => {
+  const { app, window } = await launch({ files: { "a.md": "# A\n", "b.md": "# B\n" } });
+  await expect(window.getByRole("tab")).toHaveCount(2);
+  await expect(window.getByRole("radiogroup", { name: "View Mode" })).toBeVisible();
+  await expect(window.getByRole("radio", { checked: true })).toHaveAccessibleName("Editor and Preview");
+  await expect(window.getByRole("radio", { name: "Editor Only" })).toHaveAttribute("tabindex", "-1");
+  const panes = window.locator(".document:not([hidden]) .panes");
+
+  await window.locator(".document:not([hidden]) .cm-content").click();
+  await window.keyboard.press("Escape");
+  await window.keyboard.press("Shift+Tab");
+  await expect(window.getByRole("button", { name: "Outline" })).toBeFocused();
+  await window.keyboard.press("Shift+Tab");
+  await expect(window.getByRole("radio", { name: "Editor and Preview" })).toBeFocused();
+
+  await window.keyboard.press("ArrowLeft");
+  await expect(panes).toHaveAttribute("data-mode", "editorOnly");
+  await expect(window.getByRole("radio", { checked: true })).toHaveAccessibleName("Editor Only");
+  await expect(window.getByRole("radio", { name: "Editor Only" })).toBeFocused();
+  await window.keyboard.press("End");
+  await expect(panes).toHaveAttribute("data-mode", "previewOnly");
+  // The preview would take the keyboard a moment later, were it handed over.
+  await window.waitForTimeout(300);
+  await expect(window.getByRole("radio", { name: "Preview Only" })).toBeFocused();
+  await window.keyboard.press("ArrowRight");
+  await expect(panes).toHaveAttribute("data-mode", "editorOnly");
+
+  await window.keyboard.press("Shift+Tab");
+  await expect(window.getByRole("tab", { selected: true })).toBeFocused();
   await app.close();
 });
 

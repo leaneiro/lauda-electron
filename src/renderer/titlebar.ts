@@ -1,6 +1,7 @@
 import type { TranslationKey } from "../shared/i18n";
 import { rowTarget } from "../shared/keyboard-row";
 import { previewWidths, type ViewMode } from "../shared/settings";
+import { ChoiceGroup } from "./choice-group";
 import type { WindowContext } from "./context";
 import type { LaudaDocument } from "./document";
 import { element } from "./dom";
@@ -22,7 +23,7 @@ export class TitleBar {
   private readonly spacer = element("div", "title-spacer");
   private readonly center = element("div", "toolbar-center");
   private readonly right = element("div", "toolbar-right");
-  private readonly viewModes = element("div", "view-modes glass");
+  private readonly viewModes: ChoiceGroup<ViewMode>;
   private readonly widthButton = element("button", "glass-button glass width-button is-out");
   private readonly outlineButton = element("button", "glass-button glass outline-button");
   private readonly tabs = new Map<string, HTMLElement>();
@@ -45,17 +46,12 @@ export class TitleBar {
       root.append(menu);
     }
 
-    for (const { mode, key, icon } of modes) {
-      const button = element("button");
-      button.dataset.mode = mode;
-      button.innerHTML = icon;
-      button.title = t(key);
-      button.setAttribute("aria-label", t(key));
-      button.addEventListener("click", () => workspace.setViewMode(mode));
-      this.viewModes.append(button);
-    }
-    this.viewModes.setAttribute("role", "group");
-    this.viewModes.setAttribute("aria-label", t("View Mode"));
+    this.viewModes = new ChoiceGroup(
+      "view-modes glass",
+      t("View Mode"),
+      modes.map(({ mode, key, icon }) => ({ value: mode, label: t(key), icon })),
+      (mode, by) => workspace.setViewMode(mode, by === "keys" ? "stays" : "follows"),
+    );
 
     // The tabs are one stop for the keyboard, the selected tab; the arrows
     // move between them, selecting as they go, and Return goes to the
@@ -116,14 +112,13 @@ export class TitleBar {
 
     // One document keeps the picker in the middle of the bar; with tabs it
     // joins the controls on the right.
+    const picker = this.viewModes.element;
     const pickerParent = workspace.showsTabs ? this.right : this.center;
-    if (this.viewModes.parentElement !== pickerParent) {
-      if (workspace.showsTabs) this.right.prepend(this.viewModes);
-      else this.center.append(this.viewModes);
+    if (picker.parentElement !== pickerParent) {
+      if (workspace.showsTabs) this.right.prepend(picker);
+      else this.center.append(picker);
     }
-    for (const button of this.viewModes.querySelectorAll<HTMLButtonElement>("button")) {
-      button.setAttribute("aria-pressed", String(button.dataset.mode === workspace.viewMode));
-    }
+    this.viewModes.show(workspace.viewMode);
 
     const width = workspace.previewWidth;
     const next = previewWidths[(width.level + 1) % previewWidths.length] ?? width;
@@ -235,8 +230,7 @@ export class TitleBar {
     const target = documents[rowTarget(event.key, documents.indexOf(selected), documents.length) ?? -1];
     if (!target) return;
     event.preventDefault();
-    // Selecting gives the document's panes the keyboard; it stays on the tabs.
-    this.workspace.select(target);
+    this.workspace.select(target, "stays");
     this.tabs.get(target.id)?.focus();
   }
 

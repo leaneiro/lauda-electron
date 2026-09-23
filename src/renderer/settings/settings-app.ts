@@ -1,4 +1,5 @@
-import { appearanceModes, limits, type Settings, specialFontOptions } from "../../shared/settings";
+import { type AppearanceMode, appearanceModes, limits, type Settings, specialFontOptions } from "../../shared/settings";
+import { ChoiceGroup } from "../choice-group";
 import { dressPage, WindowContext } from "../context";
 import { element } from "../dom";
 import { followTheme } from "../theme";
@@ -80,24 +81,40 @@ function formatLineHeight(value: number, locale: string): string {
 /// follows it.
 class SettingsForm {
   private fontFamilies: readonly string[] = [];
+  /// Kept from one drawing of the form to the next, so the keyboard stays
+  /// on it while the arrows choose.
+  private readonly appearance: ChoiceGroup<AppearanceMode>;
 
   constructor(
     private readonly context: WindowContext,
     private readonly form: HTMLFormElement,
     private settings: Settings,
   ) {
+    const { t } = context;
+    const labels = { auto: "Automatic", light: "Light", dark: "Dark" } as const;
+    this.appearance = new ChoiceGroup(
+      "segmented",
+      t("Appearance"),
+      appearanceModes.map((mode) => ({ value: mode, label: t(labels[mode]) })),
+      (mode) => {
+        this.set({ appearanceMode: mode });
+        this.appearance.show(mode);
+      },
+    );
     form.addEventListener("submit", (event) => event.preventDefault());
     this.render();
   }
 
   /// Settings stored from anywhere, this form included. What arrives while
-  /// a slider or the checkbox has the focus is the form's own change, which
-  /// it already shows, and drawing the form again would take the control
-  /// from under the pointer. Restore Defaults is a button, and takes the
-  /// focus when pressed.
+  /// one of the form's controls has the focus (a slider, the checkbox, a
+  /// choice) is the form's own change, which it already shows, and drawing
+  /// the form again would take the control from under the pointer or the
+  /// keyboard. Restore Defaults is a plain button, and takes the focus when
+  /// pressed.
   settingsChanged(settings: Settings): void {
     this.settings = settings;
-    if (document.activeElement?.tagName !== "INPUT") this.render();
+    const focused = document.activeElement;
+    if (focused?.tagName !== "INPUT" && focused?.getAttribute("role") !== "radio") this.render();
   }
 
   fontsListed(families: readonly string[]): void {
@@ -113,20 +130,7 @@ class SettingsForm {
   private render(): void {
     const { lauda, t, strings } = this.context;
     const current = this.settings;
-    const appearance = element("div", "segmented");
-    appearance.setAttribute("role", "group");
-    appearance.setAttribute("aria-label", t("Appearance"));
-    const labels = { auto: "Automatic", light: "Light", dark: "Dark" } as const;
-    for (const mode of appearanceModes) {
-      const button = element("button", undefined, t(labels[mode]));
-      button.type = "button";
-      button.setAttribute("aria-pressed", String(current.appearanceMode === mode));
-      button.addEventListener("click", () => {
-        this.set({ appearanceMode: mode });
-        this.render();
-      });
-      appearance.append(button);
-    }
+    this.appearance.show(current.appearanceMode);
 
     const points = (value: number) => t("%lld pt", Math.round(value));
     const strict = element("input");
@@ -151,7 +155,7 @@ class SettingsForm {
 
     const families = this.fontFamilies;
     this.form.replaceChildren(
-      ...section(t("General"), [row(t("Appearance"), appearance)]),
+      ...section(t("General"), [row(t("Appearance"), this.appearance.element)]),
       ...section(t("Editor"), [
         row(
           t("Font"),

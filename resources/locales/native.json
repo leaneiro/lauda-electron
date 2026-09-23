@@ -105,13 +105,13 @@
     "ja": "ボールド",
     "zh-Hans": "粗体"
   },
-  "Browse All Versions…": {
-    "pt-BR": "Explorar Todas as Versões…",
-    "de": "Alle Versionen durchsuchen …",
-    "es": "Explorar todas las versiones…",
-    "fr": "Parcourir toutes les versions…",
-    "ja": "すべてのバージョンをブラウズ…",
-    "zh-Hans": "浏览所有版本…"
+  "Cancel": {
+    "pt-BR": "Cancelar",
+    "de": "Abbrechen",
+    "es": "Cancelar",
+    "fr": "Annuler",
+    "ja": "キャンセル",
+    "zh-Hans": "取消"
   },
   "Clear Menu": {
     "pt-BR": "Limpar Menu",
@@ -337,6 +337,14 @@
     "ja": "中",
     "zh-Hans": "中等"
   },
+  "Move": {
+    "pt-BR": "Mover",
+    "de": "Bewegen",
+    "es": "Mover",
+    "fr": "Déplacer",
+    "ja": "移動",
+    "zh-Hans": "移动"
+  },
   "Move To…": {
     "pt-BR": "Mover Para…",
     "de": "Bewegen …",
@@ -384,6 +392,14 @@
     "fr": "Pas encore enregistré",
     "ja": "未保存",
     "zh-Hans": "尚未保存"
+  },
+  "Open Documents": {
+    "pt-BR": "Documentos abertos",
+    "de": "Geöffnete Dokumente",
+    "es": "Documentos abiertos",
+    "fr": "Documents ouverts",
+    "ja": "開いている書類",
+    "zh-Hans": "打开的文稿"
   },
   "Open Recent": {
     "pt-BR": "Abrir Recente",
@@ -433,6 +449,14 @@
     "ja": "前へ（⇧⌘G）",
     "zh-Hans": "上一个 (⇧⌘G)"
   },
+  "Rename": {
+    "pt-BR": "Renomear",
+    "de": "Umbenennen",
+    "es": "Renombrar",
+    "fr": "Renommer",
+    "ja": "名称変更",
+    "zh-Hans": "重命名"
+  },
   "Rename…": {
     "pt-BR": "Renomear…",
     "de": "Umbenennen …",
@@ -449,6 +473,14 @@
     "ja": "デフォルトに戻す",
     "zh-Hans": "恢复默认设置"
   },
+  "Revert": {
+    "pt-BR": "Reverter",
+    "de": "Zurücksetzen",
+    "es": "Revertir",
+    "fr": "Revenir",
+    "ja": "元に戻す",
+    "zh-Hans": "恢复"
+  },
   "Revert to Saved": {
     "pt-BR": "Reverter para o Salvo",
     "de": "Zurück zur letzten Version",
@@ -456,6 +488,14 @@
     "fr": "Revenir à la version enregistrée",
     "ja": "保存した状態に戻す",
     "zh-Hans": "复原到已存储版本"
+  },
+  "Revert to the last saved version of “%@”?": {
+    "pt-BR": "Reverter para a última versão salva de “%@”?",
+    "de": "Zur zuletzt gespeicherten Version von „%@“ zurückkehren?",
+    "es": "¿Volver a la última versión guardada de “%@”?",
+    "fr": "Revenir à la dernière version enregistrée de « %@ » ?",
+    "ja": "“%@”を最後に保存したバージョンに戻しますか？",
+    "zh-Hans": "要恢复到“%@”上次保存的版本吗？"
   },
   "Save": {
     "pt-BR": "Salvar",
@@ -617,6 +657,14 @@
     "ja": "広い",
     "zh-Hans": "宽"
   },
+  "Your current changes will be lost.": {
+    "pt-BR": "Suas alterações atuais serão perdidas.",
+    "de": "Deine aktuellen Änderungen gehen verloren.",
+    "es": "Se perderán los cambios actuales.",
+    "fr": "Vos modifications actuelles seront perdues.",
+    "ja": "現在の変更内容は失われます。",
+    "zh-Hans": "当前的更改将会丢失。"
+  },
   "image-%@.png": {
     "pt-BR": "imagem-%@.png",
     "de": "bild-%@.png",
@@ -634,7 +682,7 @@
     "zh-Hans": "阅读时间不到 1 分钟"
   },
   "macOS saves automatically; ⌘S saves right away.": {
-    "pt-BR": "O macOS salva automaticamente; ⌘S salva na hora.",
+    "pt-BR": "O macOS salva automaticamente e ⌘S salva na hora.",
     "de": "macOS sichert automatisch; ⌘S sichert sofort.",
     "es": "macOS guarda automáticamente; ⌘S guarda al instante.",
     "fr": "macOS enregistre automatiquement ; ⌘S enregistre immédiatement.",

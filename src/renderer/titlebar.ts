@@ -1,4 +1,5 @@
 import type { TranslationKey } from "../shared/i18n";
+import { rowTarget } from "../shared/keyboard-row";
 import { previewWidths, type ViewMode } from "../shared/settings";
 import type { WindowContext } from "./context";
 import type { LaudaDocument } from "./document";
@@ -226,19 +227,12 @@ export class TitleBar {
     const documents = this.workspace.documents;
     const selected = this.workspace.selected;
     if (!selected || documents.length < 2) return;
-    const index = documents.indexOf(selected);
-    const targets: Record<string, LaudaDocument | undefined> = {
-      ArrowLeft: documents[(index - 1 + documents.length) % documents.length],
-      ArrowRight: documents[(index + 1) % documents.length],
-      Home: documents[0],
-      End: documents[documents.length - 1],
-    };
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       this.workspace.view(selected)?.focus();
       return;
     }
-    const target = targets[event.key];
+    const target = documents[rowTarget(event.key, documents.indexOf(selected), documents.length) ?? -1];
     if (!target) return;
     event.preventDefault();
     // Selecting gives the document's panes the keyboard; it stays on the tabs.

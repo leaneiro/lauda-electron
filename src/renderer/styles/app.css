@@ -742,6 +742,62 @@ body.platform-darwin .window-title {
   color: var(--text-secondary);
 }
 
+/* MARK: - Find and replace */
+
+/* Find and Replace… is CodeMirror's own panel, above the text. It takes the
+   app's type and colours, as the find bar does, rather than CodeMirror's
+   defaults, which stay light in the dark. */
+.editor-pane .cm-editor .cm-panels {
+  background: var(--bar-bg);
+  color: var(--text);
+}
+.editor-pane .cm-editor .cm-panels-top {
+  border-bottom: 1px solid var(--separator);
+}
+.editor-pane .cm-editor .cm-panel.cm-search {
+  padding: 6px 30px 6px 10px;
+  font-family: var(--ui-font);
+  font-size: 12px;
+}
+.editor-pane .cm-editor .cm-panel.cm-search label {
+  font-size: inherit;
+}
+.editor-pane .cm-editor .cm-panel.cm-search input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+.editor-pane .cm-editor .cm-panel.cm-search .cm-textfield,
+.editor-pane .cm-editor .cm-panel.cm-search .cm-button {
+  font: inherit;
+  color: var(--text);
+  background: var(--control-bg);
+  border: 1px solid var(--separator);
+  border-radius: 6px;
+}
+.editor-pane .cm-editor .cm-panel.cm-search .cm-textfield {
+  width: 170px;
+  padding: 3px 7px;
+}
+.editor-pane .cm-editor .cm-panel.cm-search .cm-textfield::placeholder {
+  color: var(--text-tertiary);
+}
+.editor-pane .cm-editor .cm-panel.cm-search .cm-button {
+  padding: 3px 10px;
+}
+.editor-pane .cm-editor .cm-panel.cm-search .cm-button:active {
+  background: var(--pill-selected);
+}
+.editor-pane .cm-editor .cm-panel.cm-search :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.editor-pane .cm-editor .cm-panel.cm-search button[name="close"] {
+  top: 6px;
+  right: 10px;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+}
+
 /* MARK: - Outline */
 
 /* The browser's popover, anchored under the outline button: its right edge

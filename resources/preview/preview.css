@@ -106,6 +106,9 @@ blockquote {
 ul, ol { padding-left: 1.6em; margin: 0.9em 0; }
 li { margin: 0.25em 0; }
 li > p { margin: 0.35em 0; }
+/* A list inside an item is part of it: its items sit as close as the
+   item's own neighbours, not a whole list's margin away. */
+li > ul, li > ol { margin: 0; }
 li.task { list-style: none; margin-left: -1.4em; }
 li.task input[type="checkbox"] { margin-right: 0.45em; vertical-align: -0.1em; accent-color: var(--link); }
 table {

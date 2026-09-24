@@ -396,10 +396,18 @@ test("the window can only write the files it was handed", async () => {
 
 /// The last tab the reader closes takes the window with it, as in the native
 /// app; on Windows and Linux that ends the app.
-test("closing the last tab closes the window", async () => {
-  const { app } = await launch({ files: { "only.md": "# Only\n" } });
+test("closing the last tab closes the window, and leaves no session", async () => {
+  const { app, folder } = await launch({ files: { "first.md": "# First\n", "last.md": "# Last\n" } });
+  const session = join(folder, "..", "user-data", "session.json");
+  const storedFiles = () =>
+    existsSync(session) ? (JSON.parse(readFileSync(session, "utf8")) as { files: string[] }).files.length : -1;
+  await expect.poll(storedFiles).toBe(2);
+  await clickMenu(app, "File", "Close");
+  await expect.poll(storedFiles).toBe(1);
   await clickMenu(app, "File", "Close");
   await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBe(0);
+  // The next launch starts anew rather than bringing the last tab back.
+  expect(storedFiles()).toBe(0);
   await forceQuit(app);
 });
 

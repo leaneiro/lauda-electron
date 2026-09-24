@@ -1,4 +1,4 @@
-import type { MenuCommand, OpenDocument } from "../shared/ipc";
+import type { MenuCommand, OpenDocument, SessionContents } from "../shared/ipc";
 import { modeChangeMs } from "../shared/layout";
 import { nextPreviewWidthLevel, previewWidthShowing, type Settings, type ViewMode } from "../shared/settings";
 import { TabList } from "../shared/tab-list";
@@ -192,7 +192,12 @@ export class Workspace {
   /// launch opens a new document, there being no tabs to bring back.
   async closeTab(document: LaudaDocument): Promise<void> {
     if (!(await this.close(document))) return;
-    if (this.documents.length === 0) await this.context.lauda.invoke("window:close");
+    if (this.documents.length > 0) return;
+    // The session, now without tabs, goes out at once: closing the window
+    // stops it being written, as quitting does, before its pause is over,
+    // and the last tab would come back at the next launch.
+    await this.storeSessionNow();
+    await this.context.lauda.invoke("window:close");
   }
 
   private async canClose(document: LaudaDocument): Promise<boolean> {
@@ -412,10 +417,7 @@ export class Workspace {
       documentCount: this.documents.length,
       viewMode: this.viewMode,
     };
-    const session = {
-      files: this.documents.flatMap((d) => (d.filePath ? [d.filePath] : [])),
-      selected: this.selected?.filePath ?? null,
-    };
+    const session = this.session();
     const windowKey = JSON.stringify(windowInfo);
     if (windowKey !== this.reported.window) {
       this.reported.window = windowKey;
@@ -435,5 +437,21 @@ export class Workspace {
         void this.context.lauda.invoke("session:store", session);
       }, 150);
     }
+  }
+
+  /// The files open, in tab order, and the one in front.
+  private session(): SessionContents {
+    return {
+      files: this.documents.flatMap((d) => (d.filePath ? [d.filePath] : [])),
+      selected: this.selected?.filePath ?? null,
+    };
+  }
+
+  /// The session written without waiting for the pause after a change.
+  private async storeSessionNow(): Promise<void> {
+    window.clearTimeout(this.sessionTimer);
+    const session = this.session();
+    this.reported.session = JSON.stringify(session);
+    await this.context.lauda.invoke("session:store", session);
   }
 }

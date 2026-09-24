@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it, test } from "vitest";
-import { resolveAppFile, resolveDocumentFile } from "../../src/main/document-files";
+import { pathWithExtension, resolveAppFile, resolveDocumentFile } from "../../src/main/document-files";
 
 describe("what a document's preview may read", () => {
   let root: string;
@@ -59,5 +59,18 @@ describe("the app's own scheme", () => {
 
   it("refuses a path that doesn't decode", () => {
     expect(resolveAppFile(dist, "/renderer/%E0%A4%A.html")).toEqual({ status: 400 });
+  });
+});
+
+/// Linux's save panel keeps a name typed without an extension as it is.
+describe("a save panel's answer", () => {
+  it("gets the type's extension when it has none", () => {
+    expect(pathWithExtension("/home/a/notes", "md")).toBe("/home/a/notes.md");
+    expect(pathWithExtension("/home/a/.hidden", "md")).toBe("/home/a/.hidden.md");
+  });
+
+  it("keeps an extension the reader typed", () => {
+    expect(pathWithExtension("/home/a/notes.md", "md")).toBe("/home/a/notes.md");
+    expect(pathWithExtension("/home/a/notes.txt", "md")).toBe("/home/a/notes.txt");
   });
 });

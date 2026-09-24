@@ -3,7 +3,7 @@ import { basename, dirname, extname, join } from "node:path";
 import { app, type BrowserWindow, dialog, type IpcMainInvokeEvent } from "electron";
 import type { Strings } from "../../shared/i18n";
 import { isImagePath } from "../../shared/markdown/content-policy";
-import { messageOf, showError, showWarning } from "../dialogs";
+import { askWhereToSave, messageOf, showError, showWarning } from "../dialogs";
 import { type DocumentWatcher, writeAtomically } from "../files";
 import type { GrantedFiles } from "../granted-files";
 import { freePathIn, importImages, savePastedImage } from "../images";
@@ -49,39 +49,46 @@ export function registerDocumentRequests({
     const window = windowFor(event);
     const directory = request.directory ?? app.getPath("documents");
     const name = extname(request.title) ? request.title : `${request.title}.md`;
-    const result = await dialog.showSaveDialog(window, {
-      defaultPath: join(directory, name),
-      filters: saveFilters(strings),
-    });
-    if (result.canceled || !result.filePath) return null;
+    const filePath = await askWhereToSave(
+      window,
+      { defaultPath: join(directory, name), filters: saveFilters(strings) },
+      "md",
+      strings,
+    );
+    if (!filePath) return null;
     try {
-      watcher.noteWritten(result.filePath, request.text);
-      await writeAtomically(result.filePath, request.text);
-      recentFiles.note(result.filePath);
-      granted.grant(result.filePath);
-      return result.filePath;
+      watcher.noteWritten(filePath, request.text);
+      await writeAtomically(filePath, request.text);
+      recentFiles.note(filePath);
+      granted.grant(filePath);
+      return filePath;
     } catch (error) {
-      await showError(window, strings.t("Couldn't save “%@”", basename(result.filePath)), error, strings);
+      await showError(window, strings.t("Couldn't save “%@”", basename(filePath)), error, strings);
       return null;
     }
   });
   handle("doc:rename", async (event, filePath) => {
     if (!granted.has(filePath)) return null;
     const window = windowFor(event);
-    const result = await dialog.showSaveDialog(window, {
-      title: strings.t("Rename"),
-      buttonLabel: strings.t("Rename"),
-      defaultPath: filePath,
-      filters: saveFilters(strings),
-    });
-    if (result.canceled || !result.filePath || result.filePath === filePath) return null;
+    const destination = await askWhereToSave(
+      window,
+      {
+        title: strings.t("Rename"),
+        buttonLabel: strings.t("Rename"),
+        defaultPath: filePath,
+        filters: saveFilters(strings),
+      },
+      extname(filePath).slice(1) || "md",
+      strings,
+    );
+    if (!destination || destination === filePath) return null;
     try {
-      await moveFile(filePath, result.filePath);
+      await moveFile(filePath, destination);
       recentFiles.forget(filePath);
-      recentFiles.note(result.filePath);
+      recentFiles.note(destination);
       granted.revoke(filePath);
-      granted.grant(result.filePath);
-      return result.filePath;
+      granted.grant(destination);
+      return destination;
     } catch (error) {
       await showError(window, strings.t("Couldn't rename “%@”", basename(filePath)), error, strings);
       return null;
@@ -121,17 +128,6 @@ export function registerDocumentRequests({
       cancelId: 2,
     });
     return (["save", "dontSave", "cancel"] as const)[result.response] ?? "cancel";
-  });
-  handle("doc:ask-revert", async (event, title) => {
-    const result = await dialog.showMessageBox(windowFor(event), {
-      type: "warning",
-      message: strings.t("Revert to the last saved version of “%@”?", title),
-      detail: strings.t("Your current changes will be lost."),
-      buttons: [strings.t("Revert"), strings.t("Cancel")],
-      defaultId: 0,
-      cancelId: 1,
-    });
-    return result.response === 0;
   });
   // As NSDocument asks when its file changed under unsaved changes. Save
   // Anyway comes first and answers Escape: it keeps what the reader sees.
@@ -173,7 +169,9 @@ export function registerDocumentRequests({
     await dialog.showMessageBox(windowFor(event), {
       type: "info",
       message: strings.t("Save the document first"),
-      detail: strings.t("Images are copied to the document's folder, so save the file before adding images."),
+      // One short line: GTK lays out a wrapped detail flush left under a
+      // centred message, which reads as misaligned.
+      detail: strings.t("Images are copied to the document's folder."),
       buttons: [strings.t("OK")],
     });
   });

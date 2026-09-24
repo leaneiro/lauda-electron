@@ -1,10 +1,10 @@
 import { dirname, join } from "node:path";
-import { app, BrowserWindow, dialog } from "electron";
+import { app, BrowserWindow } from "electron";
 import type { Strings } from "../shared/i18n";
 import type { ExportRequest } from "../shared/ipc";
 import { renderForPrint, standalone } from "../shared/markdown";
 import { cssFontFamily, type Settings } from "../shared/settings";
-import { showError } from "./dialogs";
+import { askWhereToSave, showError } from "./dialogs";
 import { writeAtomically } from "./files";
 import { previewStylesheet } from "./preview-styles";
 import { distDirectory, serveExportPage } from "./protocols";
@@ -28,14 +28,19 @@ function startFolder(request: ExportRequest): string {
 }
 
 export async function exportHTML(window: BrowserWindow, request: ExportRequest, settings: Settings, strings: Strings) {
-  const result = await dialog.showSaveDialog(window, {
-    defaultPath: join(startFolder(request), `${request.title}.html`),
-    filters: [{ name: strings.t("HTML Document"), extensions: ["html"] }],
-    buttonLabel: strings.t("Export"),
-  });
-  if (result.canceled || !result.filePath) return;
+  const filePath = await askWhereToSave(
+    window,
+    {
+      defaultPath: join(startFolder(request), `${request.title}.html`),
+      filters: [{ name: strings.t("HTML Document"), extensions: ["html"] }],
+      buttonLabel: strings.t("Export"),
+    },
+    "html",
+    strings,
+  );
+  if (!filePath) return;
   try {
-    await writeAtomically(result.filePath, standaloneHTML(request, settings));
+    await writeAtomically(filePath, standaloneHTML(request, settings));
   } catch (error) {
     await showExportError(window, request, error, strings);
   }
@@ -63,12 +68,17 @@ const letterCountries = new Set([
 ]);
 
 export async function exportPDF(window: BrowserWindow, request: ExportRequest, settings: Settings, strings: Strings) {
-  const result = await dialog.showSaveDialog(window, {
-    defaultPath: join(startFolder(request), `${request.title}.pdf`),
-    filters: [{ name: strings.t("PDF Document"), extensions: ["pdf"] }],
-    buttonLabel: strings.t("Export"),
-  });
-  if (result.canceled || !result.filePath) return;
+  const filePath = await askWhereToSave(
+    window,
+    {
+      defaultPath: join(startFolder(request), `${request.title}.pdf`),
+      filters: [{ name: strings.t("PDF Document"), extensions: ["pdf"] }],
+      buttonLabel: strings.t("Export"),
+    },
+    "pdf",
+    strings,
+  );
+  if (!filePath) return;
 
   const page = serveExportPage(request.filePath ? dirname(request.filePath) : null, standaloneHTML(request, settings));
   // Roughly an A4 page at 96 dpi, as the native offscreen web view.
@@ -88,7 +98,7 @@ export async function exportPDF(window: BrowserWindow, request: ExportRequest, s
       printBackground: true,
       margins: { top: margin, bottom: margin, left: margin, right: margin },
     });
-    await writeAtomically(result.filePath, pdf);
+    await writeAtomically(filePath, pdf);
   } catch (error) {
     await showExportError(window, request, error, strings);
   } finally {

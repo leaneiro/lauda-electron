@@ -165,12 +165,11 @@ describe("LaudaDocument", () => {
     expect(writes(requests)).toEqual([]);
   });
 
-  it("Save writes at once, and is what Revert to Saved goes back to", async () => {
+  it("Save writes at once", async () => {
     const { document, requests } = fileDocument();
     document.edit("saved on purpose");
     expect(await document.save()).toBe(true);
     expect(writes(requests)).toEqual([["/docs/notes.md", "saved on purpose"]]);
-    expect(document.revertText).toBe("saved on purpose");
   });
 
   /// The welcome guide opens with text and no file; opening and closing it

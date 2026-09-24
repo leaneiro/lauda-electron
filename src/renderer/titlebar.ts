@@ -190,11 +190,11 @@ export class TitleBar {
     tab.addEventListener("auxclick", (event) => {
       if (event.button !== 1) return;
       event.preventDefault();
-      void this.workspace.close(document);
+      void this.workspace.closeTab(document);
     });
     close.addEventListener("click", (event) => {
       event.stopPropagation();
-      void this.workspace.close(document);
+      void this.workspace.closeTab(document);
     });
     return tab;
   }

@@ -114,7 +114,16 @@
         "zh_CN"
       ]
     },
+    "extraResources": [
+      {
+        "from": "resources/icons/AppIcon-512.png",
+        "to": "AppIcon-512.png"
+      }
+    ],
     "linux": {
+      "executableArgs": [
+        "--ozone-platform=x11"
+      ],
       "target": [
         "AppImage",
         "deb",

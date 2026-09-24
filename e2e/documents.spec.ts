@@ -242,7 +242,7 @@ test("a file changed elsewhere under unsaved changes asks which to keep", async 
   await app.close();
 });
 
-test("duplicate, revert, rename and move", async () => {
+test("duplicate, rename and move", async () => {
   const { app, window, folder } = await launch({ files: { "draft.md": "# Draft\n" } });
   await window.locator(".cm-content").click();
   await window.keyboard.press(process.platform === "darwin" ? "Meta+End" : "Control+End");
@@ -254,13 +254,6 @@ test("duplicate, revert, rename and move", async () => {
   await expect(window.locator(".tab.is-selected")).toHaveClass(/is-edited/);
   await expect(window.locator(".document:not([hidden]) .cm-content")).toHaveText("# Draftmore");
   await window.locator(".tab").first().click();
-
-  await app.evaluate(({ dialog }) => {
-    dialog.showMessageBox = (async () => ({ response: 0, checkboxChecked: false })) as typeof dialog.showMessageBox;
-  });
-  await clickMenu(app, "File", "Revert to Saved");
-  await expect(window.locator(".document:not([hidden]) .cm-content")).toHaveText("# Draft");
-  await expect.poll(() => readFileSync(join(folder, "draft.md"), "utf8")).toBe("# Draft\n");
 
   const renamed = join(folder, "final.md");
   await app.evaluate(({ dialog }, path) => {
@@ -398,5 +391,70 @@ test("the window can only write the files it was handed", async () => {
   );
   expect(allowed).toMatchObject({ ok: true });
   expect(readFileSync(opened, "utf8")).toBe("# Mine, again\n");
+  await forceQuit(app);
+});
+
+/// The last tab the reader closes takes the window with it, as in the native
+/// app; on Windows and Linux that ends the app.
+test("closing the last tab closes the window", async () => {
+  const { app } = await launch({ files: { "only.md": "# Only\n" } });
+  await clickMenu(app, "File", "Close");
+  await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBe(0);
+  await forceQuit(app);
+});
+
+/// Linux's save panel keeps a name typed without an extension: the app adds
+/// .md, and asks before replacing a file already there by that name.
+test("saving a new document adds .md and asks before replacing a file", async () => {
+  const { app, window, folder } = await launch({ files: { "first.md": "# First\n" } });
+  writeFileSync(join(folder, "taken.md"), "old");
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.webContents.send("menu:command", { name: "new" });
+  });
+  await window.locator(".document:not([hidden]) .cm-content").click();
+  await window.keyboard.type("# New");
+  await app.evaluate(
+    ({ dialog }, answers) => {
+      const asked: string[] = [];
+      (globalThis as { asked?: string[] }).asked = asked;
+      dialog.showSaveDialog = (async () => ({
+        canceled: false,
+        filePath: answers.shift(),
+      })) as typeof dialog.showSaveDialog;
+      dialog.showMessageBox = (async (_window: unknown, options: Electron.MessageBoxOptions) => {
+        asked.push(options.message);
+        return { response: 1, checkboxChecked: false };
+      }) as typeof dialog.showMessageBox;
+    },
+    [join(folder, "taken"), join(folder, "fresh")],
+  );
+
+  // "taken" becomes taken.md, which is there: asked, and kept.
+  await clickMenu(app, "File", "Save");
+  await expect
+    .poll(() => app.evaluate(() => (globalThis as { asked?: string[] }).asked?.[0] ?? ""))
+    .toContain("taken.md");
+  expect(readFileSync(join(folder, "taken.md"), "utf8")).toBe("old");
+
+  await clickMenu(app, "File", "Save");
+  await expect.poll(() => existsSync(join(folder, "fresh.md"))).toBe(true);
+  expect(readFileSync(join(folder, "fresh.md"), "utf8")).toBe("# New");
+  await expect(window.locator(".tab.is-selected .tab-title")).toHaveText("fresh.md");
+  await forceQuit(app);
+});
+
+/// However many tabs are open, they share the title bar, narrowing as the
+/// native ones do, and none reaches under the controls.
+test("many tabs narrow to fit beside the controls", async () => {
+  const files = Object.fromEntries(Array.from({ length: 14 }, (_, i) => [`note-${i + 1}.md`, `# Note ${i + 1}\n`]));
+  const { app, window } = await launch({ files });
+  await expect(window.locator(".tab")).toHaveCount(14);
+  await expect
+    .poll(async () => {
+      const lastTab = await window.locator(".tab").last().boundingBox();
+      const controls = await window.locator(".toolbar-right").boundingBox();
+      return lastTab && controls ? controls.x - (lastTab.x + lastTab.width) : -1;
+    })
+    .toBeGreaterThanOrEqual(0);
   await forceQuit(app);
 });

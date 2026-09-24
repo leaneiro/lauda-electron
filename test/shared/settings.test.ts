@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { clampSplit, isSmoothModeChange } from "../../src/shared/layout";
 import {
+  cssEditorFontFamily,
   cssFontFamily,
   defaultSettings,
   nextPreviewWidthLevel,
@@ -50,6 +51,14 @@ describe("settings", () => {
   test("a chosen font falls back to the system's, and can't break out of its quotes", () => {
     expect(cssFontFamily("Georgia")).toMatch(/^"Georgia", -apple-system/);
     expect(cssFontFamily('Evil"; } body { x')).toMatch(/^"Evil; } body { x"/);
+  });
+
+  /// The Ubuntu fonts draw arrows tiny; DejaVu's go ahead of the system's
+  /// fonts, never of a font the reader chose.
+  test("the system's fonts take their arrows from DejaVu where it is", () => {
+    expect(cssFontFamily("system-sans")).toMatch(/^"Lauda Arrows", -apple-system/);
+    expect(cssEditorFontFamily("system-mono")).toMatch(/^"Lauda Arrows Mono", ui-monospace/);
+    expect(cssEditorFontFamily("Fira Code")).toMatch(/^"Fira Code", ui-monospace/);
   });
 });
 

@@ -320,6 +320,7 @@ function registerRequests(): void {
     Menu.getApplicationMenu()?.popup({ window: windowFor(event), x: Math.round(x), y: Math.round(y) });
   });
   handle("window:closed-everything", (_event, ok) => documentWindow.everythingClosed(ok));
+  handle("window:close", (event) => windowFor(event).close());
 
   registerDocumentRequests({ granted, watcher, recentFiles, strings, windowFor });
 
@@ -393,10 +394,16 @@ app.whenReady().then(async () => {
   });
   app.setAboutPanelOptions({
     applicationName: "Lauda",
-    applicationVersion: buildInfo.version,
+    // Only the Mac's panel shows `version`; elsewhere the commit goes with the
+    // version, as the Windows dialog writes it.
+    applicationVersion: isMac ? buildInfo.version : `${buildInfo.version} (${buildInfo.gitHash})`,
     version: buildInfo.gitHash,
     copyright: "© 2026 Leandro Carneiro",
-    iconPath: join(distDirectory, "resources/icons/AppIcon-512.png"),
+    // Linux's panel reads the icon with GTK, which can't look inside the
+    // app's archive: the packaged app keeps a copy beside it.
+    iconPath: app.isPackaged
+      ? join(process.resourcesPath, "AppIcon-512.png")
+      : join(distDirectory, "resources/icons/AppIcon-512.png"),
   });
   registerRequests();
   refreshMenu();

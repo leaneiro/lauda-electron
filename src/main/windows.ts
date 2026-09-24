@@ -16,10 +16,11 @@ export function windowBackground(kind: "document" | "settings" = "document"): st
 }
 
 /// Windows and Linux draw the window's buttons over the title bar, in its
-/// colours.
+/// colours, one point short of it: the bar's bottom line (--titlebar-height
+/// in app.css, its last point) then runs on under them.
 export function titleBarOverlay(): Electron.TitleBarOverlayOptions {
   const dark = nativeTheme.shouldUseDarkColors;
-  return { color: windowBackground(), symbolColor: dark ? "#e6e6e9" : "#1d1d1f", height: 52 };
+  return { color: windowBackground(), symbolColor: dark ? "#e6e6e9" : "#1d1d1f", height: 51 };
 }
 
 const webPreferences: Electron.WebPreferences = {

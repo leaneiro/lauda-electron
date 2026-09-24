@@ -18,9 +18,6 @@ export class LaudaDocument {
   /// that was: what the status bar reads to say "Saved".
   savedText: string | null;
   savedDate: Date | null = null;
-  /// What Revert to Saved brings back: the text as it was opened, or as it
-  /// was last saved with Save.
-  revertText: string | null;
   /// A document without a file compares with the text it was made with (the
   /// welcome guide's), so opening and closing it asks nothing; one made as
   /// the reader's own change, a duplicate, is edited from the start.
@@ -43,7 +40,6 @@ export class LaudaDocument {
     this.filePath = options.filePath;
     this.text = options.text;
     this.savedText = options.filePath ? options.text : null;
-    this.revertText = this.savedText;
     this.baseline = options.text;
     this.startsEdited = options.edited ?? false;
     this.untitledTitle = options.title;
@@ -113,7 +109,6 @@ export class LaudaDocument {
     if (!this.filePath) return this.saveAs();
     const ok = await this.autosave();
     if (ok) {
-      this.revertText = this.text;
       this.savedDate = new Date();
       this.notifyChanged();
     }
@@ -129,7 +124,6 @@ export class LaudaDocument {
     if (!path) return false;
     this.filePath = path;
     this.savedText = this.text;
-    this.revertText = this.text;
     this.savedDate = new Date();
     this.notifyChanged();
     return true;

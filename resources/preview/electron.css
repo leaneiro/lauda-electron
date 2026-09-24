@@ -42,3 +42,17 @@ li.task input[type="checkbox"]:checked {
         color: HighlightText;
     }
 }
+
+/* Arrows from DejaVu where it is installed (see cssFontFamily in
+     shared/settings.ts): the Ubuntu fonts draw them tiny. Where DejaVu isn't,
+     these faces match nothing and the next font in the stack draws them. */
+@font-face {
+    font-family: "Lauda Arrows";
+    src: local("DejaVu Sans"), local("DejaVuSans");
+    unicode-range: U+2190-21FF;
+}
+@font-face {
+    font-family: "Lauda Arrows Mono";
+    src: local("DejaVu Sans Mono"), local("DejaVuSansMono");
+    unicode-range: U+2190-21FF;
+}

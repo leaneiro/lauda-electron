@@ -1,5 +1,5 @@
 import { realpathSync } from "node:fs";
-import { resolve, sep } from "node:path";
+import { extname, resolve, sep } from "node:path";
 import { isImagePath } from "../shared/markdown";
 
 /// Where a document's preview may load `requestPath` from: inside its
@@ -40,4 +40,11 @@ export function resolveAppFile(distDirectory: string, requestPath: string): { fi
   const file = resolve(distDirectory, `.${pathname}`);
   if (!file.startsWith(distDirectory + sep)) return { status: 403 };
   return { file };
+}
+
+/// A save panel's answer with `extension` when the name was typed without
+/// one. Windows and macOS add the type's extension themselves; the GTK
+/// panel on Linux keeps the name as typed.
+export function pathWithExtension(path: string, extension: string): string {
+  return extname(path) ? path : `${path}.${extension}`;
 }

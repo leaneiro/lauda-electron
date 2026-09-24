@@ -16,6 +16,8 @@ export interface Requests {
   "window:title-bar-double-click": { args: []; result: void };
   "window:show-menu": { args: [x: number, y: number]; result: void };
   "window:closed-everything": { args: [ok: boolean]; result: void };
+  /// The reader closed the last tab: the window goes, as the native one does.
+  "window:close": { args: []; result: void };
   "doc:register-folder": { args: [documentId: string, filePath: string | null]; result: string };
   "doc:forget-folder": { args: [documentId: string]; result: void };
   "doc:write": { args: [filePath: string, text: string]; result: WriteResult };
@@ -23,7 +25,6 @@ export interface Requests {
   "doc:rename": { args: [filePath: string]; result: string | null };
   "doc:move": { args: [filePath: string]; result: string | null };
   "doc:ask-save-changes": { args: [title: string]; result: "save" | "dontSave" | "cancel" };
-  "doc:ask-revert": { args: [title: string]; result: boolean };
   /// Another app changed a file the reader has changes of their own to:
   /// which of the two to keep.
   "doc:ask-changed-elsewhere": { args: [title: string]; result: "saveAnyway" | "revert" };
@@ -128,7 +129,6 @@ export type MenuCommand =
   | { name: "duplicate" }
   | { name: "rename" }
   | { name: "move" }
-  | { name: "revert" }
   | { name: "export-pdf" }
   | { name: "export-html" }
   | { name: "find" }

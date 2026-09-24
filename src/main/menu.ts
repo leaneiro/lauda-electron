@@ -48,8 +48,6 @@ export function buildMenu(context: MenuContext): Menu {
       { label: t("Rename…"), click: command("rename"), enabled: hasFile },
       { label: t("Move To…"), click: command("move"), enabled: hasFile },
       { type: "separator" },
-      { label: t("Revert to Saved"), click: command("revert"), enabled: hasFile },
-      { type: "separator" },
       {
         label: t("Export as PDF…"),
         accelerator: "CmdOrCtrl+Shift+E",

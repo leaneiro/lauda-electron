@@ -58,7 +58,8 @@
   --ui-font:
     -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", system-ui, "Helvetica Neue", "Noto Sans",
     Ubuntu, Cantarell, sans-serif;
-  --editor-font: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+  --editor-font:
+    "Lauda Arrows Mono", ui-monospace, "SF Mono", Menlo, "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
   --editor-size: 14px;
   --editor-line-height: 1.51;
 
@@ -349,6 +350,20 @@ body.platform-darwin .window-title {
     width 0.28s cubic-bezier(0.3, 1.5, 0.6, 1);
 }
 
+/* Arrows from DejaVu where it is installed (see cssFontFamily in
+   shared/settings.ts): the Ubuntu fonts draw them tiny. Where DejaVu isn't,
+   these faces match nothing and the next font in the stack draws them. */
+@font-face {
+  font-family: "Lauda Arrows";
+  src: local("DejaVu Sans"), local("DejaVuSans");
+  unicode-range: U+2190-21FF;
+}
+@font-face {
+  font-family: "Lauda Arrows Mono";
+  src: local("DejaVu Sans Mono"), local("DejaVuSansMono");
+  unicode-range: U+2190-21FF;
+}
+
 /* MARK: - Tabs */
 
 .tab-strip {
@@ -358,6 +373,10 @@ body.platform-darwin .window-title {
   height: 28px;
   flex: 1 1 auto;
   min-width: 0;
+  /* However many tabs, none reaches under the controls; the margin keeps the
+     selected tab's shadow and focus ring. */
+  overflow: clip;
+  overflow-clip-margin: 6px;
   transition:
     opacity var(--mode-change) ease-out,
     transform var(--mode-change) ease-out;
@@ -368,10 +387,12 @@ body.platform-darwin .window-title {
   transform: scale(0.94);
   pointer-events: none;
 }
+/* Tabs share the strip, narrowing as more open, down to little more than
+   their close button, as the native ones do. */
 .tab {
   position: relative;
   flex: 0 1 220px;
-  min-width: 120px;
+  min-width: 48px;
   max-width: 220px;
   height: 28px;
   border-radius: 14px;

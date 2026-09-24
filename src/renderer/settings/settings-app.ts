@@ -107,19 +107,28 @@ class SettingsForm {
 
   /// Settings stored from anywhere, this form included. What arrives while
   /// one of the form's controls has the focus (a slider, the checkbox, a
-  /// choice) is the form's own change, which it already shows, and drawing
-  /// the form again would take the control from under the pointer or the
-  /// keyboard. Restore Defaults is a plain button, and takes the focus when
-  /// pressed.
+  /// choice, a font menu) is the form's own change, which it already shows,
+  /// and drawing the form again would take the control from under the
+  /// pointer or the keyboard. Restore Defaults is a plain button, and takes
+  /// the focus when pressed.
   settingsChanged(settings: Settings): void {
     this.settings = settings;
-    const focused = document.activeElement;
-    if (focused?.tagName !== "INPUT" && focused?.getAttribute("role") !== "radio") this.render();
+    if (!this.isInUse()) this.render();
   }
 
+  /// The system's fonts arrive a moment after the window opens. A font menu
+  /// open by then would close under the pointer, so the form waits for it
+  /// to let go.
   fontsListed(families: readonly string[]): void {
     this.fontFamilies = families;
-    this.render();
+    const focused = document.activeElement;
+    if (this.isInUse() && focused) focused.addEventListener("blur", () => this.render(), { once: true });
+    else this.render();
+  }
+
+  private isInUse(): boolean {
+    const focused = document.activeElement;
+    return focused?.tagName === "INPUT" || focused?.tagName === "SELECT" || focused?.getAttribute("role") === "radio";
   }
 
   private set(changes: Partial<Settings>): void {

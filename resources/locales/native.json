@@ -681,13 +681,13 @@
     "ja": "1分未満で読めます",
     "zh-Hans": "阅读时间不到 1 分钟"
   },
-  "macOS saves automatically; ⌘S saves right away.": {
+  "macOS saves automatically, and ⌘S saves right away.": {
     "pt-BR": "O macOS salva automaticamente e ⌘S salva na hora.",
-    "de": "macOS sichert automatisch; ⌘S sichert sofort.",
-    "es": "macOS guarda automáticamente; ⌘S guarda al instante.",
-    "fr": "macOS enregistre automatiquement ; ⌘S enregistre immédiatement.",
-    "ja": "macOSは自動的に保存します。⌘Sですぐに保存できます。",
-    "zh-Hans": "macOS 会自动保存；按 ⌘S 可立即保存。"
+    "de": "macOS sichert automatisch und ⌘S sichert sofort.",
+    "es": "macOS guarda automáticamente y ⌘S guarda al instante.",
+    "fr": "macOS enregistre automatiquement et ⌘S enregistre immédiatement.",
+    "ja": "macOSは自動的に保存し、⌘Sですぐに保存できます。",
+    "zh-Hans": "macOS 会自动保存，按 ⌘S 可立即保存。"
   },
   "~%lld min read": {
     "pt-BR": "~%lld min de leitura",

@@ -187,6 +187,14 @@ export class Workspace {
     return true;
   }
 
+  /// A tab the reader closes. The last one takes the window with it, as in
+  /// the native app: on Windows and Linux that ends the app, and the next
+  /// launch opens a new document, there being no tabs to bring back.
+  async closeTab(document: LaudaDocument): Promise<void> {
+    if (!(await this.close(document))) return;
+    if (this.documents.length === 0) await this.context.lauda.invoke("window:close");
+  }
+
   private async canClose(document: LaudaDocument): Promise<boolean> {
     if (document.filePath) return document.autosave();
     if (!document.isEdited) return true;
@@ -315,7 +323,7 @@ export class Workspace {
     if (!document || !view) return;
     switch (command.name) {
       case "close":
-        await this.close(document);
+        await this.closeTab(document);
         return;
       case "save":
         await document.save();
@@ -341,12 +349,6 @@ export class Workspace {
         view.fileMoved();
         return;
       }
-      case "revert":
-        if (document.revertText === null || document.revertText === document.text) return;
-        if (!(await this.context.lauda.invoke("doc:ask-revert", document.title))) return;
-        view.replaceText(document.revertText);
-        await document.autosave();
-        return;
       case "export-pdf":
       case "export-html":
         await this.context.lauda.invoke(command.name === "export-pdf" ? "export:pdf" : "export:html", {

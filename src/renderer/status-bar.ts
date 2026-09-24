@@ -34,8 +34,8 @@ export class StatusBar {
     spacer.className = "spacer";
     this.save.className = "save-status";
     this.save.title = context.isMac
-      ? t("macOS saves automatically; ⌘S saves right away.")
-      : t("Lauda saves automatically; %@ saves right away.", context.shortcut("S"));
+      ? t("macOS saves automatically, and ⌘S saves right away.")
+      : t("Lauda saves automatically, and %@ saves right away.", context.shortcut("S"));
     this.element.append(this.words, this.characters, this.reading, spacer, this.save);
     this.counts = new CountsModel((text) => context.worker.count(text));
     this.counts.onChange(() => this.renderCounts());

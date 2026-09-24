@@ -111,18 +111,32 @@ export const specialFontOptions = [
   { id: FontOption.systemMono, key: "System (Mono)" },
 ] as const;
 
-/// The CSS font-family for a stored font id. The system stacks name the
-/// Mac's fonts first, as the native app does, then Windows's and Linux's.
+/// The system stacks name the Mac's fonts first, as the native app does,
+/// then Windows's and Linux's.
+const systemSans = `-apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", system-ui, "Helvetica Neue", "Noto Sans", Ubuntu, Cantarell, sans-serif`;
+const systemSerif = `ui-serif, "New York", Georgia, Cambria, "Noto Serif", "DejaVu Serif", serif`;
+const systemMono = `ui-monospace, "SF Mono", Menlo, "Cascadia Mono", Consolas, "Noto Sans Mono", "DejaVu Sans Mono", "Liberation Mono", monospace`;
+
+/// Arrows (U+2190 to U+21FF) from DejaVu, ahead of the system's fonts, where
+/// DejaVu is installed, as on most Linux systems: the Ubuntu fonts draw them
+/// a fraction of a letter's size, and typing turns -> into one. Elsewhere
+/// these faces match no font and the system's own arrows stay. A font the
+/// reader chose keeps its arrows. The faces are in app.css and the
+/// preview's electron.css.
+const arrows = `"Lauda Arrows"`;
+const arrowsMono = `"Lauda Arrows Mono"`;
+
+/// The CSS font-family for a stored font id.
 export function cssFontFamily(id: string): string {
   switch (id) {
     case FontOption.systemSans:
-      return `-apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", system-ui, "Helvetica Neue", "Noto Sans", Ubuntu, Cantarell, sans-serif`;
+      return `${arrows}, ${systemSans}`;
     case FontOption.systemSerif:
-      return `ui-serif, "New York", Georgia, Cambria, "Noto Serif", "DejaVu Serif", serif`;
+      return `${arrows}, ${systemSerif}`;
     case FontOption.systemMono:
-      return `ui-monospace, "SF Mono", Menlo, "Cascadia Mono", Consolas, "Noto Sans Mono", "DejaVu Sans Mono", "Liberation Mono", monospace`;
+      return `${arrowsMono}, ${systemMono}`;
     default:
-      return `"${id.replace(/["\\]/g, "")}", ${cssFontFamily(FontOption.systemSans)}`;
+      return `"${id.replace(/["\\]/g, "")}", ${systemSans}`;
   }
 }
 
@@ -132,5 +146,5 @@ export function cssEditorFontFamily(id: string): string {
   if (id === FontOption.systemSans || id === FontOption.systemSerif || id === FontOption.systemMono) {
     return cssFontFamily(id);
   }
-  return `"${id.replace(/["\\]/g, "")}", ${cssFontFamily(FontOption.systemMono)}`;
+  return `"${id.replace(/["\\]/g, "")}", ${systemMono}`;
 }

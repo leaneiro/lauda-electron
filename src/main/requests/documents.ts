@@ -3,7 +3,7 @@ import { basename, dirname, extname, join } from "node:path";
 import { app, type BrowserWindow, dialog, type IpcMainInvokeEvent } from "electron";
 import type { Strings } from "../../shared/i18n";
 import { isImagePath } from "../../shared/markdown/content-policy";
-import { askWhereToSave, messageOf, showError, showWarning } from "../dialogs";
+import { askWhereToSave, messageOf, showError, showMessage, showWarning } from "../dialogs";
 import { type DocumentWatcher, writeAtomically } from "../files";
 import type { GrantedFiles } from "../granted-files";
 import { freePathIn, importImages, savePastedImage } from "../images";
@@ -119,7 +119,7 @@ export function registerDocumentRequests({
     }
   });
   handle("doc:ask-save-changes", async (event, title) => {
-    const result = await dialog.showMessageBox(windowFor(event), {
+    const result = await showMessage(windowFor(event), {
       type: "warning",
       message: strings.t("Do you want to save the changes you made to “%@”?", title),
       detail: strings.t("Your changes will be lost if you don't save them."),
@@ -132,7 +132,7 @@ export function registerDocumentRequests({
   // As NSDocument asks when its file changed under unsaved changes. Save
   // Anyway comes first and answers Escape: it keeps what the reader sees.
   handle("doc:ask-changed-elsewhere", async (event, title) => {
-    const result = await dialog.showMessageBox(windowFor(event), {
+    const result = await showMessage(windowFor(event), {
       type: "warning",
       message: strings.t("“%@” was changed by another app.", title),
       detail: strings.t(
@@ -166,7 +166,7 @@ export function registerDocumentRequests({
     return savePastedImage(documentPath, png, strings);
   });
   handle("images:ask-save-first", async (event) => {
-    await dialog.showMessageBox(windowFor(event), {
+    await showMessage(windowFor(event), {
       type: "info",
       message: strings.t("Save the document first"),
       // One short line: GTK lays out a wrapped detail flush left under a

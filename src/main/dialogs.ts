@@ -3,11 +3,18 @@ import { basename } from "node:path";
 import { type BrowserWindow, dialog } from "electron";
 import type { Strings } from "../shared/i18n";
 import { pathWithExtension } from "./document-files";
+import { messageOptionsFor } from "./message-options";
 
 /// What an error says, whatever was thrown: a thrown Error's message, or
 /// the thing itself written out.
 export function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/// Every message box the app shows, as its system draws them best (see
+/// messageOptionsFor).
+export function showMessage(window: BrowserWindow, options: Electron.MessageBoxOptions) {
+  return dialog.showMessageBox(window, messageOptionsFor(options, process.platform));
 }
 
 /// A warning on the window, with one button to dismiss it.
@@ -17,7 +24,7 @@ export async function showWarning(
   detail: string,
   strings: Strings,
 ): Promise<void> {
-  await dialog.showMessageBox(window, { type: "warning", message, detail, buttons: [strings.t("OK")] });
+  await showMessage(window, { type: "warning", message, detail, buttons: [strings.t("OK")] });
 }
 
 /// A warning that something failed, with the error as its detail.
@@ -45,7 +52,7 @@ export async function askWhereToSave(
   if (result.canceled || !result.filePath) return null;
   const destination = pathWithExtension(result.filePath, extension);
   if (destination === result.filePath || !existsSync(destination)) return destination;
-  const answer = await dialog.showMessageBox(window, {
+  const answer = await showMessage(window, {
     type: "warning",
     message: strings.t("“%@” already exists. Do you want to replace it?", basename(destination)),
     buttons: [strings.t("Replace"), strings.t("Cancel")],

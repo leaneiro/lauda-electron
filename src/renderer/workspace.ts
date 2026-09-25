@@ -144,6 +144,14 @@ export class Workspace {
     this.showSelected();
   }
 
+  /// A tab dropped at `index` among the others: the order the strip shows,
+  /// the tab keys walk and the session keeps.
+  moveTab(document: LaudaDocument, index: number): void {
+    if (!this.tabs.contains(document)) return;
+    this.tabs.move(document, index);
+    this.notifyChanged();
+  }
+
   select(document: LaudaDocument, keyboard: KeyboardAfterChoice = "follows"): void {
     if (!this.tabs.contains(document)) return;
     this.tabs.select(document);

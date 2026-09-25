@@ -466,3 +466,81 @@ test("many tabs narrow to fit beside the controls", async () => {
     .toBeGreaterThanOrEqual(0);
   await forceQuit(app);
 });
+
+/// A tab dragged along the strip takes a new place among the others, and the
+/// session keeps the order; a click that doesn't move only selects.
+test("dragging a tab reorders the tabs and the session", async () => {
+  const { app, window, folder } = await launch({ files: { "a.md": "# A\n", "b.md": "# B\n", "c.md": "# C\n" } });
+  const titles = window.locator(".tab-title");
+  await expect(titles).toHaveText(["a.md", "b.md", "c.md"]);
+  // Once the tabs have come in, where they stand is where they stay.
+  await window.waitForTimeout(500);
+  const box = async (index: number) => {
+    const rect = await window.locator(".tab").nth(index).boundingBox();
+    if (!rect) throw new Error("no tab");
+    return rect;
+  };
+
+  const first = await box(0);
+  const last = await box(2);
+  await window.mouse.move(first.x + first.width / 2, first.y + first.height / 2);
+  await window.mouse.down();
+  await window.mouse.move(last.x + last.width - 6, last.y + last.height / 2, { steps: 12 });
+  await window.mouse.up();
+  await expect(titles).toHaveText(["b.md", "c.md", "a.md"]);
+  await expect(window.locator(".tab.is-selected .tab-title")).toHaveText("a.md");
+
+  const session = join(folder, "..", "user-data", "session.json");
+  const storedNames = () =>
+    existsSync(session)
+      ? (JSON.parse(readFileSync(session, "utf8")) as { files: string[] }).files.map((file) =>
+          file.split(/[\\/]/).pop(),
+        )
+      : [];
+  await expect.poll(storedNames).toEqual(["b.md", "c.md", "a.md"]);
+  // The tab keys walk the new order.
+  await window.locator(".tab.is-selected").focus();
+  await window.keyboard.press("Home");
+  await expect(window.locator(".tab.is-selected .tab-title")).toHaveText("b.md");
+
+  const middle = await box(1);
+  await window.mouse.click(middle.x + middle.width / 2, middle.y + middle.height / 2);
+  await expect(window.locator(".tab.is-selected .tab-title")).toHaveText("c.md");
+  await expect(titles).toHaveText(["b.md", "c.md", "a.md"]);
+
+  // A press pulled away from its tab and let go elsewhere is no click.
+  const third = await box(2);
+  await window.mouse.move(third.x + third.width / 2, third.y + third.height / 2);
+  await window.mouse.down();
+  await window.mouse.move(third.x + third.width / 2, third.y + 200, { steps: 6 });
+  await window.mouse.up();
+  await expect(window.locator(".tab.is-selected .tab-title")).toHaveText("c.md");
+  await expect(titles).toHaveText(["b.md", "c.md", "a.md"]);
+  await forceQuit(app);
+});
+
+/// A tab closed during a drag ends the drag: the tabs left go back to their
+/// places, none of them left shifted aside.
+test("a tab closed during a drag leaves the others in place", async () => {
+  const { app, window } = await launch({ files: { "a.md": "# A\n", "b.md": "# B\n", "c.md": "# C\n" } });
+  const titles = window.locator(".tab-title");
+  await expect(titles).toHaveText(["a.md", "b.md", "c.md"]);
+  await window.waitForTimeout(500);
+  const first = await window.locator(".tab").nth(0).boundingBox();
+  if (!first) throw new Error("no tab");
+  await window.mouse.move(first.x + first.width / 2, first.y + first.height / 2);
+  await window.mouse.down();
+  // Past the second tab's middle, which moves aside.
+  await window.mouse.move(first.x + first.width + 12, first.y + first.height / 2, { steps: 6 });
+  await expect(window.locator(".tab").nth(1)).toHaveAttribute("style", /translateX\(-\d/);
+
+  // Held until the closed tab is gone, which takes the drag's own ending with it.
+  await clickMenu(app, "File", "Close");
+  await expect(titles).toHaveText(["b.md", "c.md"]);
+  await window.waitForTimeout(600);
+  await window.mouse.up();
+  for (const tab of await window.locator(".tab").all()) {
+    expect(await tab.evaluate((element) => element.style.transform)).toBe("");
+  }
+  await forceQuit(app);
+});

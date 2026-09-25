@@ -16,6 +16,18 @@ function list(...names: string[]): [TabList<Doc>, Doc[]] {
 const names = (tabs: TabList<Doc>) => tabs.items.map((doc) => doc.name);
 
 describe("TabList", () => {
+  it("moves a tab, the selection staying on the tab it was", () => {
+    const [tabs, docs] = list("a", "b", "c");
+    tabs.move(docs[0] as Doc, 2);
+    expect(names(tabs)).toEqual(["b", "c", "a"]);
+    expect(tabs.selected).toBe(docs[2]);
+    tabs.move(docs[2] as Doc, 0);
+    expect(names(tabs)).toEqual(["c", "b", "a"]);
+    // A place past the end is the end.
+    tabs.move(docs[1] as Doc, 9);
+    expect(names(tabs)).toEqual(["c", "a", "b"]);
+  });
+
   it("shows a new tab", () => {
     const [tabs, docs] = list("a", "b");
     expect(names(tabs)).toEqual(["a", "b"]);

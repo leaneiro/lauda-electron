@@ -7,6 +7,7 @@ import type { LaudaDocument } from "./document";
 import { element } from "./dom";
 import { icons, widthColumn, widthLevelIcon } from "./icons";
 import { OutlinePopover } from "./outline";
+import { TabDragging } from "./tab-dragging";
 import { tabAnimation, type Workspace } from "./workspace";
 
 const modes: { mode: ViewMode; key: TranslationKey; icon: string }[] = [
@@ -27,6 +28,7 @@ export class TitleBar {
   private readonly widthButton = element("button", "glass-button glass width-button is-out");
   private readonly outlineButton = element("button", "glass-button glass outline-button");
   private readonly tabs = new Map<string, HTMLElement>();
+  private readonly drag: TabDragging;
 
   constructor(
     private readonly context: WindowContext,
@@ -53,6 +55,7 @@ export class TitleBar {
       (mode, by) => workspace.setViewMode(mode, by === "keys" ? "stays" : "follows"),
     );
 
+    this.drag = new TabDragging(this.strip, workspace);
     // The tabs are one stop for the keyboard, the selected tab; the arrows
     // move between them, selecting as they go, and Return goes to the
     // document.
@@ -146,6 +149,7 @@ export class TitleBar {
       if (present.has(id) || tab.classList.contains("is-leaving") || tab.classList.contains("is-fading")) continue;
       // A tab closed with others still open leaves its room to them; the last
       // two go together, and fade where they stand as the strip goes with them.
+      this.drag.cancel();
       tab.classList.add(documents.length === 0 ? "is-fading" : "is-leaving");
       window.setTimeout(() => tab.remove(), tabAnimation);
       this.tabs.delete(id);
@@ -155,6 +159,7 @@ export class TitleBar {
     for (const document of documents) {
       let tab = this.tabs.get(document.id);
       if (!tab) {
+        this.drag.cancel();
         tab = this.makeTab(document);
         this.tabs.set(document.id, tab);
         if (this.workspace.tabsAreIn) {
@@ -183,6 +188,8 @@ export class TitleBar {
     const title = element("span", "tab-title");
     tab.append(close, title);
     tab.addEventListener("click", () => this.workspace.select(document));
+    // Dragged along the strip, a tab takes a new place among the others.
+    tab.addEventListener("pointerdown", (event) => this.drag.press(event, tab, document));
     // The wheel closes the tab it is clicked on, wherever on it.
     tab.addEventListener("mousedown", (event) => {
       if (event.button === 1) event.preventDefault();

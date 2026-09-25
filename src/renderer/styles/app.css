@@ -447,6 +447,20 @@ body.platform-darwin .window-title {
   padding: 0;
   margin-right: -6px;
 }
+/* A tab dragged along the strip follows the pointer at once, over the
+   others, which slide aside to make room (TabDragging). Let go, it slides
+   into its place, still over them. */
+.tab.is-dragged,
+.tab.is-landing {
+  z-index: 1;
+}
+.tab.is-dragged {
+  transition: none;
+}
+/* The drop measures the tabs where they are drawn, with nothing moving. */
+.tab-strip.is-settling .tab {
+  transition: none;
+}
 .tab-title {
   overflow: hidden;
   white-space: nowrap;

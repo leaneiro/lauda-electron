@@ -34,6 +34,15 @@ export class TabList<Item> {
     if (this.contains(item)) this.current = item;
   }
 
+  /// Moves a tab to `index` among the tabs, the selection staying on
+  /// whichever tab it was.
+  move(item: Item, index: number): void {
+    const from = this.list.indexOf(item);
+    if (from < 0) return;
+    this.list.splice(from, 1);
+    this.list.splice(Math.max(0, Math.min(index, this.list.length)), 0, item);
+  }
+
   /// Removes a tab. If it was the one showing, the tab that slides into its
   /// place takes over, or the one before it when it was the last.
   remove(item: Item): void {

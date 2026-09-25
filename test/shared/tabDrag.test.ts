@@ -1,5 +1,5 @@
-// TabDragTests.swift, the same cases, but for the native `landing` (this
-// edition measures where the dropped tab slides from on the page) and the
+// TabDragTests.swift, the same cases, but for where the native strip draws
+// the dragged tab (this edition measures that on the page) and the
 // workspace's, which the end-to-end drag test covers here.
 import { describe, expect, it } from "vitest";
 import { TabDrag, tabDropIndex, tabMakeRoomOffset } from "../../src/shared/tab-drag";

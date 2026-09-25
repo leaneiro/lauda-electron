@@ -1,7 +1,7 @@
 // A tab dragged along the strip to a new place among the others
-// (TabDrag.swift, with the same rules and cases). The native `landing`, where
-// the dropped tab slides from, isn't here: this edition measures that on the
-// page (TabDragging).
+// (TabDrag.swift, with the same rules and cases). Where the native strip draws
+// the dragged tab (`width`, `position`, `place`) isn't here: this edition
+// measures that on the page (TabDragging).
 
 /// A tab dragged along the strip, as browsers reorder tabs: it follows the
 /// pointer, held within the strip, and the tabs it passes move aside to make

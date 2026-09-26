@@ -545,9 +545,6 @@ body.platform-darwin .window-title {
 .panes.no-animation .pane {
   transition: none;
 }
-.pane.is-away {
-  visibility: hidden;
-}
 
 .editor-pane {
   left: 0;

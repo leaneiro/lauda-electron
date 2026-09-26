@@ -111,15 +111,19 @@ export class DocumentView {
     const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const animates = animated && !reduceMotion && previous !== mode && isSmoothModeChange(previous, mode, textBytes);
     this.panes.classList.toggle("no-animation", !animates);
-    // Both panes are on screen while one slides in or out; the one left
-    // outside is hidden once it is gone, so it takes no clicks or focus.
-    this.editorPane.classList.remove("is-away");
-    this.previewPane.classList.remove("is-away");
+    // Both panes are on screen while one slides in or out. The one left
+    // outside stays drawn there, clipped, and takes no clicks or focus
+    // (inert). It used to be hidden, and on Windows (a VM without a GPU)
+    // the change from editor only to both panes came at once, with no
+    // slide. Likely cause, not measured: hidden, the preview's page stops
+    // drawing, and has to draw anew on its way back.
+    this.editorPane.inert = false;
+    this.previewPane.inert = false;
     this.panes.dataset.mode = mode;
     window.clearTimeout(this.awayTimer);
     const settle = () => {
-      this.editorPane.classList.toggle("is-away", mode === "previewOnly");
-      this.previewPane.classList.toggle("is-away", mode === "editorOnly");
+      this.editorPane.inert = mode === "previewOnly";
+      this.previewPane.inert = mode === "editorOnly";
       this.editor.restoreScroll();
       this.preview.realign();
     };

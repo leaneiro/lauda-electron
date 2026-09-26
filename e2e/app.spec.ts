@@ -288,3 +288,22 @@ test("find counts matches in the editor and in the preview", async () => {
   await expect(window.locator(".document:not([hidden]) .find-bar")).toBeHidden();
   await app.close();
 });
+
+/// The pane out of view stays drawn, outside the window's edge, inert
+/// rather than hidden: it takes no clicks or focus.
+test("the pane out of view stays drawn and takes nothing", async () => {
+  const { app, window } = await launch({ files: { "a.md": "# A\n\nSome text.\n" } });
+  const panes = window.locator(".document:not([hidden]) .panes");
+  const preview = panes.locator(".preview-pane");
+  await expect(panes).toHaveAttribute("data-mode", "split");
+
+  await window.getByRole("radio", { name: "Editor Only" }).click();
+  await expect(panes).toHaveAttribute("data-mode", "editorOnly");
+  await expect.poll(() => preview.evaluate((pane: HTMLElement) => pane.inert)).toBe(true);
+  expect(await preview.evaluate((pane) => getComputedStyle(pane).visibility)).toBe("visible");
+
+  await window.getByRole("radio", { name: "Editor and Preview" }).click();
+  await expect(panes).toHaveAttribute("data-mode", "split");
+  await expect.poll(() => preview.evaluate((pane: HTMLElement) => pane.inert)).toBe(false);
+  await app.close();
+});

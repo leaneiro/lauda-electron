@@ -99,8 +99,8 @@ export class DocumentWindow {
     this.window?.close();
   }
 
-  /// A second launch with nothing to open brings the window forward. False
-  /// when there is no window to bring.
+  /// A second launch brings the window forward, with files to open or
+  /// without. False when there is no window to bring.
   bringForward(): boolean {
     if (!this.window) return false;
     // Still waiting for its page to draw: the reader asked for it, so it

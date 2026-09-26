@@ -353,8 +353,11 @@ app.on("open-file", (event, filePath) => {
 
 app.on("second-instance", (_event, argv) => {
   const files = filesInArguments(argv);
-  if (files.length > 0) void openFiles(files);
-  else if (!documentWindow.bringForward()) void launchWithoutFiles();
+  if (files.length > 0) {
+    void openFiles(files);
+    // A file opened from the file manager brings its window forward with it.
+    documentWindow.bringForward();
+  } else if (!documentWindow.bringForward()) void launchWithoutFiles();
 });
 
 /// Quitting asks the window first: unsaved untitled text is reviewed and

@@ -4,12 +4,12 @@ import { messageOptionsFor } from "../../src/main/message-options";
 describe("a message box's options", () => {
   const options = { type: "warning", message: "Save the document first", buttons: ["OK"] };
 
-  it("leave out the icon on Linux, where GTK centres the text", () => {
+  it("leave out the icon on Linux and Windows", () => {
     expect(messageOptionsFor(options, "linux")).toEqual({ ...options, type: "none" });
+    expect(messageOptionsFor(options, "win32")).toEqual({ ...options, type: "none" });
   });
 
-  it("keep it on Windows and macOS, which set the text beside it", () => {
-    expect(messageOptionsFor(options, "win32")).toBe(options);
+  it("keep it on macOS", () => {
     expect(messageOptionsFor(options, "darwin")).toBe(options);
   });
 });

@@ -1,8 +1,8 @@
-/// A message box's options as its system shows them best. GTK centres a
-/// message box's text, and GNOME's own alerts have no icon, so on Linux the
-/// icon Electron would set beside the centred text, where it reads as
-/// misaligned, is left out. Windows and macOS set their text beside their
-/// icons, and keep them.
+/// A message box's options as its system shows them best. On Linux and
+/// Windows the icon Electron would set beside the text is left out: GTK
+/// centres the text, where an icon beside it reads as misaligned, and GNOME's
+/// own alerts have none; on Windows it was a choice from the test run, the
+/// blue title saying it on its own. macOS keeps its icon.
 export function messageOptionsFor<T extends { type?: string }>(options: T, platform: string): T {
-  return platform === "linux" ? { ...options, type: "none" } : options;
+  return platform === "darwin" ? options : { ...options, type: "none" };
 }

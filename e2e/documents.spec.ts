@@ -544,3 +544,68 @@ test("a tab closed during a drag leaves the others in place", async () => {
   }
   await forceQuit(app);
 });
+
+/// Moves the page makes up while the tabs move report the button up, where
+/// the pointer last was (seen under Playwright on macOS); they don't end the
+/// drag, and the release drops the tab where it is let go. Dispatched by
+/// hand, in that order.
+test("a move that reports the button up doesn't end the drag", async () => {
+  const { app, window } = await launch({ files: { "a.md": "# A\n", "b.md": "# B\n", "c.md": "# C\n" } });
+  const titles = window.locator(".tab-title");
+  await expect(titles).toHaveText(["a.md", "b.md", "c.md"]);
+  await window.waitForTimeout(500);
+  const first = await window.locator(".tab").nth(0).boundingBox();
+  const last = await window.locator(".tab").nth(2).boundingBox();
+  if (!first || !last) throw new Error("no tab");
+
+  await window.evaluate(
+    ({ from, to, y }) => {
+      const tab = document.querySelector(".tab");
+      if (!tab) throw new Error("no tab");
+      const fire = (target: EventTarget, type: string, x: number, buttons: number) =>
+        target.dispatchEvent(
+          new PointerEvent(type, {
+            bubbles: true,
+            clientX: x,
+            clientY: y,
+            pointerId: 1,
+            pointerType: "mouse",
+            isPrimary: true,
+            button: type === "pointermove" ? -1 : 0,
+            buttons,
+          }),
+        );
+      fire(tab, "pointerdown", from, 1);
+      for (let step = 1; step <= 5; step++) fire(globalThis, "pointermove", from + step * 10, 1);
+      fire(globalThis, "pointermove", from + 50, 0);
+      for (let step = 1; step <= 5; step++)
+        fire(globalThis, "pointermove", from + 50 + ((to - from - 50) * step) / 5, 1);
+      fire(globalThis, "pointerup", to, 0);
+    },
+    { from: first.x + first.width / 2, to: last.x + last.width - 6, y: first.y + first.height / 2 },
+  );
+  await expect(titles).toHaveText(["b.md", "c.md", "a.md"]);
+  await forceQuit(app);
+});
+
+/// In preview only, choosing a tab hands the keyboard to its preview's page,
+/// in a frame of its own; a tab dragged there still takes its new place.
+test("a tab dragged in preview only takes its new place", async () => {
+  const { app, window } = await launch({ files: { "a.md": "# A\n", "b.md": "# B\n", "c.md": "# C\n" } });
+  const titles = window.locator(".tab-title");
+  await expect(titles).toHaveText(["a.md", "b.md", "c.md"]);
+  await window.getByRole("radio", { name: "Preview Only" }).click();
+  await expect(window.locator(".document:not([hidden]) .panes")).toHaveAttribute("data-mode", "previewOnly");
+  await window.locator(".tab").nth(2).click();
+  await window.waitForTimeout(500);
+
+  const first = await window.locator(".tab").nth(0).boundingBox();
+  const last = await window.locator(".tab").nth(2).boundingBox();
+  if (!first || !last) throw new Error("no tab");
+  await window.mouse.move(first.x + first.width / 2, first.y + first.height / 2);
+  await window.mouse.down();
+  await window.mouse.move(last.x + last.width - 6, last.y + last.height / 2, { steps: 12 });
+  await window.mouse.up();
+  await expect(titles).toHaveText(["b.md", "c.md", "a.md"]);
+  await forceQuit(app);
+});

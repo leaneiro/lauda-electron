@@ -52,11 +52,11 @@ export class TabDragging {
 
     const move = (moveEvent: PointerEvent) => {
       if (moveEvent.pointerId !== event.pointerId) return;
-      // Let go outside the window, the press ended where nothing heard it.
-      if ((moveEvent.buttons & 1) === 0) {
-        finish(false);
-        return;
-      }
+      // A move never ends the drag, whatever button it reports: the page
+      // makes up moves of its own when the tabs move under a still pointer,
+      // with the button up and where the pointer last was (seen under
+      // Playwright on macOS), and taking one for a release ended drags at
+      // once. The release comes to this window wherever it happens.
       drag.translation = moveEvent.clientX - start;
       if (!dragging) {
         if (Math.abs(drag.translation) < dragThreshold) return;
@@ -73,7 +73,10 @@ export class TabDragging {
       });
     };
     const up = (upEvent: PointerEvent) => {
-      if (upEvent.pointerId === event.pointerId) finish(true);
+      if (upEvent.pointerId !== event.pointerId) return;
+      // Where it is let go is where it lands, whichever move came last.
+      drag.translation = upEvent.clientX - start;
+      finish(true);
     };
     const cancelled = (cancelEvent: PointerEvent) => {
       if (cancelEvent.pointerId === event.pointerId) finish(false);

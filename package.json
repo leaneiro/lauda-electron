@@ -17,6 +17,7 @@
     "e2e": "node scripts/build.mjs && playwright test",
     "measure": "node scripts/build.mjs && playwright test -c playwright.measure.config.ts",
     "sync-native": "node scripts/sync-native.mjs",
+    "icons": "electron scripts/make-icons.mjs",
     "dist:linux": "node scripts/build.mjs --production && electron-builder --linux",
     "dist:win": "node scripts/build.mjs --production && node scripts/dist-win.mjs",
     "dist:mac": "node scripts/build.mjs --production && electron-builder --mac --config.appId=com.carneirolabs.lauda.electron --config.productName=\"Lauda Electron\"",
@@ -96,7 +97,7 @@
           ]
         }
       ],
-      "icon": "build/icon.png"
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -116,7 +117,7 @@
     },
     "extraResources": [
       {
-        "from": "resources/icons/AppIcon-512.png",
+        "from": "build/icons/512x512.png",
         "to": "AppIcon-512.png"
       }
     ],

@@ -3,11 +3,19 @@ import { app, BrowserWindow, nativeTheme, screen, type WebContents } from "elect
 import type { Events } from "../shared/ipc";
 import { logNote } from "./log";
 import { placeWindow } from "./placement";
-import { appOrigin, distDirectory } from "./protocols";
+import { appOrigin } from "./protocols";
 import { readWindowState, windowStateFile } from "./store";
 import { tabKeyCommand } from "./tab-keys";
 
 const isMac = process.platform === "darwin";
+
+/// The app's icon as a file of its own, for Linux's window and About
+/// panel: GTK reads the panel's from the disk and can't look inside the
+/// app's archive, so the packaged app keeps a copy beside it
+/// (extraResources). scripts/make-icons.mjs draws it.
+export const appIconFile = app.isPackaged
+  ? join(process.resourcesPath, "AppIcon-512.png")
+  : join(app.getAppPath(), "build/icons/512x512.png");
 
 /// The windows' background before their pages draw: the page's own colour
 /// (--window-bg in app.css; Settings is the lighter grey of a sheet).
@@ -134,7 +142,7 @@ export class DocumentWindow {
       backgroundColor: windowBackground(),
       titleBarStyle: "hidden",
       ...(isMac ? { trafficLightPosition: { x: 19, y: 19 } } : { titleBarOverlay: titleBarOverlay() }),
-      ...(process.platform === "linux" ? { icon: join(distDirectory, "resources/icons/AppIcon-512.png") } : {}),
+      ...(process.platform === "linux" ? { icon: appIconFile } : {}),
       webPreferences,
     });
     this.window = window;

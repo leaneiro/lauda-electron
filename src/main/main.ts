@@ -28,7 +28,7 @@ import { appOrigin, distDirectory, handleProtocols, registerSchemes } from "./pr
 import { registerDocumentRequests } from "./requests/documents";
 import { handle } from "./requests/handle";
 import { RecentFiles, readSession, SettingsStore } from "./store";
-import { DocumentWindow, SettingsWindow } from "./windows";
+import { appIconFile, DocumentWindow, SettingsWindow } from "./windows";
 
 const isMac = process.platform === "darwin";
 const isWindows = process.platform === "win32";
@@ -402,11 +402,7 @@ app.whenReady().then(async () => {
     applicationVersion: isMac ? buildInfo.version : `${buildInfo.version} (${buildInfo.gitHash})`,
     version: buildInfo.gitHash,
     copyright: "© 2026 Leandro Carneiro",
-    // Linux's panel reads the icon with GTK, which can't look inside the
-    // app's archive: the packaged app keeps a copy beside it.
-    iconPath: app.isPackaged
-      ? join(process.resourcesPath, "AppIcon-512.png")
-      : join(distDirectory, "resources/icons/AppIcon-512.png"),
+    iconPath: appIconFile,
   });
   registerRequests();
   refreshMenu();

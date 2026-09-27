@@ -90,9 +90,9 @@ src/
   renderer/    # the window: title bar and tabs, editor (CodeMirror), preview host, settings
   preview/     # the script inside the preview's page (the native preview.js)
   shared/      # Markdown renderer, editing rules, strings, settings: pure TypeScript
-resources/     # preview stylesheet and font, welcome guides, strings, icons
-scripts/       # build and sync-native
-build/         # packaging resources: icons, the Linux install scripts
+resources/     # preview stylesheet and font, welcome guides, strings, the icon's drawing
+scripts/       # build, sync-native, the Windows packages and the icons
+build/         # packaging resources: the icons (drawn by `npm run icons`), the Windows installer's script, the Linux install scripts
 test/          # unit tests (Vitest)
 e2e/           # end-to-end tests (Playwright)
 ```
@@ -100,10 +100,12 @@ e2e/           # end-to-end tests (Playwright)
 ## Staying in step with the native app
 
 `npm run sync-native` copies the preview stylesheet, the wordmark font, the
-welcome guides, the icons and the string catalog (converted to JSON) from
-the native repository, expected at `../markeditor` (or wherever
+welcome guides, the icon's drawing and the string catalog (converted to
+JSON) from the native repository, expected at `../markeditor` (or wherever
 `LAUDA_NATIVE` points). Strings the native app gets from macOS, like the
-Edit menu's, live in `resources/locales/app.json`.
+Edit menu's, live in `resources/locales/app.json`. When the drawing
+changes, `npm run icons` draws the Windows and Linux icons in `build/`
+from it, each size on its own.
 
 ## Platform notes
 

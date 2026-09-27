@@ -1,6 +1,7 @@
 // Brings over what the native app and this one share, so the two stay in
 // step: the string catalog (converted to JSON, plural variations kept), the
-// preview's stylesheet and wordmark font and the welcome guides.
+// preview's stylesheet and wordmark font, the welcome guides and the icon's
+// drawing.
 // Run it after changing any of them in the native repository.
 import { cpSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -46,4 +47,9 @@ for (const folder of readdirSync(join(native, "Resources/Welcome"))) {
   copy(`Resources/Welcome/${folder}/Welcome.md`, `resources/welcome/${language}.md`);
 }
 
-console.log(`OK: ${Object.keys(strings).length} strings, preview files and welcome guides from ${native}`);
+// npm run icons draws every icon from it, the native app's included.
+copy("Resources/Icons/AppIcon.svg", "build/icon.svg");
+
+console.log(
+  `OK: ${Object.keys(strings).length} strings, preview files, welcome guides and the icon's drawing from ${native}`,
+);

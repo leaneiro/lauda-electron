@@ -1,7 +1,9 @@
-// Draws the app icon for Windows and Linux into build/: icon.ico for
-// Windows, icons/<size>x<size>.png for Linux's icon theme and icon.png for
-// the Mac build, from the icon's drawing, build/icon.svg. Run it with
-// `npm run icons` after the drawing changes.
+// Draws the app icon into build/: icon.ico for Windows, icons/<size>x<size>.png
+// for Linux's icon theme and icon.png for this edition's Mac build; and,
+// with `--mac <folder>`, the native app's PNGs into that folder (its
+// Resources/Icons). All from the icon's drawing, build/icon.svg, the native
+// app's, which sync-native brings over. Run it with `npm run icons` after
+// the drawing changes.
 //
 // Each size is drawn from the drawing itself, by Chromium, never scaled
 // down from a picture: scaled down from one large picture, as
@@ -10,7 +12,7 @@
 // icons have it, with its sides on whole pixels, which keeps them sharp.
 
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow } from "electron";
 
@@ -24,8 +26,10 @@ const windowsSizes = [16, 20, 24, 30, 32, 36, 40, 48, 60, 64, 72, 80, 96, 256];
 // The fixed sizes of the hicolor icon theme, which the .deb and the .rpm
 // install the icon in and the AppImage takes it from.
 const linuxSizes = [16, 22, 24, 32, 36, 48, 64, 72, 96, 128, 192, 256, 512];
-// electron-builder makes the Mac build's .icns from one large picture.
-const macSize = 1024;
+// The sizes the native app's .icns is assembled from (its
+// Scripts/make-icon.sh); electron-builder makes this edition's from the
+// largest.
+const macSizes = [16, 32, 64, 128, 256, 512, 1024];
 
 // The share of each side the body leaves empty, as each system's own grid
 // has it for a square icon: 3 px inside 48 in Microsoft's (the guide "Design
@@ -36,8 +40,9 @@ const linuxMargin = 12 / 128;
 const macMargin = 100 / 1024;
 
 // The margin in whole pixels, so the body's sides fall on the pixel grid.
-// At 16 px it is 1 px, as in the designer's own 16 px icon: Linux's share
-// rounds to 2 px there, which would leave the body 12 px across.
+// At 16 px it is 1 px, as in the designer's own 16 px icon: Linux's and
+// Apple's shares round to 2 px there, which would leave the body 12 px
+// across.
 function margin(size, share) {
   return size <= 16 ? 1 : Math.round(size * share);
 }
@@ -135,10 +140,13 @@ app
     if (/<(text|image|foreignObject|feImage)\b/.test(svg)) {
       throw new Error("The icon's drawing holds text or a picture: turn them into shapes.");
     }
+    const macOption = process.argv.indexOf("--mac");
+    const macFolder = macOption < 0 ? null : process.argv[macOption + 1];
+    if (macFolder === undefined) throw new Error("--mac takes the folder to draw the native app's PNGs in.");
     const frames = [
       ...windowsSizes.map((size) => ({ size, margin: margin(size, windowsMargin) })),
       ...linuxSizes.map((size) => ({ size, margin: margin(size, linuxMargin) })),
-      { size: macSize, margin: margin(macSize, macMargin) },
+      ...macSizes.map((size) => ({ size, margin: margin(size, macMargin) })),
     ];
 
     const window = new BrowserWindow({ show: false });
@@ -147,6 +155,7 @@ app
     const png = encoded.map((image) => Buffer.from(image, "base64"));
     const windowsImages = png.slice(0, windowsSizes.length);
     const linuxImages = png.slice(windowsSizes.length, windowsSizes.length + linuxSizes.length);
+    const macImages = png.slice(windowsSizes.length + linuxSizes.length);
 
     writeFileSync(join(build, "icon.ico"), iconFile(windowsImages));
     rmSync(join(build, "icons"), { recursive: true, force: true });
@@ -154,10 +163,16 @@ app
     for (const [index, size] of linuxSizes.entries()) {
       writeFileSync(join(build, "icons", `${size}x${size}.png`), linuxImages[index]);
     }
-    writeFileSync(join(build, "icon.png"), png[png.length - 1]);
+    writeFileSync(join(build, "icon.png"), macImages[macImages.length - 1]);
     console.log(
       `OK: build/icon.ico (${windowsSizes.join(", ")}), build/icons (${linuxSizes.join(", ")}), build/icon.png`,
     );
+    if (macFolder) {
+      for (const [index, size] of macSizes.entries()) {
+        writeFileSync(join(resolve(macFolder), `AppIcon-${size}.png`), macImages[index]);
+      }
+      console.log(`OK: AppIcon-<size>.png (${macSizes.join(", ")}) in ${resolve(macFolder)}`);
+    }
     app.quit();
   })
   .catch((error) => {

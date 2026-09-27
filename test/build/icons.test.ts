@@ -120,7 +120,7 @@ function bodySides({ size, file }: { size: number; file: Buffer }) {
 
 /// scripts/make-icons.mjs draws them from build/icon.svg. Scaled down from
 /// one large picture, the small sizes came out blurred; the native app's
-/// PNGs, drawn without smoothing at the small sizes, showed steps along
+/// former PNGs, drawn without smoothing at the small sizes, showed steps along
 /// their edges; and PNGs with the body off the pixel grid had a grey line
 /// around it.
 describe("the icons Windows and Linux show", () => {

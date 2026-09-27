@@ -66,10 +66,12 @@ on Windows. On a Mac with Apple silicon and no Rosetta, the AppImage and
 NSIS tools don't run, but `npx electron-builder --linux deb` and
 `npx electron-builder --win zip` (a portable folder) do.
 
-The icons in `build/` come from one drawing, `build/icon.svg`:
-`npm run icons` draws every size Windows and Linux show, each on its own,
-with the margin each system's icons keep. Run it after changing the
-drawing.
+The icons in `build/` come from one drawing, `build/icon.svg`, the native
+app's: `npm run icons` draws every size Windows and Linux show, each on
+its own, with the margin each system's grid keeps. With
+`-- --mac ../markeditor/Resources/Icons` it also draws the native app's
+PNGs, which its `make icon` turns into the .icns. Run it after changing
+the drawing.
 
 `npm run e2e` tests the development build; with `LAUDA_EXECUTABLE` set to
 a packaged app's executable, the same tests run against it.
@@ -105,10 +107,10 @@ e2e/           # end-to-end tests (Playwright)
 ## Staying in step with the native app
 
 `npm run sync-native` copies the preview stylesheet, the wordmark font, the
-welcome guides and the string catalog (converted to JSON) from the native
-repository, expected at `../markeditor` (or wherever `LAUDA_NATIVE`
-points). Strings the native app gets from macOS, like the Edit menu's,
-live in `resources/locales/app.json`.
+welcome guides, the icon's drawing and the string catalog (converted to
+JSON) from the native repository, expected at `../markeditor` (or wherever
+`LAUDA_NATIVE` points). Strings the native app gets from macOS, like the
+Edit menu's, live in `resources/locales/app.json`.
 
 ## Platform notes
 

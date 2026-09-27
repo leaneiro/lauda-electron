@@ -29,6 +29,11 @@ export class LaudaDocument {
   private readonly listeners = new Set<Listener>();
   private autosaveTimer: number | undefined;
   private writing: Promise<void> = Promise.resolve();
+  /// A failed write was reported, and the writes made on their own after it
+  /// (the timer, leaving the window) fail the same way and say nothing until
+  /// one gets through. The error box takes the focus, and leaving the window
+  /// writes: each box wrote again and showed another, without end.
+  private failureShown = false;
   /// Set while the reader chooses between their text and a file another
   /// app changed: nothing is written until they have.
   private writesAreHeld = false;
@@ -92,16 +97,17 @@ export class LaudaDocument {
   private scheduleAutosave(): void {
     if (!this.filePath || this.writesAreHeld) return;
     window.clearTimeout(this.autosaveTimer);
-    this.autosaveTimer = window.setTimeout(() => void this.autosave(), autosaveDelay);
+    this.autosaveTimer = window.setTimeout(() => void this.autosave("unasked"), autosaveDelay);
   }
 
   /// Writes the file if its text changed; used on a timer, when the window
-  /// loses focus and before closing.
-  async autosave(): Promise<boolean> {
+  /// loses focus and before closing. A failure is always said when the write
+  /// was asked for (closing, a rename), once when it wasn't.
+  async autosave(reason: "asked" | "unasked" = "asked"): Promise<boolean> {
     window.clearTimeout(this.autosaveTimer);
     if (this.writesAreHeld) return false;
     if (!this.filePath || this.text === this.savedText) return true;
-    return this.write(this.filePath);
+    return this.write(this.filePath, reason);
   }
 
   /// ⌘S: a document with a file writes it now; a new one asks where.
@@ -131,15 +137,19 @@ export class LaudaDocument {
 
   /// Writes one text at a time, taken once, so an edit arriving mid-write
   /// isn't recorded as saved.
-  private write(filePath: string): Promise<boolean> {
+  private write(filePath: string, reason: "asked" | "unasked"): Promise<boolean> {
     const written = this.text;
     const result = this.writing.then(async () => {
       const { lauda, t } = this.context;
       const outcome = await lauda.invoke("doc:write", filePath, written);
       if (!outcome.ok) {
-        await lauda.invoke("doc:show-error", t("Couldn't save “%@”", this.title), outcome.error ?? "");
+        if (reason === "asked" || !this.failureShown) {
+          this.failureShown = true;
+          await lauda.invoke("doc:show-error", t("Couldn't save “%@”", this.title), outcome.error ?? "");
+        }
         return false;
       }
+      this.failureShown = false;
       if (this.filePath === filePath) {
         this.savedText = written;
         this.savedDate = new Date();

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { _electron as electron, expect, type Page, test } from "@playwright/test";
 import { clickMenu, forceQuit, launch, previewFrame } from "./launch";
@@ -679,5 +679,46 @@ test("ctrl+tab walks the tabs", async () => {
   await press(true);
   await press(true);
   await expect(selected).toHaveText("c.md");
+  await forceQuit(app);
+});
+
+/// A file that can't be written: the error is said once, however often the
+/// window loses focus meanwhile (the error box itself takes it), and again
+/// when a save is asked for. The text stays.
+test("a failing save is reported once, not in a loop", async () => {
+  // A read-only folder stops no writes on Windows, nor as root.
+  test.skip(process.platform === "win32" || process.getuid?.() === 0, "a read-only folder doesn't stop writes here");
+  const { app, window, folder } = await launch({ files: { "locked.md": "# Locked\n" } });
+  await app.evaluate(({ dialog, BrowserWindow }) => {
+    const state = globalThis as { errors?: number };
+    state.errors = 0;
+    dialog.showMessageBox = (async () => {
+      state.errors = (state.errors ?? 0) + 1;
+      // A real box takes the focus from the window; a few times is enough to
+      // tell a loop.
+      if (state.errors <= 5) {
+        await BrowserWindow.getAllWindows()[0]?.webContents.executeJavaScript(
+          "window.dispatchEvent(new Event('blur'))",
+        );
+      }
+      return { response: 0, checkboxChecked: false };
+    }) as typeof dialog.showMessageBox;
+  });
+  chmodSync(folder, 0o555);
+  try {
+    await window.locator(".document:not([hidden]) .cm-content").click();
+    await window.keyboard.press("End");
+    await window.keyboard.type(" kept");
+    const errors = () => app.evaluate(() => (globalThis as { errors?: number }).errors);
+    await expect.poll(errors, { timeout: 8000 }).toBe(1);
+    await window.waitForTimeout(3000);
+    expect(await errors()).toBe(1);
+    await expect(window.locator(".document:not([hidden]) .cm-content")).toContainText("Locked kept");
+
+    await clickMenu(app, "File", "Save");
+    await expect.poll(errors, { timeout: 8000 }).toBe(2);
+  } finally {
+    chmodSync(folder, 0o755);
+  }
   await forceQuit(app);
 });

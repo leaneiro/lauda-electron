@@ -404,7 +404,7 @@ export class Workspace {
 
   /// Writes every document with a file; the window lost focus.
   flushAutosaves(): void {
-    for (const document of this.documents) void document.autosave();
+    for (const document of this.documents) void document.autosave("unasked");
   }
 
   // MARK: - What the main process mirrors

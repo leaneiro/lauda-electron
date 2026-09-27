@@ -142,13 +142,6 @@ export function buildMenu(context: MenuContext): Menu {
       enabled: state.documentCount > 1,
     },
   ];
-  if (!isMac) {
-    // Windows and Linux move between tabs with Ctrl+Tab as well.
-    tabs.push(
-      { label: t("Show Next Tab"), accelerator: "Ctrl+Tab", click: command("next-tab"), visible: false },
-      { label: t("Show Previous Tab"), accelerator: "Ctrl+Shift+Tab", click: command("previous-tab"), visible: false },
-    );
-  }
   const window: MenuItemConstructorOptions = {
     label: t("Window"),
     role: isMac ? "windowMenu" : undefined,

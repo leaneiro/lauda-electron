@@ -5,6 +5,7 @@ import { logNote } from "./log";
 import { placeWindow } from "./placement";
 import { appOrigin, distDirectory } from "./protocols";
 import { readWindowState, windowStateFile } from "./store";
+import { tabKeyCommand } from "./tab-keys";
 
 const isMac = process.platform === "darwin";
 
@@ -148,6 +149,15 @@ export class DocumentWindow {
     if (state?.maximized) window.maximize();
     window.show();
     window.on("unresponsive", () => logNote("app", "The window stopped responding"));
+    // Ctrl+Tab and Ctrl+Shift+Tab walk the tabs, as in browsers. Hidden
+    // items in the Window menu carried them, and on Windows those shortcuts
+    // never fired (seen in the test run).
+    window.webContents.on("before-input-event", (event, input) => {
+      const command = tabKeyCommand(input);
+      if (!command) return;
+      event.preventDefault();
+      this.send("menu:command", { name: command });
+    });
     this.rememberBounds(window);
     this.reportState(window);
 

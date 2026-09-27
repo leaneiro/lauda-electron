@@ -657,3 +657,27 @@ test("a drag whose moves come from another pointer still moves the tab", async (
   await expect(titles).toHaveText(["b.md", "c.md", "a.md"]);
   await forceQuit(app);
 });
+
+/// Ctrl+Tab and Ctrl+Shift+Tab walk the tabs, from the editor too. Keys the
+/// test types never pass through the window's own key handler, so it is handed
+/// the press as the system would.
+test("ctrl+tab walks the tabs", async () => {
+  const { app, window } = await launch({ files: { "a.md": "# A\n", "b.md": "# B\n", "c.md": "# C\n" } });
+  const selected = window.locator(".tab.is-selected .tab-title");
+  await expect(window.locator(".tab-title")).toHaveText(["a.md", "b.md", "c.md"]);
+  await window.locator(".tab").nth(0).click();
+  await expect(selected).toHaveText("a.md");
+  await window.locator(".document:not([hidden]) .cm-content").click();
+  const press = (shift: boolean) =>
+    app.evaluate(({ BrowserWindow }, shift) => {
+      const input = { type: "keyDown", key: "Tab", control: true, shift, alt: false, meta: false };
+      BrowserWindow.getAllWindows()[0]?.webContents.emit("before-input-event", { preventDefault() {} }, input);
+    }, shift);
+
+  await press(false);
+  await expect(selected).toHaveText("b.md");
+  await press(true);
+  await press(true);
+  await expect(selected).toHaveText("c.md");
+  await forceQuit(app);
+});

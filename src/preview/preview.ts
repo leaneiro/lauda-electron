@@ -73,14 +73,55 @@ function setStyle(family: string, size: number, lineHeight: number): void {
   });
 }
 
+// The column's width in rem, as last set; null until the page has one.
+let contentWidthRem: number | null = null;
+
+// A new width for the column. It eases in (the transition in preview.css),
+// and the page puts itself back at lastPosition on every frame of it, as it
+// does while the pane resizes. The page's first width, and any width with no
+// transition to follow (reduced motion), is set at once.
 function setContentWidth(rem: number): void {
-  reflowing(() => {
-    root.style.setProperty("--article-max", `${rem}rem`);
-  });
+  if (rem === contentWidthRem) return;
+  const first = contentWidthRem === null;
+  contentWidthRem = rem;
+  const change = () => root.style.setProperty("--article-max", `${rem}rem`);
+  const duration = Number.parseFloat(getComputedStyle(content).transitionDuration) * 1000;
+  if (first || !(duration > 0)) {
+    reflowing(change);
+    return;
+  }
+  if (!lastPosition) rememberTopOfPage();
+  change();
+  followWidth();
 }
 
-// Applies a change that reflows the text and puts the page back at
-// lastPosition. The change applies at once: an animated reflow would keep
+// Whether the page is following the column's width, frame by frame.
+let followingWidth = false;
+
+// Puts the page back at lastPosition on every frame while the column's width
+// eases, for as long as its transition lasts rather than for a set time: a
+// page out of view holds its transition and its frames, and in view again it
+// eased with nothing following it once a set time had passed.
+function followWidth(): void {
+  if (followingWidth) return;
+  followingWidth = true;
+  const follow = () => {
+    suppressScrollEventsUntil = Date.now() + reflowEchoWindow;
+    realign();
+    if (widthIsEasing()) requestAnimationFrame(follow);
+    else followingWidth = false;
+  };
+  requestAnimationFrame(follow);
+}
+
+function widthIsEasing(): boolean {
+  return content
+    .getAnimations()
+    .some((animation) => animation instanceof CSSTransition && animation.transitionProperty === "max-width");
+}
+
+// Applies a change that reflows the text (the font) and puts the page back
+// at lastPosition. The change applies at once: an animated reflow would keep
 // moving the text after the page was put back.
 function reflowing(change: () => void): void {
   if (!lastPosition) rememberTopOfPage();

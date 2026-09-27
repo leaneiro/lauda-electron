@@ -326,6 +326,48 @@ test("the text width button cycles in preview-only mode", async () => {
   await app.close();
 });
 
+/// The column eases to its new width, and the paragraph at the top of the
+/// page stays there all the way (the page puts it back on every frame).
+test("the text width eases and the reader's place stays", async () => {
+  const sentence = "The quick brown fox jumps over the lazy dog. ";
+  const paragraphs = Array.from({ length: 120 }, (_, index) => `Paragraph ${index + 1}. ${sentence.repeat(12)}`);
+  const { app, window } = await launch({ files: { "long.md": paragraphs.join("\n\n") } });
+  const preview = await previewFrame(window);
+  await clickMenu(app, "View", "Preview Only");
+  // Scrolls just after the pane resized are taken for the resize's own, and
+  // not as the reader's place.
+  await window.waitForTimeout(800);
+  await preview
+    .locator("#content > p")
+    .nth(59)
+    .evaluate((paragraph) => paragraph.scrollIntoView({ block: "start" }));
+  await window.waitForTimeout(400);
+  const topParagraph = () =>
+    preview.evaluate(() => {
+      const all = [...document.querySelectorAll("#content > p")];
+      return all.findIndex((paragraph) => paragraph.getBoundingClientRect().bottom > 1);
+    });
+  const width = () => preview.locator("article").evaluate((article) => article.getBoundingClientRect().width);
+  const before = await topParagraph();
+  const startWidth = await width();
+
+  await window.locator(".width-button").click();
+  const widths: number[] = [];
+  const tops: number[] = [];
+  for (let sample = 0; sample < 6; sample++) {
+    await window.waitForTimeout(40);
+    widths.push(await width());
+    tops.push(await topParagraph());
+  }
+  await window.waitForTimeout(400);
+  const endWidth = await width();
+  expect(endWidth).toBeGreaterThan(startWidth);
+  expect(widths.some((each) => each > startWidth + 1 && each < endWidth - 1)).toBe(true);
+  expect(tops).toEqual(tops.map(() => before));
+  expect(await topParagraph()).toBe(before);
+  await app.close();
+});
+
 /// In preview only, a tab comes back at the reader's place: its hidden frame
 /// lost its scroll, and the page took the scroll from the top for the
 /// reader's.
@@ -355,6 +397,42 @@ test("a tab in preview only comes back at the reader's place", async () => {
   await window.locator(".tab").nth(0).click();
   await window.waitForTimeout(400);
   expect(await topParagraph()).toBe(before);
+  await app.close();
+});
+
+/// Every tab's preview gets a new width, one out of view included: back in
+/// view, its reader's place is where it was.
+test("a preview out of view keeps the reader's place through a width change", async () => {
+  const sentence = "The quick brown fox jumps over the lazy dog. ";
+  const text = Array.from({ length: 120 }, (_, index) => `Paragraph ${index + 1}. ${sentence.repeat(12)}`).join("\n\n");
+  const { app, window } = await launch({ files: { "first.md": text, "second.md": text } });
+  await clickMenu(app, "View", "Preview Only");
+  await window.locator(".tab").nth(0).click();
+  const preview = await previewFrame(window);
+  // Scrolls just after the pane resized are taken for the resize's own.
+  await window.waitForTimeout(800);
+  await preview
+    .locator("#content > p")
+    .nth(59)
+    .evaluate((paragraph) => paragraph.scrollIntoView({ block: "start" }));
+  await window.waitForTimeout(400);
+  const topParagraph = () =>
+    preview.evaluate(() => {
+      const all = [...document.querySelectorAll("#content > p")];
+      return all.findIndex((paragraph) => paragraph.getBoundingClientRect().bottom > 1);
+    });
+  const before = await topParagraph();
+
+  await window.locator(".tab").nth(1).click();
+  await window.locator(".width-button").click();
+  await window.waitForTimeout(500);
+  await window.locator(".tab").nth(0).click();
+  const tops: number[] = [];
+  for (let sample = 0; sample < 12; sample++) {
+    await window.waitForTimeout(50);
+    tops.push(await topParagraph());
+  }
+  expect(tops).toEqual(tops.map(() => before));
   await app.close();
 });
 

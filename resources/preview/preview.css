@@ -133,10 +133,15 @@ mark.find-hit.current { background: #ff9f0a; color: #1d1d1f; }
     font-weight: 600;
 }
 
-/* Set for an instant while the preview reflows and puts the top line back
-   (preview.js); the width transition would otherwise move the text again. */
+/* Set for an instant while the preview reflows at once and puts the top
+   line back (preview.js); a transition would otherwise move the text again.
+   The column's width is the one change that animates, followed frame by
+   frame, unless the reader asks for less motion. */
 .reflowing, .reflowing * {
     transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+    article { transition: none; }
 }
 
 @media print {

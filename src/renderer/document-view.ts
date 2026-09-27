@@ -92,8 +92,14 @@ export class DocumentView {
   }
 
   setVisible(visible: boolean): void {
+    const wasHidden = this.element.hidden;
     this.element.hidden = !visible;
-    if (visible) this.editor.restoreScroll();
+    if (!visible) return;
+    this.editor.restoreScroll();
+    // A hidden frame loses its scroll, and back in view it scrolls from the
+    // top, which the preview took for the reader's place: in preview only, a
+    // tab came back at the top. It goes back to the place it kept instead.
+    if (wasHidden) this.preview.realign();
   }
 
   /// Gives the keyboard to the pane that types or scrolls in this mode.

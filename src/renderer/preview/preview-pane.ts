@@ -105,7 +105,8 @@ export class PreviewPane implements PreviewFinding {
     if (this.isReady) this.post({ type: "setContentWidth", rem });
   }
 
-  /// The pane changed size once a mode change settled: stay on the same line.
+  /// The pane changed size once a mode change settled, or its tab came back
+  /// into view: stay on the same line.
   realign(): void {
     if (this.isReady) this.post({ type: "realign" });
   }

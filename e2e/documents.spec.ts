@@ -326,6 +326,38 @@ test("the text width button cycles in preview-only mode", async () => {
   await app.close();
 });
 
+/// In preview only, a tab comes back at the reader's place: its hidden frame
+/// lost its scroll, and the page took the scroll from the top for the
+/// reader's.
+test("a tab in preview only comes back at the reader's place", async () => {
+  const sentence = "The quick brown fox jumps over the lazy dog. ";
+  const text = Array.from({ length: 120 }, (_, index) => `Paragraph ${index + 1}. ${sentence.repeat(12)}`).join("\n\n");
+  const { app, window } = await launch({ files: { "first.md": text, "second.md": text } });
+  await clickMenu(app, "View", "Preview Only");
+  await window.locator(".tab").nth(0).click();
+  const preview = await previewFrame(window);
+  // Scrolls just after the pane resized are taken for the resize's own.
+  await window.waitForTimeout(800);
+  await preview
+    .locator("#content > p")
+    .nth(59)
+    .evaluate((paragraph) => paragraph.scrollIntoView({ block: "start" }));
+  await window.waitForTimeout(400);
+  const topParagraph = () =>
+    preview.evaluate(() => {
+      const all = [...document.querySelectorAll("#content > p")];
+      return all.findIndex((paragraph) => paragraph.getBoundingClientRect().bottom > 1);
+    });
+  const before = await topParagraph();
+
+  await window.locator(".tab").nth(1).click();
+  await window.waitForTimeout(300);
+  await window.locator(".tab").nth(0).click();
+  await window.waitForTimeout(400);
+  expect(await topParagraph()).toBe(before);
+  await app.close();
+});
+
 /// The window names files by path. One it wasn't handed can't be written,
 /// moved, watched or have images copied beside it, however it asks: a page
 /// taken over by a bug must not reach the rest of the disk.

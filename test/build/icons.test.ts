@@ -91,14 +91,38 @@ const linuxNames = readdirSync(linuxFolder)
 const linuxIcons = new Map(
   linuxNames.map((name) => [Number.parseInt(name, 10), readFileSync(join(linuxFolder, name))]),
 );
+// The share of each side the body leaves empty, as each system's grid has
+// it for a square icon: 3 px inside 48 in Microsoft's, 12 px inside 128
+// in GNOME's.
 const everyIcon = [
-  ...[...windowsIcons].map(([size, file]) => ({ name: `Windows ${size}`, size, file })),
-  ...[...linuxIcons].map(([size, file]) => ({ name: `Linux ${size}`, size, file })),
+  ...[...windowsIcons].map(([size, file]) => ({ name: `Windows ${size}`, size, file, margin: 3 / 48 })),
+  ...[...linuxIcons].map(([size, file]) => ({ name: `Linux ${size}`, size, file, margin: 12 / 128 })),
 ];
 
-/// scripts/make-icons.mjs draws them. Scaled down from one large picture,
-/// the small sizes came out blurred, and the native app's PNGs, with hard
-/// edges at the small sizes, showed steps along them on these systems.
+/// How far in from each side, across the middle, the body starts, and
+/// how opaque its first pixel is.
+function bodySides({ size, file }: { size: number; file: Buffer }) {
+  const { pixels } = decodePNG(file);
+  const alpha = (x: number, y: number) => pixels[(y * size + x) * 4 + 3] ?? 0;
+  const middle = Math.floor(size / 2);
+  const inward = {
+    left: (step: number) => alpha(step, middle),
+    right: (step: number) => alpha(size - 1 - step, middle),
+    top: (step: number) => alpha(middle, step),
+    bottom: (step: number) => alpha(middle, size - 1 - step),
+  };
+  return Object.entries(inward).map(([side, along]) => {
+    let depth = 0;
+    while (depth < size && along(depth) === 0) depth++;
+    return { side, depth, alpha: along(depth) };
+  });
+}
+
+/// scripts/make-icons.mjs draws them from build/icon.svg. Scaled down from
+/// one large picture, the small sizes came out blurred; the native app's
+/// PNGs, drawn without smoothing at the small sizes, showed steps along
+/// their edges; and PNGs with the body off the pixel grid had a grey line
+/// around it.
 describe("the icons Windows and Linux show", () => {
   it("has each size Windows shows an app's icon at", () => {
     expect([...windowsIcons.keys()]).toEqual([16, 20, 24, 30, 32, 36, 40, 48, 60, 64, 72, 80, 96, 256]);
@@ -129,19 +153,21 @@ describe("the icons Windows and Linux show", () => {
       // Smoothed, the rounded corners alone leave more partly covered
       // pixels than half the icon's width.
       expect(smoothed, name).toBeGreaterThanOrEqual(size / 2);
-      // Across the middle, each side of the body starts on a whole pixel.
-      const middle = Math.floor(size / 2);
-      const inward = {
-        left: (step: number) => alpha(step, middle),
-        right: (step: number) => alpha(size - 1 - step, middle),
-        top: (step: number) => alpha(middle, step),
-        bottom: (step: number) => alpha(middle, size - 1 - step),
-      };
-      for (const [side, along] of Object.entries(inward)) {
-        let step = 0;
-        while (step < size && along(step) === 0) step++;
-        expect(step, `${name}, ${side}`).toBeLessThan(size);
-        expect(along(step), `${name}, ${side}`).toBe(255);
+      // Across the middle, each side of the body starts on a whole pixel:
+      // its first one all but opaque, as the traced drawing's sides wander
+      // by a hair, not the half-covered pixel of a side off the grid.
+      for (const { side, depth, alpha } of bodySides({ size, file })) {
+        expect(depth, `${name}, ${side}`).toBeLessThan(size);
+        expect(alpha, `${name}, ${side}`).toBeGreaterThanOrEqual(250);
+      }
+    }
+  });
+
+  it("leaves each system's margin around the body, and 1 px at 16 px", () => {
+    for (const { name, size, file, margin } of everyIcon) {
+      const expected = size <= 16 ? 1 : Math.round(size * margin);
+      for (const { side, depth } of bodySides({ size, file })) {
+        expect(depth, `${name}, ${side}`).toBe(expected);
       }
     }
   });

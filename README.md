@@ -66,6 +66,11 @@ on Windows. On a Mac with Apple silicon and no Rosetta, the AppImage and
 NSIS tools don't run, but `npx electron-builder --linux deb` and
 `npx electron-builder --win zip` (a portable folder) do.
 
+The icons in `build/` come from one drawing, `build/icon.svg`:
+`npm run icons` draws every size Windows and Linux show, each on its own,
+with the margin each system's icons keep. Run it after changing the
+drawing.
+
 `npm run e2e` tests the development build; with `LAUDA_EXECUTABLE` set to
 a packaged app's executable, the same tests run against it.
 `LAUDA_PLATFORM=win32` (or `linux`) lays the window out as on that system,
@@ -90,9 +95,9 @@ src/
   renderer/    # the window: title bar and tabs, editor (CodeMirror), preview host, settings
   preview/     # the script inside the preview's page (the native preview.js)
   shared/      # Markdown renderer, editing rules, strings, settings: pure TypeScript
-resources/     # preview stylesheet and font, welcome guides, strings, the icon's drawing
+resources/     # preview stylesheet and font, welcome guides, strings
 scripts/       # build, sync-native, the Windows packages and the icons
-build/         # packaging resources: the icons (drawn by `npm run icons`), the Windows installer's script, the Linux install scripts
+build/         # packaging resources: the icon's drawing and the icons drawn from it, the Windows installer's script, the Linux install scripts
 test/          # unit tests (Vitest)
 e2e/           # end-to-end tests (Playwright)
 ```
@@ -100,12 +105,10 @@ e2e/           # end-to-end tests (Playwright)
 ## Staying in step with the native app
 
 `npm run sync-native` copies the preview stylesheet, the wordmark font, the
-welcome guides, the icon's drawing and the string catalog (converted to
-JSON) from the native repository, expected at `../markeditor` (or wherever
-`LAUDA_NATIVE` points). Strings the native app gets from macOS, like the
-Edit menu's, live in `resources/locales/app.json`. When the drawing
-changes, `npm run icons` draws the Windows and Linux icons in `build/`
-from it, each size on its own.
+welcome guides and the string catalog (converted to JSON) from the native
+repository, expected at `../markeditor` (or wherever `LAUDA_NATIVE`
+points). Strings the native app gets from macOS, like the Edit menu's,
+live in `resources/locales/app.json`.
 
 ## Platform notes
 

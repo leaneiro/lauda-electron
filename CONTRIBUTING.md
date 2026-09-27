@@ -72,9 +72,9 @@ the folders it made.
 ## Staying in step with the native app
 
 `npm run sync-native` copies the preview stylesheet, the wordmark font,
-the welcome guides, the icon's drawing and the string catalog from the
-native repository. Those files are the native app's: change them there.
-`npm run icons` then draws this edition's icons from the drawing. The
+the welcome guides and the string catalog from the native repository.
+Those files are the native app's: change them there. The icon is this
+edition's own: `npm run icons` draws it from `build/icon.svg`. The
 parser, `parser.ts`, does what a few of from-markdown's handlers do and
 reads that library's internal state, so micromark, from-markdown and the
 GFM extensions are pinned to exact versions; updating them is a step

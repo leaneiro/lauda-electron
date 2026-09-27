@@ -1,15 +1,13 @@
 // Draws the app icon for Windows and Linux into build/: icon.ico for
 // Windows, icons/<size>x<size>.png for Linux's icon theme and icon.png for
-// the Mac build, from the icon's drawing, resources/icons/AppIcon.svg (the
-// native app's, brought over by sync-native). Run it with `npm run icons`
-// after the drawing changes.
+// the Mac build, from the icon's drawing, build/icon.svg. Run it with
+// `npm run icons` after the drawing changes.
 //
-// Each size is drawn from the drawing itself, by Chromium, with the L in
-// its typeface, the wordmark font. Scaled down from one large picture, as
+// Each size is drawn from the drawing itself, by Chromium, never scaled
+// down from a picture: scaled down from one large picture, as
 // electron-builder did, the small sizes came out blurred, with a grey ring
-// around the body; and the native app's own PNGs, drawn for the Mac, have
-// hard edges at the small sizes (no smoothing at all at 16 and 32 pixels),
-// which showed as steps on these systems.
+// around the body. The white body fills each system's frame as its own
+// icons have it, with its sides on whole pixels, which keeps them sharp.
 
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -29,60 +27,69 @@ const linuxSizes = [16, 22, 24, 32, 36, 48, 64, 72, 96, 128, 192, 256, 512];
 // electron-builder makes the Mac build's .icns from one large picture.
 const macSize = 1024;
 
-// Runs in the page: draws the drawing at each size and returns the PNGs,
-// in base64. The body's edges, where the drawing stops being transparent,
-// go on whole pixels at every size, which keeps them sharp (the bottom one
-// because the body is square); the margins round to the nearest pixel, so
-// the body stays centred.
-async function drawSizes({ svg, font, sizes }) {
-  async function picture(source) {
-    const image = new Image();
-    image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(source)}`;
-    await image.decode();
-    return image;
-  }
-  function drawn(image, size, x, y, side) {
+// The share of each side the body leaves empty, as each system's own grid
+// has it for a square icon: 3 px inside 48 in Microsoft's (the guide "Design
+// guidelines for Windows app icons"), 12 px inside 128 in GNOME's app icon
+// template, and 100 px inside 1024 in Apple's.
+const windowsMargin = 3 / 48;
+const linuxMargin = 12 / 128;
+const macMargin = 100 / 1024;
+
+// The margin in whole pixels, so the body's sides fall on the pixel grid.
+// At 16 px it is 1 px, as in the designer's own 16 px icon: Linux's share
+// rounds to 2 px there, which would leave the body 12 px across.
+function margin(size, share) {
+  return size <= 16 ? 1 : Math.round(size * share);
+}
+
+// Runs in the page: draws the drawing at each size, with the body that
+// margin inside the frame, and returns the PNGs in base64.
+async function drawSizes({ svg, frames }) {
+  const image = new Image();
+  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  await image.decode();
+  function drawn(size, x, y, width, height) {
     const canvas = document.createElement("canvas");
     canvas.width = size;
     canvas.height = size;
     const context = canvas.getContext("2d");
-    context.drawImage(image, x, y, side, side);
+    context.drawImage(image, x, y, width, height);
     return { canvas, context };
   }
 
-  const face = `<style>@font-face{font-family:"Newsreader";font-weight:600;src:url(data:font/woff;base64,${font})}</style>`;
-  const image = await picture(svg.replace(/<svg\b[^>]*>/, (tag) => tag + face));
+  // Where the body's sides are, to a fraction of a pixel: along the middle
+  // of each side, away from the rounded corners, the transparent share of
+  // the pixels between the edge of the drawing and its middle. The body is
+  // opaque, and a traced drawing's sides wander a little, so this is their
+  // average.
   const full = image.naturalWidth;
-  const { canvas: whole, context } = drawn(image, full, 0, 0, full);
-  // A font the page can't use leaves the L to another typeface, and one
-  // still loading leaves it out, both without a word: the icon has to come
-  // out different from the drawing without the font and without its text.
-  const withFont = whole.toDataURL();
-  for (const source of [svg, svg.replace(/<text\b[^>]*>[^<]*<\/text>/g, "")]) {
-    const without = drawn(await picture(source), full, 0, 0, full).canvas.toDataURL();
-    if (without === withFont) throw new Error("The L wasn't drawn in the wordmark font.");
-  }
-
-  const pixels = context.getImageData(0, 0, full, full).data;
-  let left = full;
-  let right = 0;
-  let top = full;
-  for (let y = 0; y < full; y++) {
-    for (let x = 0; x < full; x++) {
-      if (pixels[(y * full + x) * 4 + 3] === 0) continue;
-      left = Math.min(left, x);
-      right = Math.max(right, x + 1);
-      top = Math.min(top, y);
+  const pixels = drawn(full, 0, 0, full, full).context.getImageData(0, 0, full, full).data;
+  const coverage = (x, y) => pixels[(y * full + x) * 4 + 3] / 255;
+  const middle = full / 2;
+  const along = [];
+  for (let at = Math.round(full * 0.3); at < Math.round(full * 0.7); at++) along.push(at);
+  function side(opacity) {
+    let empty = 0;
+    for (const at of along) {
+      for (let depth = 0; depth < middle; depth++) empty += 1 - opacity(at, depth);
     }
+    return empty / along.length;
   }
+  const left = side((at, depth) => coverage(depth, at));
+  const right = side((at, depth) => coverage(full - 1 - depth, at));
+  const top = side((at, depth) => coverage(at, depth));
+  const bottom = side((at, depth) => coverage(at, full - 1 - depth));
 
-  return sizes.map((size) => {
-    const ratio = size / full;
-    const marginLeft = Math.round(left * ratio);
-    const scale = (size - marginLeft - Math.round((full - right) * ratio)) / (right - left);
-    const x = marginLeft - left * scale;
-    const y = Math.round(top * ratio) - top * scale;
-    const { canvas } = drawn(image, size, x, y, full * scale);
+  // Scaled across and down on its own, so the body comes out square on the
+  // pixel grid even where the drawing's isn't quite; a body far from square
+  // would stretch the L, so it stops the script instead.
+  if (Math.abs(full - left - right - (full - top - bottom)) > 1) {
+    throw new Error("The icon's body isn't square: squared, it would stretch the L.");
+  }
+  return frames.map(({ size, margin }) => {
+    const across = (size - 2 * margin) / (full - left - right);
+    const down = (size - 2 * margin) / (full - top - bottom);
+    const { canvas } = drawn(size, margin - left * across, margin - top * down, full * across, full * down);
     return canvas.toDataURL("image/png").slice("data:image/png;base64,".length);
   });
 }
@@ -96,7 +103,8 @@ function iconFile(images) {
   header.writeUInt16LE(1, 2);
   header.writeUInt16LE(images.length, 4);
   let offset = header.length;
-  images.forEach(({ size, png }, index) => {
+  images.forEach((png, index) => {
+    const size = png.readUInt32BE(16);
     const entry = 6 + 16 * index;
     // 0 stands for 256; a larger size doesn't fit the byte and throws.
     header.writeUInt8(size === 256 ? 0 : size, entry);
@@ -107,35 +115,46 @@ function iconFile(images) {
     header.writeUInt32LE(offset, entry + 12);
     offset += png.length;
   });
-  return Buffer.concat([header, ...images.map(({ png }) => png)]);
+  return Buffer.concat([header, ...images]);
 }
 
-// Everything happens once the app is ready, so that any failure ends the
-// script with an error instead of leaving Electron running.
+// Drawn on the graphics card, the drawing's paths get 4 samples a pixel,
+// so their smoothed edges take only 4 shades; drawn in software, every
+// shade the covered share of a pixel calls for.
+app.disableHardwareAcceleration();
+
+// Everything else happens once the app is ready, so that any failure ends
+// the script with an error instead of leaving Electron running.
 app
   .whenReady()
   .then(async () => {
-    const svg = readFileSync(join(root, "resources/icons/AppIcon.svg"), "utf8");
-    // The page has the one typeface the L is drawn in; another would draw
-    // another L.
-    if (!/font-family="Newsreader\b/.test(svg)) {
-      throw new Error("The icon's drawing no longer names Newsreader: give the page its typeface.");
+    const svg = readFileSync(join(build, "icon.svg"), "utf8");
+    // The page draws shapes only: text (or HTML) would come out in whatever
+    // font the page has, and a picture inside the drawing, even through a
+    // filter, would be scaled, not drawn.
+    if (/<(text|image|foreignObject|feImage)\b/.test(svg)) {
+      throw new Error("The icon's drawing holds text or a picture: turn them into shapes.");
     }
-    const font = readFileSync(join(root, "resources/preview/LaudaWordmark.woff")).toString("base64");
+    const frames = [
+      ...windowsSizes.map((size) => ({ size, margin: margin(size, windowsMargin) })),
+      ...linuxSizes.map((size) => ({ size, margin: margin(size, linuxMargin) })),
+      { size: macSize, margin: margin(macSize, macMargin) },
+    ];
 
     const window = new BrowserWindow({ show: false });
     await window.loadURL("about:blank");
-    const sizes = [...new Set([...windowsSizes, ...linuxSizes, macSize])];
-    const encoded = await window.webContents.executeJavaScript(
-      `(${drawSizes})(${JSON.stringify({ svg, font, sizes })})`,
-    );
-    const png = new Map(sizes.map((size, index) => [size, Buffer.from(encoded[index], "base64")]));
+    const encoded = await window.webContents.executeJavaScript(`(${drawSizes})(${JSON.stringify({ svg, frames })})`);
+    const png = encoded.map((image) => Buffer.from(image, "base64"));
+    const windowsImages = png.slice(0, windowsSizes.length);
+    const linuxImages = png.slice(windowsSizes.length, windowsSizes.length + linuxSizes.length);
 
-    writeFileSync(join(build, "icon.ico"), iconFile(windowsSizes.map((size) => ({ size, png: png.get(size) }))));
+    writeFileSync(join(build, "icon.ico"), iconFile(windowsImages));
     rmSync(join(build, "icons"), { recursive: true, force: true });
     mkdirSync(join(build, "icons"));
-    for (const size of linuxSizes) writeFileSync(join(build, "icons", `${size}x${size}.png`), png.get(size));
-    writeFileSync(join(build, "icon.png"), png.get(macSize));
+    for (const [index, size] of linuxSizes.entries()) {
+      writeFileSync(join(build, "icons", `${size}x${size}.png`), linuxImages[index]);
+    }
+    writeFileSync(join(build, "icon.png"), png[png.length - 1]);
     console.log(
       `OK: build/icon.ico (${windowsSizes.join(", ")}), build/icons (${linuxSizes.join(", ")}), build/icon.png`,
     );

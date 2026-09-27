@@ -51,7 +51,13 @@ export class TabDragging {
     let dragging = false;
 
     const move = (moveEvent: PointerEvent) => {
-      if (moveEvent.pointerId !== event.pointerId) return;
+      // The primary pointer's moves, even another pointer's: in Ubuntu under
+      // UTM (XWayland) the press and the release came as the mouse, and the
+      // moves between them as a pen with an id of its own (seen with a
+      // diagnostic panel), so the drag never began. A finger doesn't steer
+      // a press it didn't make.
+      if (!moveEvent.isPrimary) return;
+      if (moveEvent.pointerType === "touch" && event.pointerType !== "touch") return;
       // A move never ends the drag, whatever button it reports: the page
       // makes up moves of its own when the tabs move under a still pointer,
       // with the button up and where the pointer last was (seen under

@@ -609,3 +609,51 @@ test("a tab dragged in preview only takes its new place", async () => {
   await expect(titles).toHaveText(["b.md", "c.md", "a.md"]);
   await forceQuit(app);
 });
+
+/// In Ubuntu under UTM the press and the release come as the mouse and the
+/// moves between them as a pen with an id of its own: the tab still follows
+/// and lands. A finger's move meanwhile doesn't steer it. Dispatched by
+/// hand, in that order.
+test("a drag whose moves come from another pointer still moves the tab", async () => {
+  const { app, window } = await launch({ files: { "a.md": "# A\n", "b.md": "# B\n", "c.md": "# C\n" } });
+  const titles = window.locator(".tab-title");
+  await expect(titles).toHaveText(["a.md", "b.md", "c.md"]);
+  await window.waitForTimeout(500);
+  const first = await window.locator(".tab").nth(0).boundingBox();
+  const last = await window.locator(".tab").nth(2).boundingBox();
+  if (!first || !last) throw new Error("no tab");
+
+  const steered = await window.evaluate(
+    ({ from, to, y }) => {
+      const tab = document.querySelector<HTMLElement>(".tab");
+      if (!tab) throw new Error("no tab");
+      const fire = (target: EventTarget, type: string, x: number, pointer: { id: number; kind: string }) =>
+        target.dispatchEvent(
+          new PointerEvent(type, {
+            bubbles: true,
+            clientX: x,
+            clientY: y,
+            pointerId: pointer.id,
+            pointerType: pointer.kind,
+            isPrimary: true,
+            button: type === "pointermove" ? -1 : 0,
+            buttons: type === "pointerup" ? 0 : 1,
+          }),
+        );
+      const mouse = { id: 1, kind: "mouse" };
+      const pen = { id: 11, kind: "pen" };
+      const finger = { id: 20, kind: "touch" };
+      fire(tab, "pointerdown", from, mouse);
+      for (let step = 1; step <= 8; step++) fire(globalThis, "pointermove", from + ((to - from) * step) / 8, pen);
+      const before = tab.style.transform;
+      fire(globalThis, "pointermove", from, finger);
+      const after = tab.style.transform;
+      fire(globalThis, "pointerup", to, mouse);
+      return before !== after;
+    },
+    { from: first.x + first.width / 2, to: last.x + last.width - 6, y: first.y + first.height / 2 },
+  );
+  expect(steered).toBe(false);
+  await expect(titles).toHaveText(["b.md", "c.md", "a.md"]);
+  await forceQuit(app);
+});

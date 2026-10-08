@@ -25,6 +25,19 @@ export class LaudaDocument {
   private readonly startsEdited: boolean;
   private untitledTitle: string;
   scrollSync: ScrollSync = startingScroll();
+  /// Whether this document's panes scroll together. The chain on the
+  /// divider parts them, to read one place while writing in another, and
+  /// joins them again; a document opens with them joined.
+  scrollsLinked = true;
+  /// Whether each pane has more than fits in it. The chain shows only
+  /// while both have: joined or apart makes no difference to a pane with
+  /// nowhere to scroll, as a scroll bar makes none.
+  editorScrollable = false;
+  previewScrollable = false;
+
+  get panesScroll(): boolean {
+    return this.editorScrollable && this.previewScrollable;
+  }
 
   private readonly listeners = new Set<Listener>();
   private autosaveTimer: number | undefined;

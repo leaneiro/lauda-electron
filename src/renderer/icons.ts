@@ -31,6 +31,38 @@ export const icons = {
   notSaved: `<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="0.1 2.6" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/></svg>`,
 };
 
+/// The chain on the divider, drawn as the system's link symbol is
+/// (ChainIcon.swift): two links on the diagonal, hooked into each other
+/// while the panes scroll together, each passing over the other at one
+/// crossing and under it at the other, a little apart while they don't.
+/// The masks carry the cuts, each link's in the other's halo on its side of
+/// the diagonal; where the links sit and how wide the cuts are go with the
+/// icon as custom properties, which the stylesheet eases between. The ids
+/// are made unique, since every document has a divider of its own on the
+/// page.
+///
+/// The system's link symbol at 17 pt, measured at 12x: links 11.7 by 8
+/// outside with a 2.25 stroke, their centres 6.7 apart along the diagonal;
+/// here a tenth larger, as in the native app. Apart, a gap of 2 between
+/// the links' ends; the link underneath is cut 1.65 on each side of the one
+/// passing over it.
+const chainLink = { length: 12.87, width: 8.8, stroke: 2.475, hooked: 7.37, gap: 2, cut: 1.65 };
+export function chainIcon(id: string): string {
+  const { length, width, stroke, hooked, gap, cut } = chainLink;
+  const figures = [
+    `--link-hooked: ${hooked / 2}px`,
+    `--link-apart: ${(length + gap) / 2}px`,
+    `--halo-hooked: ${stroke + 2 * cut}px`,
+    `--halo-apart: ${stroke}px`,
+  ].join("; ");
+  // A link's ring, stroked on its middle so that its outside is length by
+  // width; the links move along the diagonal, the group's x.
+  const ring = (classes: string) =>
+    `<rect class="${classes}" x="${-(length - stroke) / 2}" y="${-(width - stroke) / 2}" width="${length - stroke}" height="${width - stroke}" rx="${(width - stroke) / 2}"/>`;
+  const half = 16;
+  return `<svg class="chain" style="${figures}" viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentColor" stroke-width="${stroke}" aria-hidden="true"><defs><clipPath id="${id}-one-side"><rect x="${-half}" y="${-half}" width="${2 * half}" height="${half}"/></clipPath><clipPath id="${id}-other-side"><rect x="${-half}" y="0" width="${2 * half}" height="${half}"/></clipPath><mask id="${id}-cut-lower" maskUnits="userSpaceOnUse" x="${-half}" y="${-half}" width="${2 * half}" height="${2 * half}"><rect x="${-half}" y="${-half}" width="${2 * half}" height="${2 * half}" fill="#fff"/><g clip-path="url(#${id}-one-side)" stroke="#000">${ring("halo upper")}</g></mask><mask id="${id}-cut-upper" maskUnits="userSpaceOnUse" x="${-half}" y="${-half}" width="${2 * half}" height="${2 * half}"><rect x="${-half}" y="${-half}" width="${2 * half}" height="${2 * half}" fill="#fff"/><g clip-path="url(#${id}-other-side)" stroke="#000">${ring("halo lower")}</g></mask></defs><g transform="translate(${half} ${half}) rotate(-45)"><g mask="url(#${id}-cut-lower)">${ring("link lower")}</g><g mask="url(#${id}-cut-upper)">${ring("link upper")}</g></g></svg>`;
+}
+
 /// How wide the text column is drawn at each width level.
 const widthColumns = [6, 10, 14];
 export function widthColumn(level: number): number {

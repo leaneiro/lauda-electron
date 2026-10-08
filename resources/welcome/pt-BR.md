@@ -57,7 +57,7 @@ Arraste uma imagem para o editor, ou cole uma captura de tela, e ela é copiada 
 ## Para se localizar
 
 - O botão **Sumário** na barra de ferramentas lista os títulos e leva até eles.
-- Os dois painéis rolam juntos.
+- Os dois painéis rolam juntos. Para rolar cada um por conta própria, clique na corrente que aparece no divisor entre eles; clique de novo e eles voltam a rolar juntos.
 - Fontes, tamanhos, aparência e quebras de linha ficam em **Ajustes** (⌘,).
 
 Bom texto! ✍️

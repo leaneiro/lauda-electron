@@ -65,6 +65,10 @@
 
   /* modeChangeMs in shared/layout.ts, which the script times itself by. */
   --mode-change: 0.2s;
+  /* How a drawn symbol goes from one state to another, with a little
+     overshoot, as the native icons' spring (ToolbarIcon.stateChange): the
+     width button's column, the divider's chain. */
+  --symbol-change: 0.28s cubic-bezier(0.3, 1.4, 0.6, 1);
   color-scheme: light;
 }
 
@@ -346,8 +350,8 @@ body.platform-darwin .window-title {
 }
 .width-column {
   transition:
-    x 0.28s cubic-bezier(0.3, 1.5, 0.6, 1),
-    width 0.28s cubic-bezier(0.3, 1.5, 0.6, 1);
+    x var(--symbol-change),
+    width var(--symbol-change);
 }
 
 /* Arrows from DejaVu where it is installed (see cssFontFamily in
@@ -563,6 +567,66 @@ body.platform-darwin .window-title {
   left: -5px;
   width: 11px;
   cursor: col-resize;
+}
+/* The chain in the middle of the divider, shown while the pointer is on the
+   divider (the chain is part of it), or the keyboard, and both panes have
+   something to scroll. Out of view it takes no clicks, so a drag at the
+   divider's middle still resizes. Quick to come, so it is there by the time
+   the pointer comes to rest (Reveal.swift, SplitDivider.swift's
+   revealDuration). */
+.chain-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: var(--icon-ink);
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease-in-out,
+    transform 0.15s ease-in-out;
+}
+.divider.has-room:hover .chain-button,
+.divider.has-room .chain-button:focus-visible {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+.divider.has-room:hover .chain-button:active {
+  transform: scale(0.96);
+}
+/* The chain's links, at the places and with the cuts the icon brings
+   (chainIcon in icons.ts): hooked, or apart with the cuts closed. One state
+   eases into the other as the native icon's spring does. */
+.chain .link,
+.chain .halo {
+  transition:
+    transform var(--symbol-change),
+    stroke-width var(--symbol-change);
+}
+.chain .lower {
+  transform: translateX(calc(-1 * var(--link-hooked)));
+}
+.chain .upper {
+  transform: translateX(var(--link-hooked));
+}
+.chain .halo {
+  stroke-width: var(--halo-hooked);
+}
+.chain-button.is-apart .lower {
+  transform: translateX(calc(-1 * var(--link-apart)));
+}
+.chain-button.is-apart .upper {
+  transform: translateX(var(--link-apart));
+}
+.chain-button.is-apart .halo {
+  stroke-width: var(--halo-apart);
 }
 .preview-pane {
   left: calc((100% - 1px) * var(--split) + 1px);
@@ -918,7 +982,10 @@ body.platform-darwin .window-title {
   .tab,
   .tab-strip,
   .width-button,
-  .window-title {
+  .window-title,
+  .chain-button,
+  .chain .link,
+  .chain .halo {
     transition: none !important;
   }
   .popover {

@@ -57,7 +57,7 @@ Zieh ein Bild in den Editor oder füge ein Bildschirmfoto ein. Es wird neben das
 ## Orientierung
 
 - Die Schaltfläche **Gliederung** in der Symbolleiste listet die Überschriften auf und springt zu ihnen.
-- Beide Bereiche scrollen gemeinsam.
+- Beide Bereiche scrollen gemeinsam. Um sie getrennt zu scrollen, klick auf die Kette, die auf dem Trenner zwischen ihnen erscheint; ein weiterer Klick bringt sie wieder zusammen.
 - Schriften, Größen, Erscheinungsbild und Zeilenumbrüche findest du in den **Einstellungen** (⌘,).
 
 Viel Spaß beim Schreiben! ✍️

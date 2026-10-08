@@ -57,7 +57,7 @@ Arrastra una imagen al editor, o pega una captura de pantalla, y se copiará jun
 ## Para orientarte
 
 - El botón **Índice** de la barra de herramientas muestra los títulos y te lleva a ellos.
-- Los dos paneles se desplazan juntos.
+- Los dos paneles se desplazan juntos. Para desplazarlos por separado, haz clic en la cadena que aparece en el divisor entre ellos; vuelve a hacer clic y van juntos de nuevo.
 - Los tipos de letra, tamaños, el aspecto y los saltos de línea están en **Ajustes** (⌘,).
 
 ¡A escribir! ✍️

@@ -33,7 +33,10 @@ export class PreviewPane implements PreviewFinding {
     private readonly context: WindowContext,
     host: HTMLElement,
     private readonly document: LaudaDocument,
-    private readonly callbacks: { publishScroll: (sync: ScrollSync) => void },
+    private readonly callbacks: {
+      publishScroll: (sync: ScrollSync) => void;
+      scrollableChanged: (scrollable: boolean) => void;
+    },
   ) {
     this.frame.className = "preview-frame";
     // Scripts for the preview's own script only: no forms, popups or
@@ -124,6 +127,13 @@ export class PreviewPane implements PreviewFinding {
   }
 
   // MARK: - Scroll sync
+
+  /// Where the page is, as the shared position would say it: where the
+  /// reader scrolled it, or the last position it was given. Null before the
+  /// page is up.
+  position(): ScrollSync | null {
+    return this.isReady ? { ...this.lastScroll, source: "preview" } : null;
+  }
 
   syncScroll(sync: ScrollSync): void {
     // Not loaded yet: remember the position and apply it once the content
@@ -217,6 +227,9 @@ export class PreviewPane implements PreviewFinding {
         this.callbacks.publishScroll(sync);
         break;
       }
+      case "previewScrollable":
+        this.callbacks.scrollableChanged(message.scrollable);
+        break;
       case "openLink":
         void this.context.lauda.invoke("app:open-external", message.href);
         break;

@@ -33,6 +33,8 @@ export type FromPreview =
   | { type: "contentApplied"; id: number }
   | { type: "findResult"; id: number; current: number; total: number }
   | { type: "previewScrolled"; line: number | null; endLine: number | null; fraction: number; toEndDistance: number }
+  /// Whether the page has more than fits in it, told when that changes.
+  | { type: "previewScrollable"; scrollable: boolean }
   | { type: "openLink"; href: string };
 
 /// The messages the window waits on, and the reply each one gets, which

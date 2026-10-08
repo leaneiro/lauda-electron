@@ -4,7 +4,7 @@ import { previewWidths, type ViewMode } from "../shared/settings";
 import { ChoiceGroup } from "./choice-group";
 import type { WindowContext } from "./context";
 import type { LaudaDocument } from "./document";
-import { element } from "./dom";
+import { element, lightGlass } from "./dom";
 import { icons, widthColumn, widthLevelIcon } from "./icons";
 import { OutlinePopover } from "./outline";
 import { TabDragging } from "./tab-dragging";
@@ -74,14 +74,7 @@ export class TitleBar {
     root.append(this.title, this.strip, this.spacer, this.center, this.right);
     this.right.append(this.widthButton, this.outlineButton);
 
-    // The glass answers the pointer with a light that follows it.
-    root.addEventListener("pointermove", (event) => {
-      const glass = (event.target as HTMLElement).closest<HTMLElement>(".glass");
-      if (!glass) return;
-      const rect = glass.getBoundingClientRect();
-      glass.style.setProperty("--pointer-x", `${event.clientX - rect.left}px`);
-      glass.style.setProperty("--pointer-y", `${event.clientY - rect.top}px`);
-    });
+    lightGlass(root);
 
     if (context.isMac) {
       root.addEventListener("dblclick", (event) => {

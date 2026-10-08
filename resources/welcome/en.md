@@ -57,7 +57,7 @@ Drag an image into the editor, or paste a screenshot, and it's copied next to th
 ## Finding your way
 
 - The **Outline** button in the toolbar lists the headings and jumps to them.
-- Both panes scroll together.
+- Both panes scroll together. To scroll them apart, click the chain that appears on the divider between them; click it again to bring them back together.
 - Fonts, sizes, appearance, and line breaks are in **Settings** (⌘,).
 
 Happy writing! ✍️

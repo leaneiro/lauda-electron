@@ -74,16 +74,33 @@ export class EditorScrolling {
   private appliedTop: number | null = null;
   private lastSize = { width: 0, height: 0 };
   private readonly resizeObserver: ResizeObserver;
+  /// Whether this pane scrolls together with the preview. Apart, it still
+  /// publishes where it is, but keeps its own line when its text reflows,
+  /// since the shared one may then be the preview's.
+  isLinked = true;
+  /// Where this pane is by its own account: what it last reported (shared
+  /// or not), took from the preview or a jump, or was anchored to.
+  private ownPosition: ScrollSync | null = null;
+  /// Whether the text is taller than the pane, as last told; null before
+  /// the pane is laid out.
+  private scrollable: boolean | null = null;
 
   constructor(
     private readonly view: EditorView,
     private readonly sharedPosition: () => ScrollSync,
     private readonly publish: (sync: ScrollSync) => void,
+    private readonly scrollableChanged: (scrollable: boolean) => void,
   ) {
     this.lines = new SourceLineLayout(view);
     view.scrollDOM.addEventListener("scroll", this.onScroll, { passive: true });
-    this.resizeObserver = new ResizeObserver(() => this.sizeChanged());
+    // The content grows and shrinks with its text: whether there is more
+    // than fits changes with it, as with the pane's size.
+    this.resizeObserver = new ResizeObserver(() => {
+      this.sizeChanged();
+      this.reportScrollable();
+    });
     this.resizeObserver.observe(view.scrollDOM);
+    this.resizeObserver.observe(view.contentDOM);
   }
 
   private readonly onScroll = () => {
@@ -100,8 +117,18 @@ export class EditorScrolling {
       toEndDistance: Math.max(maxOffset - offset, 0),
       source: "editor",
     };
+    this.ownPosition = sync;
     if (differs(sync, this.sharedPosition())) this.publish(sync);
   };
+
+  /// Tells, when it changes, whether the text is taller than the pane by
+  /// more than a hair.
+  private reportScrollable(): void {
+    const scrollable = this.lines.maxOffset() > 1;
+    if (scrollable === this.scrollable) return;
+    this.scrollable = scrollable;
+    this.scrollableChanged(scrollable);
+  }
 
   /// The pane changed size (the window, the divider, a mode change): its
   /// text wraps anew, so the same offset would show another line.
@@ -112,10 +139,14 @@ export class EditorScrolling {
     if (width > 0 && height > 0) this.anchor();
   }
 
-  /// Positions the pane at the shared scroll position.
+  /// Positions the pane at the line it keeps: the shared position, or this
+  /// pane's own while the panes scroll apart. A pane just created has no
+  /// position of its own yet, and starts from the shared one.
   anchor(): void {
+    const position = this.isLinked ? this.sharedPosition() : (this.ownPosition ?? this.sharedPosition());
+    this.ownPosition = position;
     this.view.requestMeasure({
-      read: () => this.lines.targetOffset(this.sharedPosition()),
+      read: () => this.lines.targetOffset(position),
       write: (target) => this.scrollTo(target),
     });
   }
@@ -124,6 +155,7 @@ export class EditorScrolling {
   /// estimates until measured, so the position is checked again once the
   /// lines there have been laid out.
   applyRemote(sync: ScrollSync): void {
+    this.ownPosition = sync;
     this.view.requestMeasure({
       read: () => this.lines.targetOffset(sync),
       write: (target) => {

@@ -1,3 +1,5 @@
+import type { ScrollSource } from "../shared/scroll-link";
+
 /// Shared scroll position between the panes, anchored in the source text so
 /// both show the same block even when images or tables make the preview much
 /// taller than the text (ScrollSync.swift). `source` marks which pane the
@@ -13,7 +15,7 @@ export interface ScrollSync {
   /// Pixels left to scroll before the bottom; the follower uses it to land
   /// on the bottom together with the leader.
   toEndDistance: number;
-  source: "editor" | "preview" | "navigation";
+  source: ScrollSource;
 }
 
 /// How much of the leader's final scrolling the follower spends closing

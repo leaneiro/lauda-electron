@@ -529,6 +529,22 @@
     "ja": "保存済み · %@",
     "zh-Hans": "已保存 · %@"
   },
+  "Scroll the panes separately": {
+    "pt-BR": "Rolar os painéis separadamente",
+    "de": "Bereiche getrennt scrollen",
+    "es": "Desplazar los paneles por separado",
+    "fr": "Faire défiler les volets séparément",
+    "ja": "パネルを別々にスクロール",
+    "zh-Hans": "分别滚动两个栏"
+  },
+  "Scroll the panes together": {
+    "pt-BR": "Rolar os painéis juntos",
+    "de": "Bereiche gemeinsam scrollen",
+    "es": "Desplazar los paneles juntos",
+    "fr": "Faire défiler les volets ensemble",
+    "ja": "パネルを一緒にスクロール",
+    "zh-Hans": "一起滚动两个栏"
+  },
   "Show Next Tab": {
     "pt-BR": "Mostrar Próxima Aba",
     "de": "Nächsten Tab anzeigen",

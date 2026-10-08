@@ -28,7 +28,11 @@ export class Editor implements EditorFinding {
     private readonly context: WindowContext,
     private readonly host: HTMLElement,
     private readonly document: LaudaDocument,
-    callbacks: { publishScroll: (sync: ScrollSync) => void; sharedPosition: () => ScrollSync },
+    callbacks: {
+      publishScroll: (sync: ScrollSync) => void;
+      sharedPosition: () => ScrollSync;
+      scrollableChanged: (scrollable: boolean) => void;
+    },
   ) {
     this.view = new EditorView({
       parent: host,
@@ -62,7 +66,18 @@ export class Editor implements EditorFinding {
         ],
       }),
     });
-    this.scrolling = new EditorScrolling(this.view, callbacks.sharedPosition, callbacks.publishScroll);
+    this.scrolling = new EditorScrolling(
+      this.view,
+      callbacks.sharedPosition,
+      callbacks.publishScroll,
+      callbacks.scrollableChanged,
+    );
+  }
+
+  /// Whether this pane scrolls together with the preview, for what it keeps
+  /// when its text reflows.
+  setLinked(linked: boolean): void {
+    this.scrolling.isLinked = linked;
   }
 
   focus(): boolean {

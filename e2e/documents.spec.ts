@@ -832,3 +832,120 @@ test("a failing save is reported once, not in a loop", async () => {
   }
   await forceQuit(app);
 });
+
+/// The chain on the divider: apart, each pane scrolls on its own; joined
+/// again, the editor comes to the preview, and both follow each other
+/// (ScrollLinkPanesTests.swift).
+test("the chain on the divider parts the panes and rejoins them at the preview", async () => {
+  const sections = Array.from(
+    { length: 60 },
+    (_, i) => `## Section ${i + 1}\n\n${"Some text that fills a line or two. ".repeat(6)}\n`,
+  ).join("\n");
+  const { app, window } = await launch({ files: { "long.md": `# Long\n\n${sections}` } });
+  const preview = await previewFrame(window);
+  await expect(preview.locator("h2")).toHaveCount(60);
+  const chain = window.locator(".document:not([hidden]) .chain-button");
+  const scroller = window.locator(".document:not([hidden]) .cm-scroller");
+  const headingTop = (index: number) =>
+    preview
+      .locator("h2")
+      .nth(index)
+      .evaluate((heading) => Math.round(heading.getBoundingClientRect().top));
+  const scrollPage = (index: number) =>
+    preview
+      .locator("h2")
+      .nth(index)
+      .evaluate((heading) => globalThis.scrollTo(0, heading.getBoundingClientRect().top + globalThis.scrollY));
+  // Near the section first, since the editor only lays out the lines around
+  // what it shows, then its heading at the top.
+  const scrollEditor = async (section: number) => {
+    await scroller.evaluate(
+      (element, fraction) => {
+        element.scrollTop = element.scrollHeight * fraction;
+      },
+      (section - 1) / 60,
+    );
+    await window.waitForTimeout(200);
+    await scroller.evaluate((element, text) => {
+      const line = [...element.querySelectorAll(".cm-line")].find((l) => l.textContent === text);
+      if (line) element.scrollTop += line.getBoundingClientRect().top - element.getBoundingClientRect().top;
+    }, `## Section ${section}`);
+  };
+
+  // The chain comes with the pointer on the divider, once both panes scroll.
+  // The pointer goes to the divider away from its middle: at the middle the
+  // chain comes up under it and is what receives it, which the hover waits
+  // out.
+  await expect(window.locator(".document:not([hidden]) .divider")).toHaveClass(/has-room/);
+  await expect(chain).toHaveCSS("opacity", "0");
+  await window.locator(".document:not([hidden]) .divider-handle").hover({ position: { x: 5, y: 80 } });
+  await expect(chain).toHaveCSS("opacity", "1");
+  await expect(chain).toHaveAttribute("aria-label", "Scroll the panes separately");
+
+  // Together, the preview follows the editor.
+  await scrollEditor(30);
+  await expect.poll(() => headingTop(29), { timeout: 3000 }).toBeLessThan(80);
+  expect(await headingTop(29)).toBeGreaterThan(-40);
+  await window.waitForTimeout(300);
+
+  // Apart, neither follows the other.
+  await chain.click();
+  await expect(chain).toHaveClass(/is-apart/);
+  await expect(chain).toHaveAttribute("aria-label", "Scroll the panes together");
+  const editorBefore = await scroller.evaluate((element) => element.scrollTop);
+  await scrollPage(45);
+  await window.waitForTimeout(300);
+  expect(await scroller.evaluate((element) => element.scrollTop)).toBe(editorBefore);
+  await scrollEditor(10);
+  await window.waitForTimeout(300);
+  expect(Math.abs(await headingTop(45))).toBeLessThan(2);
+
+  // Joined again, the editor comes to the preview, though the editor
+  // scrolled last, and follows it from there.
+  await window.locator(".document:not([hidden]) .divider-handle").hover({ position: { x: 5, y: 80 } });
+  await chain.click();
+  await expect(chain).not.toHaveClass(/is-apart/);
+  await expect
+    .poll(
+      () =>
+        scroller.evaluate((element) => {
+          const line = [...element.querySelectorAll(".cm-line")].find((l) => l.textContent === "## Section 46");
+          return line ? Math.round(line.getBoundingClientRect().top - element.getBoundingClientRect().top) : null;
+        }),
+      { timeout: 3000 },
+    )
+    .toBeLessThan(40);
+  await window.waitForTimeout(300);
+  await scrollPage(10);
+  await expect
+    .poll(
+      () =>
+        scroller.evaluate((element) => {
+          const line = [...element.querySelectorAll(".cm-line")].find((l) => l.textContent === "## Section 11");
+          return line ? Math.round(line.getBoundingClientRect().top - element.getBoundingClientRect().top) : null;
+        }),
+      { timeout: 3000 },
+    )
+    .toBeLessThan(40);
+  await forceQuit(app);
+});
+
+test("a text that fits leaves the chain out of view", async () => {
+  const long = Array.from({ length: 40 }, (_, i) => `## Section ${i + 1}\n\n${"Text. ".repeat(40)}\n`).join("\n");
+  const { app, window } = await launch({ files: { "long.md": long, "short.md": "# Short\n\nOne paragraph.\n" } });
+  const divider = window.locator(".document:not([hidden]) .divider");
+  const chain = window.locator(".document:not([hidden]) .chain-button");
+  // The long text's panes tell they scroll, so the telling works in this
+  // run; the short text's then don't.
+  await window.locator(".tab", { hasText: "long.md" }).click();
+  await expect(divider).toHaveClass(/has-room/);
+  await window.locator(".tab", { hasText: "short.md" }).click();
+  await previewFrame(window);
+  await window.waitForTimeout(500);
+  await expect(divider).not.toHaveClass(/has-room/);
+  await expect(chain).toHaveAttribute("aria-hidden", "true");
+  await window.locator(".document:not([hidden]) .divider-handle").hover({ position: { x: 5, y: 80 } });
+  await window.waitForTimeout(300);
+  await expect(chain).toHaveCSS("opacity", "0");
+  await forceQuit(app);
+});

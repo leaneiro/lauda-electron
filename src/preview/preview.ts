@@ -63,6 +63,20 @@ function setContent(html: string, lines: number[], lineCount: number): void {
   });
   for (const block of oldBlocks.slice(common)) content.removeChild(block);
   for (const block of newBlocks.slice(common)) content.appendChild(block);
+  reportScrollable();
+}
+
+// Whether the page has more than fits in it, as last told to the window.
+let toldScrollable: boolean | null = null;
+
+// Tells the window, when it changes, whether the page has more than fits in
+// it: the text, the pane's size, the column's width and the font all change
+// that. The chain on the divider shows only while both panes have.
+function reportScrollable(): void {
+  const scrollable = maxScroll() > 0;
+  if (scrollable === toldScrollable) return;
+  toldScrollable = scrollable;
+  post({ type: "previewScrollable", scrollable });
 }
 
 function setStyle(family: string, size: number, lineHeight: number): void {
@@ -108,8 +122,12 @@ function followWidth(): void {
   const follow = () => {
     suppressScrollEventsUntil = Date.now() + reflowEchoWindow;
     realign();
-    if (widthIsEasing()) requestAnimationFrame(follow);
-    else followingWidth = false;
+    if (widthIsEasing()) {
+      requestAnimationFrame(follow);
+    } else {
+      followingWidth = false;
+      reportScrollable();
+    }
   };
   requestAnimationFrame(follow);
 }
@@ -133,6 +151,7 @@ function reflowing(change: () => void): void {
   anchorsMoved();
   realign();
   root.classList.remove("reflowing");
+  reportScrollable();
 }
 
 // A position the page takes from where the reader left it: no other pane
@@ -333,6 +352,7 @@ window.addEventListener("resize", () => {
   suppressScrollEventsUntil = Date.now() + reflowEchoWindow;
   anchorsMoved();
   realign();
+  reportScrollable();
 });
 
 // Where the page is, for the editor to follow. The anchors are measured
@@ -359,9 +379,13 @@ window.addEventListener(
 );
 
 // The content grows on its own when an image finishes loading, and the
-// anchors below it move with it. Watching its box catches that, and the
-// reflows a stylesheet can cause without any of the calls above.
-new ResizeObserver(() => anchorsMoved()).observe(content);
+// anchors below it move with it, as may whether there is more than fits.
+// Watching its box catches that, and the reflows a stylesheet can cause
+// without any of the calls above.
+new ResizeObserver(() => {
+  anchorsMoved();
+  reportScrollable();
+}).observe(content);
 
 // Links open in the browser, as a click on one does in the native preview;
 // the window decides which schemes may leave the app.

@@ -1,12 +1,15 @@
 import { boldMarker, italicMarker, strikethroughMarker, underlineTags } from "../shared/editing";
 import type { MenuCommand } from "../shared/ipc";
 import { clampSplit, isSmoothModeChange, modeChangeMs } from "../shared/layout";
+import { movesEditor, movesPreview } from "../shared/scroll-link";
 import { cssEditorFontFamily, cssFontFamily, type Settings, type ViewMode } from "../shared/settings";
 import type { WindowContext } from "./context";
 import type { LaudaDocument } from "./document";
+import { element, lightGlass } from "./dom";
 import { Editor } from "./editor/editor";
 import { FindSession } from "./find";
 import { FindBar } from "./find-bar";
+import { chainIcon } from "./icons";
 import { PreviewPane } from "./preview/preview-pane";
 import { farFromTheEnd, type ScrollSync } from "./scroll-sync";
 import { StatusBar } from "./status-bar";
@@ -39,6 +42,9 @@ export class DocumentView {
   private readonly panes = document.createElement("div");
   private readonly editorPane = document.createElement("div");
   private readonly divider = document.createElement("div");
+  /// The chain in the middle of the divider: closed while the panes scroll
+  /// together, open while each scrolls on its own.
+  private readonly chain = element("button", "chain-button glass");
   private readonly previewPane = document.createElement("div");
   private readonly editor: Editor;
   private readonly preview: PreviewPane;
@@ -50,7 +56,7 @@ export class DocumentView {
   private readonly unsubscribe: () => void;
 
   constructor(
-    context: WindowContext,
+    private readonly context: WindowContext,
     readonly document: LaudaDocument,
     private readonly workspace: Workspace,
   ) {
@@ -64,17 +70,33 @@ export class DocumentView {
     this.previewPane.className = "pane preview-pane";
     const handle = window.document.createElement("div");
     handle.className = "divider-handle";
-    this.divider.append(handle);
+    this.chain.type = "button";
+    this.chain.innerHTML = chainIcon(`chain-${document.id}`);
+    // A press leaves the keyboard where it is, with the editor; natively
+    // the text view keeps it too.
+    this.chain.addEventListener("pointerdown", (event) => event.preventDefault());
+    this.chain.addEventListener("click", () => this.setScrollsLinked(!document.scrollsLinked));
+    this.divider.append(handle, this.chain);
+    lightGlass(this.divider);
     this.panes.append(this.editorPane, this.divider, this.previewPane);
     this.element.append(this.panes);
 
     this.editor = new Editor(context, this.editorPane, document, {
       publishScroll: (sync) => this.publishScroll(sync),
       sharedPosition: () => document.scrollSync,
+      scrollableChanged: (scrollable) => {
+        document.editorScrollable = scrollable;
+        this.showChain();
+      },
     });
     this.preview = new PreviewPane(context, this.previewPane, document, {
       publishScroll: (sync) => this.publishScroll(sync),
+      scrollableChanged: (scrollable) => {
+        document.previewScrollable = scrollable;
+        this.showChain();
+      },
     });
+    this.showChain();
     this.find = new FindSession(this.editor, this.preview, () => this.mode);
     new FindBar(context, this.panes, this.find, this.editor, () => this.mode);
     this.status = new StatusBar(context, document);
@@ -130,6 +152,9 @@ export class DocumentView {
     const settle = () => {
       this.editorPane.inert = mode === "previewOnly";
       this.previewPane.inert = mode === "editorOnly";
+      // Out of view at the window's edge, the divider would still take the
+      // pointer and the keyboard, its chain with it.
+      this.divider.inert = mode !== "split";
       this.editor.restoreScroll();
       this.preview.realign();
     };
@@ -174,12 +199,45 @@ export class DocumentView {
 
   // MARK: - Scroll sync
 
-  /// A pane the reader scrolled tells the other where to go; the one that
-  /// sent it ignores its own position coming back.
+  /// A pane the reader scrolled tells the other where to go, while the two
+  /// scroll together; a jump tells both.
   private publishScroll(sync: ScrollSync): void {
     this.document.scrollSync = sync;
-    if (sync.source === "editor" || sync.source === "navigation") this.preview.syncScroll(sync);
-    if (sync.source === "preview" || sync.source === "navigation") this.editor.applyRemoteScroll(sync);
+    const linked = this.document.scrollsLinked;
+    if (movesPreview(sync.source, linked)) this.preview.syncScroll(sync);
+    if (movesEditor(sync.source, linked)) this.editor.applyRemoteScroll(sync);
+  }
+
+  /// The chain: parts the panes' scrolling, or joins it again. Joined
+  /// again, the editor comes to the preview, where the reader was reading:
+  /// the two may have drifted far apart. The preview's position becomes the
+  /// shared one, so what the editor shared while apart never reaches the
+  /// preview (MarkdownDocument.scrollsLinked).
+  private setScrollsLinked(linked: boolean): void {
+    if (linked === this.document.scrollsLinked) return;
+    this.document.scrollsLinked = linked;
+    this.editor.setLinked(linked);
+    const here = linked ? this.preview.position() : null;
+    if (here) {
+      this.document.scrollSync = here;
+      this.editor.applyRemoteScroll(here);
+    }
+    this.showChain();
+  }
+
+  /// What the chain shows: open or closed, and only while both panes have
+  /// something to scroll, since joined or apart makes no difference
+  /// otherwise, as a scroll bar makes none; with nothing to do it is out of
+  /// the keyboard's and the screen reader's way too.
+  private showChain(): void {
+    const { scrollsLinked, panesScroll } = this.document;
+    this.chain.classList.toggle("is-apart", !scrollsLinked);
+    this.divider.classList.toggle("has-room", panesScroll);
+    this.chain.tabIndex = panesScroll ? 0 : -1;
+    this.chain.setAttribute("aria-hidden", String(!panesScroll));
+    const title = this.context.t(scrollsLinked ? "Scroll the panes separately" : "Scroll the panes together");
+    this.chain.title = title;
+    this.chain.setAttribute("aria-label", title);
   }
 
   /// The outline's jump: both panes go to the heading's line, and the

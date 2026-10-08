@@ -14,7 +14,9 @@ the same cases.
 
 - **Dual pane**: editor on the left, formatted preview on the right, with
   two-way scroll sync aligned by block, and an adjustable divider whose
-  position is remembered.
+  position is remembered. A chain on the divider lets the panes scroll
+  apart, to read one place while writing in another, and brings the editor
+  back to the preview when they rejoin.
 - **Instant preview**: renders on every keystroke, off the window's thread,
   and repaints only the blocks that changed.
 - **View modes**: editor only (Ctrl+1), split (Ctrl+2) or preview only
@@ -80,8 +82,8 @@ to look at its title bar from another one.
 
 ## Differences from the native app
 
-- The toolbar's Liquid Glass is imitated with translucency and blur; the
-  real material is macOS's own.
+- The toolbar's and the divider's Liquid Glass is imitated with
+  translucency and blur; the real material is macOS's own.
 - Browse All Versions is left out: it is macOS's version store.
 - Word counts use the browser's word boundaries, which agree with macOS
   except in Japanese, which macOS splits its own way.

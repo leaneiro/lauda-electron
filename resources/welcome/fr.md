@@ -57,7 +57,7 @@ Faites glisser une image dans l’éditeur, ou collez une capture d’écran : 
 ## Pour vous repérer
 
 - Le bouton **Table des matières** de la barre d’outils liste les titres et vous y emmène.
-- Les deux volets défilent ensemble.
+- Les deux volets défilent ensemble. Pour les faire défiler séparément, cliquez sur la chaîne qui apparaît sur le séparateur entre eux ; cliquez de nouveau pour les réunir.
 - Polices, tailles, apparence et sauts de ligne se trouvent dans les **Réglages** (⌘,).
 
 Bonne écriture ! ✍️

@@ -679,7 +679,12 @@ body.platform-darwin .window-title {
 .editor-pane .cm-scroller {
   font-family: inherit;
   line-height: var(--editor-line-height);
-  overflow-y: scroll;
+  /* A scroll bar only while there is something to scroll, as the native
+     editor's (autohidesScrollers): always drawn, it stood empty beside the
+     divider on Windows and Linux. Its room stays reserved, so the text
+     doesn't wrap anew each time the bar comes or goes. */
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 .editor-pane .cm-content {
   padding: 20px 0 64px;

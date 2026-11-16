@@ -282,6 +282,14 @@ body.platform-darwin .window-title {
 .glass:active {
   transform: scale(0.96);
 }
+/* Glass to read, not a control (the Trash notice's card): it neither
+   lights under the pointer nor gives under a click. */
+.glass.still::after {
+  content: none;
+}
+.glass.still:active {
+  transform: none;
+}
 
 .glass-button {
   width: 36px;
@@ -1054,15 +1062,7 @@ body.platform-darwin .window-title {
 .trash-notice[hidden] {
   display: none;
 }
-/* Glass as the toolbar's, but a card to read, not a control: it neither
-   lights under the pointer nor gives under a click. */
 .trash-card {
-  background: var(--glass-fill);
-  box-shadow:
-    var(--glass-shadow),
-    inset 0 0 0 1px var(--glass-rim),
-    inset 0 1px 0 var(--glass-highlight);
-  backdrop-filter: blur(14px) saturate(1.7);
   display: flex;
   flex-direction: column;
   align-items: center;

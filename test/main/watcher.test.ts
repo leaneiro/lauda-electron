@@ -184,6 +184,11 @@ describe("a document's file and the Trash", () => {
     await quiet();
     expect(said).toEqual(["trashed"]);
     expect(watcher.isInTrash(file)).toBe(true);
+
+    // And the Trash emptied meanwhile is still heard of.
+    rmSync(inBin);
+    watcher.checkAll();
+    expect(await until(() => said.includes("gone"))).toBe(true);
   });
 
   it("TRASH-01.1 TRASH-01.6 finds the file in a folder thrown away whole, and back with it", async () => {
@@ -216,5 +221,21 @@ describe("a document's file and the Trash", () => {
 
     renameSync(join(bin, "docs"), docs);
     expect(await until(() => said.includes("putBack:draft"))).toBe(true);
+  });
+
+  it("TRASH-01.8 a write asked for just after a rename finds the new name, not the old place", async () => {
+    const { root, file, said, watcher } = await watching();
+    renameSync(file, join(root, "ideas.md"));
+    expect(await watcher.isInTrashNow(file)).toBe(false);
+    expect(said).toEqual(["renamed:ideas.md"]);
+  });
+
+  it("tells no change when nothing changed since the file was opened, as after a write that failed", async () => {
+    const { said, watcher } = await watching();
+    await quiet();
+    said.length = 0;
+    watcher.checkAll();
+    await quiet();
+    expect(said).toEqual([]);
   });
 });

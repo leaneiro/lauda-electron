@@ -1,4 +1,4 @@
-import { type FSWatcher, watch } from "node:fs";
+import { existsSync, type FSWatcher, watch } from "node:fs";
 import { readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { isInsideTrash, type TrashPlaces } from "../shared/document";
@@ -86,7 +86,12 @@ interface WatchedFile {
   folderWatcher?: FSWatcher;
   trashWatcher?: FSWatcher;
   timer?: NodeJS.Timeout;
+  /// The text the file was last known to hold: read when watching begins,
+  /// and each time the app writes it or another program changes it.
   lastWritten?: string;
+  /// The folder's watcher failed, was tried again once and failed again:
+  /// the file is still looked at when the window comes forward.
+  gaveUpWatching?: boolean;
   identity: FileIdentity | null;
   /// Where the file is while it is in the Trash.
   trashedAt?: string;
@@ -114,7 +119,8 @@ export class DocumentWatcher {
     const entry = this.files.get(filePath);
     if (!entry) return;
     entry.lastWritten = text;
-    entry.identity = await identityOf(filePath);
+    // Gone again already: which file it was is still the best guess.
+    entry.identity = (await identityOf(filePath)) ?? entry.identity;
   }
 
   watch(filePath: string): void {
@@ -126,6 +132,14 @@ export class DocumentWatcher {
     if (entry.folderWatcher) return;
     this.watchFolderOf(filePath, entry);
     const watched = entry;
+    // What the file holds now is no news: without it, the first look (a
+    // write that failed, the window coming forward) would take the text
+    // opened for another program's change.
+    void readText(filePath)
+      .then((text) => {
+        watched.lastWritten ??= text;
+      })
+      .catch(() => {});
     void identityOf(filePath).then((identity) => {
       watched.identity ??= identity;
       // Opened from inside the Trash: there from the start.
@@ -212,7 +226,10 @@ export class DocumentWatcher {
   /// be watched, a limit reached) is caught when the window comes forward.
   checkAll(): void {
     for (const [filePath, entry] of this.files) {
-      if (!entry.folderWatcher && !entry.trashedAt) this.watchFolderOf(filePath, entry);
+      if (!entry.folderWatcher && !entry.trashedAt && !entry.gaveUpWatching && existsSync(dirname(filePath))) {
+        this.watchFolderOf(filePath, entry);
+        entry.gaveUpWatching = !entry.folderWatcher;
+      }
       this.scheduleCheck(filePath);
     }
   }
@@ -238,8 +255,12 @@ export class DocumentWatcher {
     if (this.files.get(filePath) !== entry) return;
     if (entry.trashedAt && entry.trashedAt !== filePath) {
       // Another file where this one was, made while it is in the Trash, is
-      // no putting back: the document's file is still there.
-      if (!entry.identity || !identity || !isSameFile(entry.identity, identity)) return;
+      // no putting back: the document's file is still there, as far as
+      // the Trash says, which is asked again (it may have been emptied).
+      if (!entry.identity || !identity || !isSameFile(entry.identity, identity)) {
+        await this.fileIsNotThere(filePath, entry);
+        return;
+      }
       entry.trashedAt = undefined;
       entry.trashWatcher?.close();
       entry.trashWatcher = undefined;
@@ -247,7 +268,7 @@ export class DocumentWatcher {
       this.events.putBack(filePath, text);
       return;
     }
-    entry.identity = identity;
+    entry.identity = identity ?? entry.identity;
     if (text === entry.lastWritten) return;
     entry.lastWritten = text;
     this.events.changed(filePath, text);

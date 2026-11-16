@@ -328,7 +328,7 @@ export class DocumentView {
     const { t } = this.context;
     const notice = element("div", "trash-notice");
     notice.hidden = true;
-    const card = element("div", "trash-card");
+    const card = element("div", "trash-card glass still");
     const symbol = element("span", "trash-symbol");
     symbol.innerHTML = icons.trash;
     const button = element("button", "trash-show", t("Show in Trash"));

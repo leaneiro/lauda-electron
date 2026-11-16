@@ -2,6 +2,7 @@
 // saved, and how images join it.
 
 export * from "./imageImporter";
+export * from "./recentTitles";
 export * from "./saveStatus";
 export * from "./shortcutKeys";
 export * from "./trash";

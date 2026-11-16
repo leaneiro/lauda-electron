@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { app } from "electron";
 import type { SessionContents } from "../shared/ipc";
@@ -126,6 +126,20 @@ export class RecentFiles {
 
   get list(): readonly string[] {
     return this.files;
+  }
+
+  /// What Open Recent offers: the files that are there now. One on a disk
+  /// that is not connected stays in the list and comes back with it.
+  get available(): readonly string[] {
+    return this.files.filter((filePath) => existsSync(filePath));
+  }
+
+  /// A file that failed to open leaves the list when it is gone for good:
+  /// its folder is there and the file is not. With the folder gone too (a
+  /// disk not connected) it stays.
+  forgetIfGone(filePath: string): void {
+    if (existsSync(filePath) || !existsSync(dirname(filePath))) return;
+    this.forget(filePath);
   }
 
   note(filePath: string): void {

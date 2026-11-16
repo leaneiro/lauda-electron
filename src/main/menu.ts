@@ -1,5 +1,5 @@
-import { basename } from "node:path";
 import { Menu, type MenuItemConstructorOptions } from "electron";
+import { recentMenuTitles } from "../shared/document";
 import type { Strings } from "../shared/i18n";
 import type { MenuCommand, MenuState } from "../shared/ipc";
 
@@ -7,6 +7,7 @@ export interface MenuContext {
   strings: Strings;
   isMac: boolean;
   isWindows: boolean;
+  /// Open Recent's files, those that are there now.
   recentFiles: readonly string[];
   state: MenuState;
   send: (command: MenuCommand) => void;
@@ -27,8 +28,9 @@ export function buildMenu(context: MenuContext): Menu {
   const hasFile = state.hasFile;
   const command = (name: Exclude<MenuCommand["name"], "view-mode">) => () => send({ name });
 
-  const recent: MenuItemConstructorOptions[] = context.recentFiles.map((filePath) => ({
-    label: basename(filePath),
+  const titles = recentMenuTitles(context.recentFiles);
+  const recent: MenuItemConstructorOptions[] = context.recentFiles.map((filePath, index) => ({
+    label: titles[index] ?? filePath,
     click: () => context.openRecent(filePath),
   }));
   if (recent.length > 0) recent.push({ type: "separator" });

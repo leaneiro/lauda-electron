@@ -92,4 +92,26 @@ describe("what the app keeps between launches", () => {
     // The system's own list hears of each file opened.
     expect(systemRecents).toContain("/notes/12.md");
   });
+
+  it("offers only the recent files that are there, and forgets one gone for good", () => {
+    const folder = mkdtempSync(join(tmpdir(), "lauda-recents-"));
+    try {
+      const kept = join(folder, "kept.md");
+      const gone = join(folder, "gone.md");
+      const away = join(folder, "disk", "away.md");
+      writeFileSync(kept, "");
+      const recents = new RecentFiles();
+      recents.clear();
+      for (const path of [away, gone, kept]) recents.note(path);
+      expect(recents.available).toEqual([kept]);
+
+      recents.forgetIfGone(gone);
+      recents.forgetIfGone(kept);
+      // A disk not connected takes the folder with it: kept for its return.
+      recents.forgetIfGone(away);
+      expect(recents.list).toEqual([kept, away]);
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  });
 });

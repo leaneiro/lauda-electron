@@ -129,7 +129,11 @@ async function openFiles(paths: string[], select?: string | null): Promise<void>
       granted.grant(filePath);
       withWindow(() => send("workspace:open", { filePath, text }));
     } catch (error) {
-      recentFiles.forget(filePath);
+      // A file gone for good is not offered again; one on a disk that is not
+      // connected stays for when it is. The menu is built again either way,
+      // since it may still show a file deleted after it was built.
+      recentFiles.forgetIfGone(filePath);
+      refreshMenu();
       await showError(window, strings.t("Couldn't open “%@”", basename(filePath)), error, strings);
     }
   }
@@ -256,7 +260,7 @@ function refreshMenu(): void {
         strings,
         isMac,
         isWindows,
-        recentFiles: recentFiles.list,
+        recentFiles: recentFiles.available,
         state: menuState,
         send: sendCommand,
         open: () => void showOpenDialog(),
@@ -395,7 +399,12 @@ app.on("will-quit", () => {
 
 // What a watcher missed (a folder that can't be watched, a system limit)
 // is caught when the reader comes back to the window.
-app.on("browser-window-focus", () => watcher.checkAll());
+app.on("browser-window-focus", () => {
+  watcher.checkAll();
+  // Open Recent is built once; a file deleted while the app was in the
+  // background would still be in it.
+  refreshMenu();
+});
 
 app.on("window-all-closed", () => {
   if (!isMac || documentWindow.isQuitting) app.quit();

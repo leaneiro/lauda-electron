@@ -153,6 +153,14 @@
     "ja": "閉じる（Esc）",
     "zh-Hans": "关闭 (Esc)"
   },
+  "Close “%@” without saving?": {
+    "pt-BR": "Fechar “%@” sem salvar?",
+    "de": "„%@“ ohne Sichern schließen?",
+    "es": "¿Cerrar “%@” sin guardar?",
+    "fr": "Fermer « %@ » sans enregistrer ?",
+    "ja": "“%@”を保存せずに閉じますか？",
+    "zh-Hans": "不存储就关闭“%@”吗？"
+  },
   "Couldn't add the image to the document's folder": {
     "de": "Das Bild konnte nicht zum Ordner des Dokuments hinzugefügt werden",
     "es": "No se ha podido añadir la imagen a la carpeta del documento",
@@ -313,6 +321,22 @@
     "ja": "イタリック",
     "zh-Hans": "斜体"
   },
+  "Keep My Changes": {
+    "pt-BR": "Manter minhas alterações",
+    "de": "Meine Änderungen behalten",
+    "es": "Conservar mis cambios",
+    "fr": "Conserver mes modifications",
+    "ja": "自分の変更を残す",
+    "zh-Hans": "保留我的更改"
+  },
+  "Keep the changes you made here, or use the file as it is now?": {
+    "pt-BR": "Você quer manter as alterações feitas aqui ou usar o arquivo como está agora?",
+    "de": "Möchtest du deine Änderungen hier behalten oder die Datei verwenden, wie sie jetzt ist?",
+    "es": "¿Quieres conservar los cambios hechos aquí o usar el archivo como está ahora?",
+    "fr": "Voulez-vous conserver les modifications faites ici ou utiliser le fichier tel qu’il est maintenant ?",
+    "ja": "ここで行った変更を残しますか？それとも現在のファイルを使いますか？",
+    "zh-Hans": "要保留你在此处所做的更改，还是使用文件现在的内容？"
+  },
   "Light": {
     "pt-BR": "Claro",
     "de": "Hell",
@@ -449,6 +473,14 @@
     "ja": "前へ（⇧⌘G）",
     "zh-Hans": "上一个 (⇧⌘G)"
   },
+  "Put it back to keep editing.": {
+    "pt-BR": "Devolva o arquivo para continuar editando.",
+    "de": "Lege sie zurück, um sie weiter zu bearbeiten.",
+    "es": "Recupéralo para seguir editando.",
+    "fr": "Remettez-le en place pour continuer à le modifier.",
+    "ja": "編集を続けるには、元の場所に戻してください。",
+    "zh-Hans": "将其放回原处即可继续编辑。"
+  },
   "Rename": {
     "pt-BR": "Renomear",
     "de": "Umbenennen",
@@ -561,6 +593,14 @@
     "ja": "前のタブを表示",
     "zh-Hans": "显示上一个标签页"
   },
+  "Show in Trash": {
+    "pt-BR": "Mostrar na Lixeira",
+    "de": "Im Papierkorb zeigen",
+    "es": "Mostrar en la Papelera",
+    "fr": "Afficher dans la Corbeille",
+    "ja": "ゴミ箱で表示",
+    "zh-Hans": "在废纸篓中显示"
+  },
   "Size": {
     "pt-BR": "Tamanho",
     "de": "Größe",
@@ -625,6 +665,22 @@
     "ja": "テキストの幅：%@。次：%@",
     "zh-Hans": "文本宽度：%@。下一个：%@"
   },
+  "The file is in the Trash, so your changes can't be saved. Put it back to keep them.": {
+    "pt-BR": "O arquivo está na Lixeira e as alterações não podem ser salvas. Devolva o arquivo para mantê-las.",
+    "de": "Die Datei liegt im Papierkorb, daher können deine Änderungen nicht gesichert werden. Lege sie zurück, um sie zu behalten.",
+    "es": "El archivo está en la Papelera y los cambios no se pueden guardar. Recupéralo para conservarlos.",
+    "fr": "Le fichier est dans la Corbeille et vos modifications ne peuvent pas être enregistrées. Remettez-le en place pour les conserver.",
+    "ja": "ファイルがゴミ箱にあるため、変更内容を保存できません。変更を残すには、元の場所に戻してください。",
+    "zh-Hans": "文件在废纸篓中，无法存储你的更改。将其放回原处即可保留更改。"
+  },
+  "This file is in the Trash": {
+    "pt-BR": "Este arquivo está na Lixeira",
+    "de": "Diese Datei ist im Papierkorb",
+    "es": "Este archivo está en la Papelera",
+    "fr": "Ce fichier est dans la Corbeille",
+    "ja": "このファイルはゴミ箱にあります",
+    "zh-Hans": "此文件在废纸篓中"
+  },
   "Underline": {
     "pt-BR": "Sublinhado",
     "de": "Unterstrichen",
@@ -640,6 +696,14 @@
     "fr": "Sans titre",
     "ja": "名称未設定",
     "zh-Hans": "未命名"
+  },
+  "Use the File": {
+    "pt-BR": "Usar o arquivo",
+    "de": "Datei verwenden",
+    "es": "Usar el archivo",
+    "fr": "Utiliser le fichier",
+    "ja": "ファイルを使う",
+    "zh-Hans": "使用文件"
   },
   "View Mode": {
     "pt-BR": "Modo de exibição",
@@ -712,5 +776,13 @@
     "fr": "~%lld min de lecture",
     "ja": "約%lld分で読めます",
     "zh-Hans": "阅读约 %lld 分钟"
+  },
+  "“%@” changed while it was in the Trash": {
+    "pt-BR": "“%@” mudou enquanto estava na Lixeira",
+    "de": "„%@“ wurde im Papierkorb geändert",
+    "es": "“%@” cambió mientras estaba en la Papelera",
+    "fr": "« %@ » a changé pendant qu’il était dans la Corbeille",
+    "ja": "“%@”はゴミ箱にある間に変更されました",
+    "zh-Hans": "“%@”在废纸篓中时已被更改"
   }
 }

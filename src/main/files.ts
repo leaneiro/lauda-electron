@@ -230,8 +230,9 @@ export class DocumentWatcher {
   async isInTrashNow(filePath: string): Promise<boolean> {
     const entry = this.files.get(filePath);
     if (!entry) return false;
-    // Opened from inside the Trash: there, though at the path it has.
-    if (entry.trashedAt === filePath) return true;
+    // Opened from inside the Trash: there, though at the path it has, told
+    // by the path alone, before the watcher has even asked which file it is.
+    if (isInsideTrash(filePath)) return true;
     const identity = await identityOf(filePath);
     const isTheDocumentsFile = !entry.trashedAt || (entry.identity && isSameFile(entry.identity, identity));
     if (identity && isTheDocumentsFile) return false;

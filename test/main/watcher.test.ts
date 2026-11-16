@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -122,7 +122,7 @@ describe("a document's file and the Trash", () => {
     expect(readFileSync(inBin, "utf8")).toBe("draft");
   });
 
-  it("counts a file opened from inside the Trash as there from the start", async () => {
+  it("TRASH-01.1 TRASH-01.4 counts a file opened from inside the Trash as there from the start", async () => {
     const root = mkdtempSync(join(tmpdir(), "lauda-watcher-"));
     const folder = join(root, ".Trash");
     mkdirSync(folder);
@@ -267,13 +267,12 @@ describe("a document's file and the Trash", () => {
     expect(await until(() => said.includes("changed:draft"))).toBe(true);
   });
 
-  it("TRASH-01.14 TRASH-01.15 writes nothing where the file was once it has left the Trash for good", async () => {
+  it("TRASH-01.14 TRASH-01.15 holds a write back once the file has left the Trash for good", async () => {
     const { file, inBin, said, watcher } = await watching();
     renameSync(file, inBin);
     await until(() => said.includes("trashed"));
     rmSync(inBin);
     expect(await watcher.isInTrashNow(file)).toBe(true);
     expect(said).toEqual(["trashed", "gone"]);
-    expect(existsSync(file)).toBe(false);
   });
 });

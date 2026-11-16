@@ -7,6 +7,8 @@ export interface Launched {
   app: ElectronApplication;
   window: Page;
   folder: string;
+  /// A folder that stands for the Trash: the real one is never a test's.
+  trash: string;
 }
 
 /// Starts the built app with a data folder of its own (so nothing the
@@ -18,7 +20,9 @@ export async function launch(
   const folder = mkdtempSync(join(tmpdir(), "lauda-e2e-"));
   const userData = join(folder, "user-data");
   const documents = join(folder, "docs");
+  const trash = join(folder, "bin");
   mkdirSync(documents, { recursive: true });
+  mkdirSync(trash, { recursive: true });
   mkdirSync(userData, { recursive: true });
   writeFileSync(join(userData, "settings.json"), JSON.stringify({ hasShownWelcomeGuide: true, ...options.settings }));
   if (options.windowState) writeFileSync(join(userData, "window-state.json"), JSON.stringify(options.windowState));
@@ -34,11 +38,11 @@ export async function launch(
     colorScheme: null,
     executablePath,
     args: executablePath ? paths : [".", ...paths],
-    env: { ...process.env, LAUDA_USER_DATA: userData, LAUDA_LOCALE: options.locale ?? "en" },
+    env: { ...process.env, LAUDA_USER_DATA: userData, LAUDA_LOCALE: options.locale ?? "en", LAUDA_TRASH: trash },
   });
   const window = await app.firstWindow();
   await window.waitForSelector("#titlebar");
-  return { app, window, folder: documents };
+  return { app, window, folder: documents, trash };
 }
 
 /// The preview's frame, once its page has loaded.

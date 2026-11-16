@@ -70,7 +70,12 @@ let menuState: MenuState = { hasDocument: false, hasFile: false, documentCount: 
 const documentWindow = new DocumentWindow(() => settingsWindow.close());
 const settingsWindow = new SettingsWindow({ title: () => strings.t("Settings"), parent: () => documentWindow.current });
 
-const watcher = new DocumentWatcher((filePath, text) => send("doc:changed-on-disk", { filePath, text }));
+const watcher = new DocumentWatcher({
+  changed: (filePath, text) => send("doc:changed-on-disk", { filePath, text }),
+  trashed: (filePath) => send("doc:trashed", { filePath }),
+  putBack: (filePath, text) => send("doc:put-back", { filePath, text }),
+  goneFromTrash: (filePath) => send("doc:gone-from-trash", { filePath }),
+});
 /// The files this process has handed the window, the only ones it may
 /// write to, move or watch (see GrantedFiles).
 const granted = new GrantedFiles();
@@ -370,6 +375,10 @@ app.on("before-quit", (event) => {
 app.on("will-quit", () => {
   if (isReady) settings.flush();
 });
+
+// What a watcher missed (a folder that can't be watched, a system limit)
+// is caught when the reader comes back to the window.
+app.on("browser-window-focus", () => watcher.checkAll());
 
 app.on("window-all-closed", () => {
   if (!isMac || documentWindow.isQuitting) app.quit();

@@ -37,9 +37,14 @@ export function registerDocumentRequests({
   handle("doc:forget-folder", (_event, documentId) => forgetDocumentFolder(documentId));
   handle("doc:write", async (_event, filePath, text) => {
     if (!granted.has(filePath)) return notGranted;
+    // Asked of the disk now, not of what the watcher last heard: the
+    // autosave can come before the news that the file was thrown away,
+    // and would make the file again where it was.
+    if (await watcher.isInTrashNow(filePath)) return { ok: false, inTrash: true };
     try {
       watcher.noteWritten(filePath, text);
       await writeAtomically(filePath, text);
+      await watcher.noteWriteDone(filePath);
       return { ok: true };
     } catch (error) {
       return { ok: false, error: messageOf(error) };

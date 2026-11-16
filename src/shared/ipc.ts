@@ -51,6 +51,13 @@ export interface Events {
   "workspace:close-everything": { reason: "window" | "quit" };
   "settings:changed": Settings;
   "doc:changed-on-disk": { filePath: string; text: string };
+  /// The file of an open document went to the Trash. The document keeps
+  /// the path it had: that is where the file comes back to.
+  "doc:trashed": { filePath: string };
+  /// It is back where it was, holding this text.
+  "doc:put-back": { filePath: string; text: string };
+  /// It left the Trash without coming back: there is no file any more.
+  "doc:gone-from-trash": { filePath: string };
   "window:state": { isFullScreen: boolean; isFocused: boolean };
 }
 
@@ -84,6 +91,9 @@ export interface OpenDocument {
 export interface WriteResult {
   ok: boolean;
   error?: string;
+  /// Nothing was written because the file is in the Trash, which is no
+  /// failure to tell the reader of.
+  inTrash?: boolean;
 }
 
 export interface SaveAsRequest {

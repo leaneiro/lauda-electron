@@ -1,0 +1,146 @@
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { DocumentWatcher, writeAtomically } from "../../src/main/files";
+
+/// A document's file, a folder that stands for the Trash, and everything
+/// the watcher said, in order. The file manager is played by rename and rm.
+function scene() {
+  const root = mkdtempSync(join(tmpdir(), "lauda-watcher-"));
+  const bin = join(root, "bin");
+  mkdirSync(bin);
+  const file = join(root, "notes.md");
+  writeFileSync(file, "draft");
+  const said: string[] = [];
+  const watcher = new DocumentWatcher(
+    {
+      changed: (_path, text) => said.push(`changed:${text}`),
+      trashed: () => said.push("trashed"),
+      putBack: (_path, text) => said.push(`putBack:${text}`),
+      goneFromTrash: () => said.push("gone"),
+    },
+    () => ({ folders: [bin], perUserParents: [] }),
+  );
+  scenes.push({ root, watcher, file });
+  return { root, bin, file, said, watcher, inBin: join(bin, "notes.md") };
+}
+
+const scenes: { root: string; watcher: DocumentWatcher; file: string }[] = [];
+afterEach(() => {
+  for (const { root, watcher, file } of scenes.splice(0)) {
+    watcher.unwatch(file);
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+async function until(condition: () => boolean, milliseconds = 4000): Promise<boolean> {
+  const deadline = Date.now() + milliseconds;
+  while (!condition()) {
+    if (Date.now() > deadline) return false;
+    await new Promise((done) => setTimeout(done, 25));
+  }
+  return true;
+}
+
+/// Long enough for the watcher to have said something, had it anything to say.
+const quiet = () => new Promise((done) => setTimeout(done, 700));
+
+async function watching(): Promise<ReturnType<typeof scene>> {
+  const made = scene();
+  made.watcher.watch(made.file);
+  // The watcher asks which file this is before it can follow it anywhere.
+  await new Promise((done) => setTimeout(done, 100));
+  return made;
+}
+
+describe("a document's file and the Trash", () => {
+  it("TRASH-01.1 says so when the file goes to the Trash", async () => {
+    const { file, inBin, said, watcher } = await watching();
+    renameSync(file, inBin);
+    expect(await until(() => said.includes("trashed"))).toBe(true);
+    expect(watcher.isInTrash(file)).toBe(true);
+  });
+
+  it("TRASH-01.1 finds the file under another name, as Windows renames what it bins", async () => {
+    const { file, bin, said } = await watching();
+    renameSync(file, join(bin, "$RABCDEF.md"));
+    expect(await until(() => said.includes("trashed"))).toBe(true);
+  });
+
+  it("TRASH-01.6 says the file is back, with the text it has now", async () => {
+    const { file, inBin, said, watcher } = await watching();
+    renameSync(file, inBin);
+    await until(() => said.includes("trashed"));
+    writeFileSync(inBin, "final");
+    renameSync(inBin, file);
+    expect(await until(() => said.includes("putBack:final"))).toBe(true);
+    expect(watcher.isInTrash(file)).toBe(false);
+    await quiet();
+    // Once: the text that came back is not also another program's change.
+    expect(said).toEqual(["trashed", "putBack:final"]);
+  });
+
+  it("TRASH-01.14 says the file is gone when it leaves the Trash without coming back", async () => {
+    const { file, inBin, said } = await watching();
+    renameSync(file, inBin);
+    await until(() => said.includes("trashed"));
+    rmSync(inBin);
+    expect(await until(() => said.includes("gone"))).toBe(true);
+    expect(said).toEqual(["trashed", "gone"]);
+  });
+
+  it("says nothing of a file deleted without passing through the Trash, as before", async () => {
+    const { file, said } = await watching();
+    rmSync(file);
+    await quiet();
+    expect(said).toEqual([]);
+  });
+
+  it("goes on telling of another program's change", async () => {
+    const { file, said } = await watching();
+    writeFileSync(file, "changed elsewhere");
+    expect(await until(() => said.includes("changed:changed elsewhere"))).toBe(true);
+  });
+
+  it("follows the file through the app's own write, which replaces it", async () => {
+    const { file, inBin, said, watcher } = await watching();
+    watcher.noteWritten(file, "typed");
+    await writeAtomically(file, "typed");
+    await watcher.noteWriteDone(file);
+    renameSync(file, inBin);
+    expect(await until(() => said.includes("trashed"))).toBe(true);
+    expect(said).toEqual(["trashed"]);
+  });
+
+  it("TRASH-01.4 knows of the Trash before a write, when no news has come yet", async () => {
+    const { file, inBin, said, watcher } = await watching();
+    renameSync(file, inBin);
+    expect(await watcher.isInTrashNow(file)).toBe(true);
+    expect(said).toEqual(["trashed"]);
+    expect(readFileSync(inBin, "utf8")).toBe("draft");
+  });
+
+  it("counts a file opened from inside the Trash as there from the start", async () => {
+    const root = mkdtempSync(join(tmpdir(), "lauda-watcher-"));
+    const folder = join(root, ".Trash");
+    mkdirSync(folder);
+    const file = join(folder, "old.md");
+    writeFileSync(file, "old");
+    const said: string[] = [];
+    const watcher = new DocumentWatcher(
+      {
+        changed: () => said.push("changed"),
+        trashed: () => said.push("trashed"),
+        putBack: () => said.push("putBack"),
+        goneFromTrash: () => said.push("gone"),
+      },
+      () => ({ folders: [folder], perUserParents: [] }),
+    );
+    scenes.push({ root, watcher, file });
+    watcher.watch(file);
+    expect(await until(() => said.includes("trashed"))).toBe(true);
+    rmSync(file);
+    expect(await until(() => said.includes("gone"))).toBe(true);
+  });
+});

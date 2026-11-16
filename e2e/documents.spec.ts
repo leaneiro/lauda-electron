@@ -293,7 +293,9 @@ test("duplicate, rename and move", async () => {
 /// brings such a window back by itself; Windows and Linux leave it where it
 /// is told, which is what this checks there (placement.test.ts has the rule).
 test("a window last seen on a screen that is gone opens where it can be reached", async () => {
-  test.skip(Object.keys(outOfSight).length > 0, "the windows are kept out of sight; run with LAUDA_ONSCREEN=1");
+  // macOS brings the window back by itself; out of sight, there, the app
+  // puts it off the screens on purpose (windows.ts).
+  test.skip(process.platform === "darwin" && Object.keys(outOfSight).length > 0, "out of sight on macOS");
   const { app } = await launch({
     files: { "a.md": "# A\n" },
     windowState: { x: 20000, y: 20000, width: 900, height: 600, maximized: false },

@@ -76,11 +76,12 @@ own, so nothing of the reader's is touched, and a folder that stands for
 the Trash (`LAUDA_TRASH`), so the real one never is. A test never writes
 outside the folders it made.
 They run out of sight (`LAUDA_OFFSCREEN`, which `e2e/launch.ts` sets):
-the windows open as far off the screens as the system lets them, wholly
-see-through, out of the Dock, letting the pointer through and never
-taking the keyboard, so a run can go on while the reader works.
-`LAUDA_ONSCREEN=1 npm run e2e` shows them, to watch a run; the one test
-about where a window opens runs only then.
+the windows are wholly see-through, out of the Dock, let the pointer
+through and never take the keyboard, so a run can go on while the reader
+works. On macOS they also go off the screens, and the test of where a
+window opens is left out there (macOS places it itself). That is measured
+on macOS; on Linux a window can't be made see-through and shows.
+`LAUDA_ONSCREEN=1 npm run e2e` shows them anywhere, to watch a run.
 
 ## Staying in step with the native app
 

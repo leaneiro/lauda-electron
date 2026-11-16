@@ -10,11 +10,15 @@ import { tabKeyCommand } from "./tab-keys";
 const isMac = process.platform === "darwin";
 
 /// For the end-to-end tests (LAUDA_OFFSCREEN): the windows never come up
-/// on the screen in use. They open as far off the screens as the system
-/// lets them (macOS keeps a strip of a titled window on screen), wholly
-/// see-through, letting the pointer through to what is under them, and
-/// without taking the keyboard from the app the reader is in. The tests
-/// reach them through the page, which none of that changes.
+/// on the screen in use. They are wholly see-through, let the pointer
+/// through to what is under them, and never take the keyboard from the app
+/// the reader is in. On macOS they also go as far off the screens as the
+/// system lets them (it keeps a strip of a titled window on screen): in
+/// place, the reader's own pointer passing over still lit what is lit under
+/// it, and a test of that failed. Elsewhere they stay where they open, so
+/// where a window opens is still tested there. The tests reach the windows
+/// through the page, which none of this changes. Measured on macOS; on
+/// Linux a window can't be made see-through, and shows.
 export const isOffscreen = process.env.LAUDA_OFFSCREEN === "1";
 const offscreenCorner = -20_000;
 
@@ -26,9 +30,9 @@ function reveal(window: BrowserWindow): void {
   }
   window.setOpacity(0);
   window.setIgnoreMouseEvents(true);
-  window.setPosition(offscreenCorner, offscreenCorner);
+  if (isMac) window.setPosition(offscreenCorner, offscreenCorner);
   window.showInactive();
-  window.setPosition(offscreenCorner, offscreenCorner);
+  if (isMac) window.setPosition(offscreenCorner, offscreenCorner);
 }
 
 /// The app's icon as a file of its own, for Linux's window and About
@@ -241,7 +245,7 @@ export class SettingsWindow {
 
   show(): void {
     if (this.window) {
-      this.window.focus();
+      if (!isOffscreen) this.window.focus();
       return;
     }
     const window = new BrowserWindow({

@@ -197,8 +197,8 @@ export class Workspace {
   }
 
   /// A tab the reader closes. The last one takes the window with it, as in
-  /// the native app: on Windows and Linux that ends the app, and the next
-  /// launch opens a new document, there being no tabs to bring back.
+  /// the native app, and that ends the app; the next launch opens a new
+  /// document, there being no tabs to bring back.
   async closeTab(document: LaudaDocument): Promise<void> {
     if (!(await this.close(document))) return;
     if (this.documents.length > 0) return;
@@ -236,12 +236,13 @@ export class Workspace {
     this.tabsChanged();
   }
 
-  /// The window is closing, or the app quits: every document in turn. On
-  /// quit the tabs stay in the session, so they come back next time.
-  async closeEverything(reason: "window" | "quit"): Promise<boolean> {
-    if (reason === "quit") this.remembersSession = false;
+  /// The window is closing, which quits the app, or the app quits: every
+  /// document in turn. The tabs stay in the session, so they come back
+  /// next time.
+  async closeEverything(): Promise<boolean> {
+    this.remembersSession = false;
     for (const document of [...this.documents]) {
-      const ok = reason === "quit" ? await this.canClose(document) : await this.close(document);
+      const ok = await this.canClose(document);
       if (!ok) {
         this.remembersSession = true;
         this.notifyChanged();
@@ -358,7 +359,8 @@ export class Workspace {
         return;
       case "rename":
       case "move": {
-        if (!document.filePath) return;
+        // The file isn't where the document says while it is in the Trash.
+        if (!document.filePath || document.isInTrash) return;
         await document.autosave();
         const from = document.filePath;
         const to = await this.context.lauda.invoke(command.name === "rename" ? "doc:rename" : "doc:move", from);
@@ -490,7 +492,8 @@ export class Workspace {
     };
     const menu = {
       hasDocument: !!document,
-      hasFile: !!document?.filePath,
+      // Rename and Move To have no file to act on while it is in the Trash.
+      hasFile: !!document?.filePath && !document.isInTrash,
       documentCount: this.documents.length,
       viewMode: this.viewMode,
     };

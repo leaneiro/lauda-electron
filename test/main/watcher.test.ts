@@ -106,9 +106,8 @@ describe("a document's file and the Trash", () => {
 
   it("follows the file through the app's own write, which replaces it", async () => {
     const { file, inBin, said, watcher } = await watching();
-    watcher.noteWritten(file, "typed");
     await writeAtomically(file, "typed");
-    await watcher.noteWriteDone(file);
+    await watcher.noteWritten(file, "typed");
     renameSync(file, inBin);
     expect(await until(() => said.includes("trashed"))).toBe(true);
     expect(said).toEqual(["trashed"]);
@@ -152,9 +151,9 @@ describe("a document's file and the Trash", () => {
     // begins; that is not this test's.
     await quiet();
     said.length = 0;
-    // A write's text is noted before the write, and the file still holds
-    // the one before: read now, it would look like another program's.
-    watcher.noteWritten(file, "typed");
+    // The file holds a text other than the one last noted: read now, it
+    // would look like another program's change.
+    await watcher.noteWritten(file, "typed");
     expect(await watcher.isInTrashNow(file)).toBe(false);
     expect(said).toEqual([]);
   });
@@ -173,5 +172,49 @@ describe("a document's file and the Trash", () => {
     renameSync(file, join(elsewhere, "notes.md"));
     await quiet();
     expect(said).toEqual([]);
+  });
+
+  it("TRASH-01.6 takes another file made where this one was for no putting back", async () => {
+    const { file, inBin, said, watcher } = await watching();
+    renameSync(file, inBin);
+    await until(() => said.includes("trashed"));
+    writeFileSync(file, "someone else's");
+    await quiet();
+    watcher.checkAll();
+    await quiet();
+    expect(said).toEqual(["trashed"]);
+    expect(watcher.isInTrash(file)).toBe(true);
+  });
+
+  it("TRASH-01.1 TRASH-01.6 finds the file in a folder thrown away whole, and back with it", async () => {
+    const root = mkdtempSync(join(tmpdir(), "lauda-watcher-"));
+    const bin = join(root, "bin");
+    const docs = join(root, "docs");
+    mkdirSync(bin);
+    mkdirSync(docs);
+    const file = join(docs, "notes.md");
+    writeFileSync(file, "draft");
+    const said: string[] = [];
+    const watcher = new DocumentWatcher(
+      {
+        changed: () => said.push("changed"),
+        trashed: () => said.push("trashed"),
+        putBack: (_path, text) => said.push(`putBack:${text}`),
+        goneFromTrash: () => said.push("gone"),
+        renamed: () => said.push("renamed"),
+      },
+      () => ({ folders: [bin], perUserParents: [] }),
+    );
+    scenes.push({ root, watcher, file });
+    watcher.watch(file);
+    await new Promise((done) => setTimeout(done, 100));
+
+    renameSync(docs, join(bin, "docs"));
+    watcher.checkAll();
+    expect(await until(() => said.includes("trashed"))).toBe(true);
+    expect(watcher.trashedPathOf(file)).toBe(join(bin, "docs", "notes.md"));
+
+    renameSync(join(bin, "docs"), docs);
+    expect(await until(() => said.includes("putBack:draft"))).toBe(true);
   });
 });

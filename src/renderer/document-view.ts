@@ -49,6 +49,7 @@ export class DocumentView {
   private readonly editor: Editor;
   private readonly preview: PreviewPane;
   private readonly find: FindSession;
+  private readonly findBar: FindBar;
   private readonly status: StatusBar;
   private mode: ViewMode;
   private awayTimer: number | undefined;
@@ -104,7 +105,7 @@ export class DocumentView {
     });
     this.showChain();
     this.find = new FindSession(this.editor, this.preview, () => this.mode);
-    new FindBar(context, this.panes, this.find, this.editor, () => this.mode);
+    this.findBar = new FindBar(context, this.panes, this.find, this.editor, () => this.mode);
     this.status = new StatusBar(context, document);
     this.element.append(this.status.element);
 
@@ -327,7 +328,7 @@ export class DocumentView {
     const { t } = this.context;
     const notice = element("div", "trash-notice");
     notice.hidden = true;
-    const card = element("div", "trash-card glass");
+    const card = element("div", "trash-card");
     const symbol = element("span", "trash-symbol");
     symbol.innerHTML = icons.trash;
     const button = element("button", "trash-show", t("Show in Trash"));
@@ -352,23 +353,18 @@ export class DocumentView {
   private showTrash(inTrash: boolean): void {
     this.showsTrash = inTrash;
     this.trashNotice.hidden = !inTrash;
-    this.panes.classList.toggle("in-trash", inTrash);
     if (inTrash) {
       const hadKeyboard = this.panes.contains(window.document.activeElement);
       this.find.close();
-      this.findBar.inert = true;
+      this.findBar.element.inert = true;
       this.editor.setLocked(true);
       if (hadKeyboard) (window.document.activeElement as HTMLElement | null)?.blur();
     } else {
-      this.findBar.inert = false;
+      this.findBar.element.inert = false;
       this.editor.setLocked(false);
     }
     this.setViewMode(this.mode, false);
     if (!inTrash && !this.element.hidden) this.focus();
-  }
-
-  private get findBar(): HTMLElement {
-    return this.panes.querySelector<HTMLElement>(".find-bar") ?? this.panes;
   }
 
   destroy(): void {

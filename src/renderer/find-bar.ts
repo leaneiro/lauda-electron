@@ -13,6 +13,10 @@ export class FindBar {
   private readonly previous = element("button");
   private readonly next = element("button");
 
+  get element(): HTMLElement {
+    return this.bar;
+  }
+
   constructor(
     context: WindowContext,
     host: HTMLElement,

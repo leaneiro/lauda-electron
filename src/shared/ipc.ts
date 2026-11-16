@@ -57,7 +57,9 @@ export interface Events {
   "workspace:open": OpenDocument;
   /// Brings an open file's tab forward; a file with no tab is left alone.
   "workspace:select": { filePath: string };
-  "workspace:close-everything": { reason: "window" | "quit" };
+  /// The window's close button or Quit: every tab answers, and they stay
+  /// in the session for the next launch.
+  "workspace:close-everything": Record<string, never>;
   "settings:changed": Settings;
   "doc:changed-on-disk": { filePath: string; text: string };
   /// The file of an open document went to the Trash. The document keeps
@@ -102,9 +104,10 @@ export interface OpenDocument {
 export interface WriteResult {
   ok: boolean;
   error?: string;
-  /// Nothing was written because the file is in the Trash, which is no
-  /// failure to tell the reader of.
-  inTrash?: boolean;
+  /// Nothing was written because the file is no longer there to write:
+  /// it went to the Trash, or was renamed, and the news is on its way.
+  /// No failure to tell the reader of.
+  withheld?: boolean;
 }
 
 export interface SaveAsRequest {

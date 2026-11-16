@@ -89,7 +89,7 @@ export class DocumentWindow {
   askToQuit(): boolean {
     if (!this.window || this.closeIsConfirmed) return false;
     this.quitting = true;
-    this.send("workspace:close-everything", { reason: "quit" });
+    this.send("workspace:close-everything", {});
     return true;
   }
 
@@ -172,7 +172,7 @@ export class DocumentWindow {
     window.on("close", (event) => {
       if (this.closeIsConfirmed) return;
       event.preventDefault();
-      this.send("workspace:close-everything", { reason: "quit" });
+      this.send("workspace:close-everything", {});
     });
     window.on("closed", () => {
       this.window = null;

@@ -272,7 +272,7 @@ describe("LaudaDocument and the Trash (TRASH-01)", () => {
   });
 
   it("TRASH-01.4 says nothing when a write finds the file already in the Trash", async () => {
-    const { document, requests } = fileDocument({ "doc:write": () => ({ ok: false, inTrash: true }) });
+    const { document, requests } = fileDocument({ "doc:write": () => ({ ok: false, withheld: true }) });
     document.edit("# Notes\n\nMore");
     expect(await document.autosave()).toBe(false);
     expect(requests.some((request) => request.channel === "doc:show-error")).toBe(false);

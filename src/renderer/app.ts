@@ -23,8 +23,8 @@ async function start(): Promise<void> {
   lauda.on("doc:put-back", ({ filePath, text }) => void workspace.filePutBack(filePath, text));
   lauda.on("doc:gone-from-trash", ({ filePath }) => void workspace.fileGoneFromTrash(filePath));
   lauda.on("doc:renamed", ({ from, to }) => workspace.fileRenamed(from, to));
-  lauda.on("workspace:close-everything", async ({ reason }) => {
-    const ok = await workspace.closeEverything(reason);
+  lauda.on("workspace:close-everything", async () => {
+    const ok = await workspace.closeEverything();
     await lauda.invoke("window:closed-everything", ok);
   });
   lauda.on("window:state", ({ isFullScreen, isFocused }) => {

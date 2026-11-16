@@ -163,9 +163,10 @@ export class LaudaDocument {
     const result = this.writing.then(async () => {
       const { lauda, t } = this.context;
       const outcome = await lauda.invoke("doc:write", filePath, written);
-      // The file went to the Trash before the news of it came: no failure,
-      // and the edit stays to be written when it is back.
-      if (outcome.inTrash) return false;
+      // The file went to the Trash, or was renamed, before the news of it
+      // came: no failure, and the edit stays to be written when it is back
+      // or under its new name.
+      if (outcome.withheld) return false;
       if (!outcome.ok) {
         if (reason === "asked" || !this.failureShown) {
           this.failureShown = true;

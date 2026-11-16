@@ -18,6 +18,10 @@ import * as rules from "./rules";
 /// A programmatic edit (formatting, a list's next item, images) is its own
 /// undo step, apart from the typing around it.
 export function programmaticEdit(view: EditorView, edit: rules.Edit, userEvent = "input.lauda"): void {
+  // A text that takes no edits (its file in the Trash) takes none from the
+  // app's own commands either, though they dispatch past CodeMirror's lock:
+  // an image import or a link that finishes after the lock.
+  if (view.state.readOnly) return;
   view.dispatch({
     changes: { from: edit.from, to: edit.to, insert: edit.insert },
     selection: EditorSelection.range(edit.selection.from, edit.selection.to),

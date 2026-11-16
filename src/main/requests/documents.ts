@@ -45,11 +45,13 @@ export function registerDocumentRequests({
     // Asked of the disk now, not of what the watcher last heard: the
     // autosave can come before the news that the file was thrown away,
     // and would make the file again where it was.
-    if (await watcher.isInTrashNow(filePath)) return { ok: false, inTrash: true };
+    if (await watcher.isInTrashNow(filePath)) return { ok: false, withheld: true };
+    // Renamed by another program while that was asked: the document follows
+    // the new name, and the old one is not to be made again.
+    if (!granted.has(filePath)) return { ok: false, withheld: true };
     try {
-      watcher.noteWritten(filePath, text);
       await writeAtomically(filePath, text);
-      await watcher.noteWriteDone(filePath);
+      await watcher.noteWritten(filePath, text);
       return { ok: true };
     } catch (error) {
       return { ok: false, error: messageOf(error) };
@@ -67,10 +69,12 @@ export function registerDocumentRequests({
     );
     if (!filePath) return null;
     try {
-      watcher.noteWritten(filePath, request.text);
       await writeAtomically(filePath, request.text);
       recentFiles.note(filePath);
       granted.grant(filePath);
+      // From now on a document with a file, watched as an opened one is.
+      watcher.watch(filePath);
+      await watcher.noteWritten(filePath, request.text);
       return filePath;
     } catch (error) {
       await showError(window, strings.t("Couldn't save “%@”", basename(filePath)), error, strings);
@@ -161,7 +165,7 @@ export function registerDocumentRequests({
   // As the native app asks: Close loses the edit, so it is neither the
   // default nor Escape's; Return and Escape both keep the document open.
   handle("doc:ask-close-in-trash", async (event, filePath, title) => {
-    if (closingQuestions.has(filePath)) return false;
+    if (!granted.has(filePath) || closingQuestions.has(filePath)) return false;
     const question = new AbortController();
     closingQuestions.set(filePath, question);
     try {

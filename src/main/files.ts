@@ -3,7 +3,7 @@ import { readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promise
 import { basename, dirname, join } from "node:path";
 import { isInsideTrash, type TrashPlaces } from "../shared/document";
 import { logFailure } from "./log";
-import { type FileIdentity, findIn, findInTrash, identityOf, trashPlacesOf } from "./trash";
+import { type FileIdentity, findIn, findInTrash, identityOf, isSameFile, trashPlacesOf } from "./trash";
 
 /// Strict UTF-8 with a Latin-1 fallback, never lossy, so a save can't
 /// silently corrupt a file that came in another encoding (as the native
@@ -93,10 +93,10 @@ interface WatchedFile {
 }
 
 /// Watches open documents for what other programs do to their files:
-/// a change of text, and the way to the Trash and back. The editor's own
-/// writes are recognized by their text and ignored. A file is followed
-/// into the Trash by which file it is, not by its name, and the Trash is
-/// looked into only when a document's file disappears.
+/// a change of text, a rename in its folder, and the way to the Trash and
+/// back. The editor's own writes are recognized by their text and
+/// ignored. A file is followed by which file it is, not by its name, and
+/// the Trash is looked into only when a document's file disappears.
 export class DocumentWatcher {
   private readonly files = new Map<string, WatchedFile>();
 
@@ -105,44 +105,59 @@ export class DocumentWatcher {
     private readonly placesOf: (filePath: string) => TrashPlaces = trashPlacesOf,
   ) {}
 
-  private entry(filePath: string): WatchedFile {
+  /// The app wrote `text` to the file: the news of it is not another
+  /// program's change. Noted once the write is done, never before, so a
+  /// write that failed leaves the text the file really holds; the news
+  /// comes a moment later (see scheduleCheck). A write replaces the file
+  /// with a new one (see writeAtomically): which file it is is asked again.
+  async noteWritten(filePath: string, text: string): Promise<void> {
+    const entry = this.files.get(filePath);
+    if (!entry) return;
+    entry.lastWritten = text;
+    entry.identity = await identityOf(filePath);
+  }
+
+  watch(filePath: string): void {
     let entry = this.files.get(filePath);
     if (!entry) {
       entry = { identity: null };
       this.files.set(filePath, entry);
     }
-    return entry;
-  }
-
-  noteWritten(filePath: string, text: string): void {
-    this.entry(filePath).lastWritten = text;
-  }
-
-  /// A write replaces the file with a new one (see writeAtomically): which
-  /// file it is has to be asked again.
-  async noteWriteDone(filePath: string): Promise<void> {
-    const entry = this.files.get(filePath);
-    if (entry) entry.identity = await identityOf(filePath);
-  }
-
-  watch(filePath: string): void {
-    const entry = this.entry(filePath);
     if (entry.folderWatcher) return;
-    entry.folderWatcher = this.watchFolder(dirname(filePath), basename(filePath), () => this.scheduleCheck(filePath));
+    this.watchFolderOf(filePath, entry);
+    const watched = entry;
     void identityOf(filePath).then((identity) => {
-      entry.identity ??= identity;
+      watched.identity ??= identity;
       // Opened from inside the Trash: there from the start.
-      if (isInsideTrash(filePath) && !entry.trashedAt && this.files.get(filePath) === entry) {
-        entry.trashedAt = filePath;
+      if (isInsideTrash(filePath) && !watched.trashedAt && this.files.get(filePath) === watched) {
+        watched.trashedAt = filePath;
         this.events.trashed(filePath);
       }
     });
   }
 
+  private watchFolderOf(filePath: string, entry: WatchedFile): void {
+    entry.folderWatcher = this.watchFolder(
+      dirname(filePath),
+      basename(filePath),
+      () => this.scheduleCheck(filePath),
+      () => {
+        entry.folderWatcher = undefined;
+      },
+    );
+  }
+
   /// The folder is watched, not the file: saving through a rename (as
   /// this app and most editors do) replaces the file a watcher follows.
-  /// With a name, only what happens to that name counts.
-  private watchFolder(folder: string, name: string | null, onEvent: () => void): FSWatcher | undefined {
+  /// With a name, only what happens to that name counts. A watcher that
+  /// fails is let go, and the next look at every file (checkAll) tries
+  /// again.
+  private watchFolder(
+    folder: string,
+    name: string | null,
+    onEvent: () => void,
+    onFailure: () => void,
+  ): FSWatcher | undefined {
     try {
       const watcher = watch(folder, (_event, changed) => {
         if (name && changed && changed.toString() !== name) return;
@@ -151,6 +166,7 @@ export class DocumentWatcher {
       watcher.on("error", (error) => {
         logFailure("files", "Watching a document's folder", error);
         watcher.close();
+        onFailure();
       });
       return watcher;
     } catch (error) {
@@ -195,7 +211,10 @@ export class DocumentWatcher {
   /// Looks at every file again: what a watcher missed (a folder that can't
   /// be watched, a limit reached) is caught when the window comes forward.
   checkAll(): void {
-    for (const filePath of this.files.keys()) this.scheduleCheck(filePath);
+    for (const [filePath, entry] of this.files) {
+      if (!entry.folderWatcher && !entry.trashedAt) this.watchFolderOf(filePath, entry);
+      this.scheduleCheck(filePath);
+    }
   }
 
   private scheduleCheck(filePath: string): void {
@@ -215,9 +234,12 @@ export class DocumentWatcher {
       await this.fileIsNotThere(filePath, entry);
       return;
     }
+    const identity = await identityOf(filePath);
     if (this.files.get(filePath) !== entry) return;
-    entry.identity = await identityOf(filePath);
     if (entry.trashedAt && entry.trashedAt !== filePath) {
+      // Another file where this one was, made while it is in the Trash, is
+      // no putting back: the document's file is still there.
+      if (!entry.identity || !identity || !isSameFile(entry.identity, identity)) return;
       entry.trashedAt = undefined;
       entry.trashWatcher?.close();
       entry.trashWatcher = undefined;
@@ -225,6 +247,7 @@ export class DocumentWatcher {
       this.events.putBack(filePath, text);
       return;
     }
+    entry.identity = identity;
     if (text === entry.lastWritten) return;
     entry.lastWritten = text;
     this.events.changed(filePath, text);
@@ -232,14 +255,24 @@ export class DocumentWatcher {
 
   private async fileIsNotThere(filePath: string, entry: WatchedFile): Promise<void> {
     if (!entry.identity) return;
-    const trashedAt = await findInTrash(entry.identity, this.placesOf(filePath));
+    const found = await findInTrash(entry.identity, this.placesOf(filePath), filePath);
     if (this.files.get(filePath) !== entry) return;
-    if (trashedAt) {
-      if (entry.trashedAt === trashedAt) return;
+    if (found) {
+      if (entry.trashedAt === found.at) return;
       const wasInTrash = entry.trashedAt !== undefined;
-      entry.trashedAt = trashedAt;
+      entry.trashedAt = found.at;
       entry.trashWatcher?.close();
-      entry.trashWatcher = this.watchFolder(dirname(trashedAt), null, () => this.scheduleCheck(filePath));
+      // The Trash folder holding the entry: what leaves it (put back,
+      // emptied) is told there, whether the entry is the file or a folder
+      // above it.
+      entry.trashWatcher = this.watchFolder(
+        found.place,
+        null,
+        () => this.scheduleCheck(filePath),
+        () => {
+          entry.trashWatcher = undefined;
+        },
+      );
       if (!wasInTrash) this.events.trashed(filePath);
       return;
     }

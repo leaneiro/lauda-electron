@@ -21,7 +21,7 @@ export async function identityOf(filePath: string): Promise<FileIdentity | null>
   }
 }
 
-function isSameFile(one: FileIdentity, other: FileIdentity | null): boolean {
+export function isSameFile(one: FileIdentity, other: FileIdentity | null): boolean {
   return other !== null && one.volume === other.volume && one.file === other.file;
 }
 
@@ -60,11 +60,34 @@ export async function findIn(identity: FileIdentity, folders: string[]): Promise
   return null;
 }
 
+/// Where the file is in the Trash, and the Trash folder whose entry holds
+/// it: the file itself, or a folder above it thrown away with it inside.
+export interface FoundInTrash {
+  at: string;
+  place: string;
+}
+
 /// Where in the Trash the file is, or null when it is in none of the
-/// places. Every entry is asked which file it is: a Trash holds what the
-/// reader threw away and forgot, hundreds at most, and this runs when a
-/// document's file disappears, not while typing.
-export async function findInTrash(identity: FileIdentity, places: TrashPlaces): Promise<string | null> {
+/// places. Every entry is asked which file it is, and an entry that is a
+/// folder is looked into along the file's own path, for a folder above the
+/// file thrown away whole (Windows renames the folder, not what is in it).
+/// A Trash holds what the reader threw away and forgot, hundreds at most,
+/// and this runs when a document's file disappears, not while typing.
+export async function findInTrash(
+  identity: FileIdentity,
+  places: TrashPlaces,
+  filePath: string,
+): Promise<FoundInTrash | null> {
   const perUser = (await Promise.all(places.perUserParents.map(entriesOf))).flat();
-  return findIn(identity, [...places.folders, ...perUser]);
+  const below = filePath.split(/[\\/]/).filter((part) => part !== "");
+  for (const place of [...places.folders, ...perUser]) {
+    for (const entry of await entriesOf(place)) {
+      if (isSameFile(identity, await identityOf(entry))) return { at: entry, place };
+      for (let depth = 1; depth < below.length; depth++) {
+        const inside = join(entry, ...below.slice(below.length - depth));
+        if (isSameFile(identity, await identityOf(inside))) return { at: inside, place };
+      }
+    }
+  }
+  return null;
 }

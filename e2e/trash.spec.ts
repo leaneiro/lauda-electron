@@ -258,3 +258,27 @@ test("TRASH-01.8 a file renamed in its folder is followed, and typing saves unde
   expect(existsSync(scene.home)).toBe(false);
   await scene.app.close();
 });
+
+test("TRASH-01.1 a new document saved somewhere is followed to the Trash as an opened one is", async () => {
+  const scene = await open();
+  const saved = join(scene.folder, "new.md");
+  await scene.app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.webContents.send("menu:command", { name: "new" });
+  });
+  await expect(scene.window.locator(".tab")).toHaveCount(2);
+  await editor(scene.window).click();
+  await scene.window.keyboard.type("fresh");
+  await scene.app.evaluate(({ dialog }, path) => {
+    dialog.showSaveDialog = (async () => ({ canceled: false, filePath: path })) as typeof dialog.showSaveDialog;
+  }, saved);
+  await clickMenu(scene.app, "File", "Save");
+  await expect(scene.window.locator(".tab.is-selected .tab-title")).toHaveText("new.md");
+
+  renameSync(saved, join(scene.trash, "new.md"));
+  await expect(notice(scene.window)).toBeVisible();
+  await scene.window.keyboard.type("x");
+  await scene.window.waitForTimeout(2500);
+  // Nothing made again where it was.
+  expect(existsSync(saved)).toBe(false);
+  await scene.app.close();
+});

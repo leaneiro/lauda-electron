@@ -50,6 +50,12 @@ for example `fix(preview): …` or `feat(editor): …`.
   file requests only about files it handed the window: opened, saved as,
   renamed or moved (`GrantedFiles`). A new request that takes a path
   checks it the same way.
+- The main process follows each open document's file (`DocumentWatcher`
+  in `files.ts`): another program's change, a rename in its folder, and
+  the way to the Trash and back, told by which file it is (`trash.ts`),
+  not by its name, since Windows renames what it bins. `doc:write` asks
+  where the file is before writing, so nothing is written into the
+  Trash, and an autosave never makes the file again where it was.
 
 ## The preview
 
@@ -66,8 +72,9 @@ Unit tests (Vitest) cover the rules in `src/shared`, the window's logic
 the parts of the main process that touch the disk, against temporary
 folders they remove.
 The end-to-end tests (Playwright) run the app with a data folder of its
-own, so nothing of the reader's is touched. A test never writes outside
-the folders it made.
+own, so nothing of the reader's is touched, and a folder that stands for
+the Trash (`LAUDA_TRASH`), so the real one never is. A test never writes
+outside the folders it made.
 
 ## Staying in step with the native app
 

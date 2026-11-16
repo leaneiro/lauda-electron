@@ -4,4 +4,5 @@
 export * from "./imageImporter";
 export * from "./saveStatus";
 export * from "./shortcutKeys";
+export * from "./trash";
 export * from "./wordCount";

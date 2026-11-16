@@ -167,14 +167,25 @@ export class DocumentWatcher {
     this.files.delete(filePath);
   }
 
+  /// Where the file is in the Trash, while it is there.
+  trashedPathOf(filePath: string): string | undefined {
+    return this.files.get(filePath)?.trashedAt;
+  }
+
   isInTrash(filePath: string): boolean {
     return this.files.get(filePath)?.trashedAt !== undefined;
   }
 
   /// Looks at the file now and says whether it is in the Trash: before a
   /// write, which would otherwise make the file again where it was.
+  /// Only where the file is counts here, not what it holds: reading it
+  /// would take the text the write is about to replace for another
+  /// program's change.
   async isInTrashNow(filePath: string): Promise<boolean> {
-    if (this.files.has(filePath)) await this.check(filePath);
+    const entry = this.files.get(filePath);
+    if (!entry) return false;
+    if (await identityOf(filePath)) return false;
+    await this.fileIsNotThere(filePath, entry);
     return this.isInTrash(filePath);
   }
 

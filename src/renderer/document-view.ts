@@ -9,7 +9,7 @@ import { element, lightGlass } from "./dom";
 import { Editor } from "./editor/editor";
 import { FindSession } from "./find";
 import { FindBar } from "./find-bar";
-import { chainIcon } from "./icons";
+import { chainIcon, icons } from "./icons";
 import { PreviewPane } from "./preview/preview-pane";
 import { farFromTheEnd, type ScrollSync } from "./scroll-sync";
 import { StatusBar } from "./status-bar";
@@ -54,6 +54,11 @@ export class DocumentView {
   private awayTimer: number | undefined;
   private readonly resizeObserver: ResizeObserver;
   private readonly unsubscribe: () => void;
+  /// Over the panes while the document's file is in the Trash
+  /// (TrashNotice.swift): the text faded behind, and a card saying why it
+  /// takes no edits.
+  private readonly trashNotice: HTMLElement;
+  private showsTrash = false;
 
   constructor(
     private readonly context: WindowContext,
@@ -79,6 +84,7 @@ export class DocumentView {
     this.divider.append(handle, this.chain);
     lightGlass(this.divider);
     this.panes.append(this.editorPane, this.divider, this.previewPane);
+    this.trashNotice = this.makeTrashNotice();
     this.element.append(this.panes);
 
     this.editor = new Editor(context, this.editorPane, document, {
@@ -109,6 +115,7 @@ export class DocumentView {
     this.resizeObserver.observe(this.panes);
     this.unsubscribe = document.onChange(() => {
       this.preview.setMarkdown(document.text, workspace.settings.strictLineBreaks);
+      if (document.isInTrash !== this.showsTrash) this.showTrash(document.isInTrash);
     });
     this.preview.setMarkdown(document.text, workspace.settings.strictLineBreaks);
   }
@@ -124,8 +131,10 @@ export class DocumentView {
     if (wasHidden) this.preview.realign();
   }
 
-  /// Gives the keyboard to the pane that types or scrolls in this mode.
+  /// Gives the keyboard to the pane that types or scrolls in this mode;
+  /// to none while the file is in the Trash.
   focus(): void {
+    if (this.showsTrash) return;
     if (this.mode === "previewOnly") this.preview.focus();
     else this.editor.focus();
   }
@@ -150,11 +159,11 @@ export class DocumentView {
     this.panes.dataset.mode = mode;
     window.clearTimeout(this.awayTimer);
     const settle = () => {
-      this.editorPane.inert = mode === "previewOnly";
-      this.previewPane.inert = mode === "editorOnly";
+      this.editorPane.inert = mode === "previewOnly" || this.showsTrash;
+      this.previewPane.inert = mode === "editorOnly" || this.showsTrash;
       // Out of view at the window's edge, the divider would still take the
       // pointer and the keyboard, its chain with it.
-      this.divider.inert = mode !== "split";
+      this.divider.inert = mode !== "split" || this.showsTrash;
       this.editor.restoreScroll();
       this.preview.realign();
     };
@@ -279,6 +288,8 @@ export class DocumentView {
   }
 
   perform(command: PaneCommand): void {
+    // Find would open under the notice, and the formatting would edit.
+    if (this.showsTrash) return;
     switch (command.name) {
       case "find":
         this.find.open();
@@ -308,6 +319,56 @@ export class DocumentView {
         if (this.mode !== "previewOnly") void this.editor.insertLink();
         return;
     }
+  }
+
+  // MARK: - The Trash
+
+  private makeTrashNotice(): HTMLElement {
+    const { t } = this.context;
+    const notice = element("div", "trash-notice");
+    notice.hidden = true;
+    const card = element("div", "trash-card glass");
+    const symbol = element("span", "trash-symbol");
+    symbol.innerHTML = icons.trash;
+    const button = element("button", "trash-show", t("Show in Trash"));
+    button.type = "button";
+    button.addEventListener("click", () => {
+      if (this.document.filePath) void this.context.lauda.invoke("doc:show-in-trash", this.document.filePath);
+    });
+    card.append(
+      symbol,
+      element("h2", "trash-title", t("This file is in the Trash")),
+      element("p", "trash-detail", t("Put it back to keep editing.")),
+      button,
+    );
+    notice.append(card);
+    this.panes.append(notice);
+    return notice;
+  }
+
+  /// The file went to the Trash, or came back. Going, the panes give up the
+  /// keyboard and take no clicks, an open find bar closes (its matches
+  /// would sit under the notice), and the editor takes no edits.
+  private showTrash(inTrash: boolean): void {
+    this.showsTrash = inTrash;
+    this.trashNotice.hidden = !inTrash;
+    this.panes.classList.toggle("in-trash", inTrash);
+    if (inTrash) {
+      const hadKeyboard = this.panes.contains(window.document.activeElement);
+      this.find.close();
+      this.findBar.inert = true;
+      this.editor.setLocked(true);
+      if (hadKeyboard) (window.document.activeElement as HTMLElement | null)?.blur();
+    } else {
+      this.findBar.inert = false;
+      this.editor.setLocked(false);
+    }
+    this.setViewMode(this.mode, false);
+    if (!inTrash && !this.element.hidden) this.focus();
+  }
+
+  private get findBar(): HTMLElement {
+    return this.panes.querySelector<HTMLElement>(".find-bar") ?? this.panes;
   }
 
   destroy(): void {

@@ -22,7 +22,7 @@ export class LaudaDocument {
   /// welcome guide's), so opening and closing it asks nothing; one made as
   /// the reader's own change, a duplicate, is edited from the start.
   private readonly baseline: string;
-  private readonly startsEdited: boolean;
+  private startsEdited: boolean;
   private untitledTitle: string;
   scrollSync: ScrollSync = startingScroll();
   /// Whether this document's panes scroll together. The chain on the
@@ -50,6 +50,10 @@ export class LaudaDocument {
   /// Set while the reader chooses between their text and a file another
   /// app changed: nothing is written until they have.
   private writesAreHeld = false;
+  /// Whether the file is in the Trash (features/F01, TRASH-01). The text
+  /// takes no edits and nothing is written there; an edit made just before
+  /// the file went is kept, and saved once it is back.
+  isInTrash = false;
 
   constructor(
     private readonly context: WindowContext,
@@ -91,7 +95,7 @@ export class LaudaDocument {
 
   /// What typing does: the text changes and the autosave is scheduled.
   edit(text: string): void {
-    if (text === this.text) return;
+    if (text === this.text || this.isInTrash) return;
     this.text = text;
     this.notifyChanged();
     this.scheduleAutosave();
@@ -108,7 +112,7 @@ export class LaudaDocument {
   }
 
   private scheduleAutosave(): void {
-    if (!this.filePath || this.writesAreHeld) return;
+    if (!this.filePath || this.writesAreHeld || this.isInTrash) return;
     window.clearTimeout(this.autosaveTimer);
     this.autosaveTimer = window.setTimeout(() => void this.autosave("unasked"), autosaveDelay);
   }
@@ -120,11 +124,15 @@ export class LaudaDocument {
     window.clearTimeout(this.autosaveTimer);
     if (this.writesAreHeld) return false;
     if (!this.filePath || this.text === this.savedText) return true;
+    // Nothing to write into the Trash, and nothing to say about it: the
+    // notice says it, and the edit waits for the file to come back.
+    if (this.isInTrash) return true;
     return this.write(this.filePath, reason);
   }
 
   /// ⌘S: a document with a file writes it now; a new one asks where.
   async save(): Promise<boolean> {
+    if (this.isInTrash) return false;
     if (!this.filePath) return this.saveAs();
     const ok = await this.autosave();
     if (ok) {
@@ -155,6 +163,9 @@ export class LaudaDocument {
     const result = this.writing.then(async () => {
       const { lauda, t } = this.context;
       const outcome = await lauda.invoke("doc:write", filePath, written);
+      // The file went to the Trash before the news of it came: no failure,
+      // and the edit stays to be written when it is back.
+      if (outcome.inTrash) return false;
       if (!outcome.ok) {
         if (reason === "asked" || !this.failureShown) {
           this.failureShown = true;
@@ -182,6 +193,34 @@ export class LaudaDocument {
 
   releaseWrites(): void {
     this.writesAreHeld = false;
+  }
+
+  /// The file went to the Trash.
+  trashed(): void {
+    if (this.isInTrash) return;
+    this.isInTrash = true;
+    window.clearTimeout(this.autosaveTimer);
+    this.notifyChanged();
+  }
+
+  /// The file is back where it was.
+  putBack(): void {
+    if (!this.isInTrash) return;
+    this.isInTrash = false;
+    this.notifyChanged();
+  }
+
+  /// The file was deleted from the Trash and the document had edits kept:
+  /// it becomes a new document holding them, to be saved somewhere or let
+  /// go as any new document is.
+  becomeUntitled(title: string): void {
+    this.filePath = null;
+    this.savedText = null;
+    this.savedDate = null;
+    this.untitledTitle = title;
+    this.startsEdited = true;
+    this.isInTrash = false;
+    this.notifyChanged();
   }
 
   /// The file moved (Rename, Move To): the document follows it.

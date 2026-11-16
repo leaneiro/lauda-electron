@@ -238,3 +238,56 @@ describe("LaudaDocument", () => {
     expect(document.folder).toBe("C:\\docs");
   });
 });
+
+describe("LaudaDocument and the Trash (TRASH-01)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("TRASH-01.4 takes no edits and writes nothing while the file is in the Trash", async () => {
+    const { document, requests } = fileDocument();
+    document.trashed();
+    document.edit("# Notes\n\nMore");
+    expect(document.text).toBe("# Notes\n");
+    expect(await document.save()).toBe(false);
+    await vi.advanceTimersByTimeAsync(autosaveDelay * 2);
+    expect(writes(requests)).toEqual([]);
+  });
+
+  it("TRASH-01.10 keeps an edit made just before the file went, and writes it once the file is back", async () => {
+    const { document, requests } = fileDocument();
+    document.edit("# Notes\n\nMore");
+    document.trashed();
+    await vi.advanceTimersByTimeAsync(autosaveDelay * 2);
+    expect(await document.autosave()).toBe(true);
+    expect(writes(requests)).toEqual([]);
+    expect(document.isEdited).toBe(true);
+
+    document.putBack();
+    expect(await document.autosave()).toBe(true);
+    expect(writes(requests)).toEqual([["/docs/notes.md", "# Notes\n\nMore"]]);
+  });
+
+  it("TRASH-01.4 says nothing when a write finds the file already in the Trash", async () => {
+    const { document, requests } = fileDocument({ "doc:write": () => ({ ok: false, inTrash: true }) });
+    document.edit("# Notes\n\nMore");
+    expect(await document.autosave()).toBe(false);
+    expect(requests.some((request) => request.channel === "doc:show-error")).toBe(false);
+    expect(document.isEdited).toBe(true);
+  });
+
+  it("TRASH-01.15 becomes a new document holding the edits kept", () => {
+    const { document } = fileDocument();
+    document.edit("# Notes\n\nMore");
+    document.trashed();
+    document.becomeUntitled("Untitled");
+    expect(document.filePath).toBeNull();
+    expect(document.title).toBe("Untitled");
+    expect(document.isInTrash).toBe(false);
+    expect(document.isEdited).toBe(true);
+    expect(document.text).toBe("# Notes\n\nMore");
+  });
+});

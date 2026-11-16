@@ -143,4 +143,17 @@ describe("a document's file and the Trash", () => {
     rmSync(file);
     expect(await until(() => said.includes("gone"))).toBe(true);
   });
+
+  it("TRASH-01.4 asks only where the file is before a write, never taking its text for a change", async () => {
+    const { file, said, watcher } = await watching();
+    // The system may tell of the file's making a moment after the watch
+    // begins; that is not this test's.
+    await quiet();
+    said.length = 0;
+    // A write's text is noted before the write, and the file still holds
+    // the one before: read now, it would look like another program's.
+    watcher.noteWritten(file, "typed");
+    expect(await watcher.isInTrashNow(file)).toBe(false);
+    expect(said).toEqual([]);
+  });
 });

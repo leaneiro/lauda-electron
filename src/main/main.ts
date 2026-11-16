@@ -70,11 +70,18 @@ let menuState: MenuState = { hasDocument: false, hasFile: false, documentCount: 
 const documentWindow = new DocumentWindow(() => settingsWindow.close());
 const settingsWindow = new SettingsWindow({ title: () => strings.t("Settings"), parent: () => documentWindow.current });
 
+/// The questions about closing a document whose file is in the Trash, by
+/// file (see the document requests).
+const closingQuestions = new Map<string, AbortController>();
 const watcher = new DocumentWatcher({
   changed: (filePath, text) => send("doc:changed-on-disk", { filePath, text }),
   trashed: (filePath) => send("doc:trashed", { filePath }),
   putBack: (filePath, text) => send("doc:put-back", { filePath, text }),
-  goneFromTrash: (filePath) => send("doc:gone-from-trash", { filePath }),
+  goneFromTrash: (filePath) => {
+    // A question that says the file is in the Trash stops being true.
+    closingQuestions.get(filePath)?.abort();
+    send("doc:gone-from-trash", { filePath });
+  },
 });
 /// The files this process has handed the window, the only ones it may
 /// write to, move or watch (see GrantedFiles).
@@ -327,7 +334,7 @@ function registerRequests(): void {
   handle("window:closed-everything", (_event, ok) => documentWindow.everythingClosed(ok));
   handle("window:close", (event) => windowFor(event).close());
 
-  registerDocumentRequests({ granted, watcher, recentFiles, strings, windowFor });
+  registerDocumentRequests({ granted, watcher, recentFiles, strings, windowFor, closingQuestions });
 
   handle("export:html", (event, request) => exportHTML(windowFor(event), request, settings.value, strings));
   handle("export:pdf", (event, request) => exportPDF(windowFor(event), request, settings.value, strings));

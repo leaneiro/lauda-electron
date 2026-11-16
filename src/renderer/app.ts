@@ -19,6 +19,9 @@ async function start(): Promise<void> {
   lauda.on("menu:command", (command) => void workspace.perform(command));
   lauda.on("settings:changed", (settings) => workspace.applySettings(settings));
   lauda.on("doc:changed-on-disk", ({ filePath, text }) => void workspace.fileChangedOnDisk(filePath, text));
+  lauda.on("doc:trashed", ({ filePath }) => workspace.fileTrashed(filePath));
+  lauda.on("doc:put-back", ({ filePath, text }) => void workspace.filePutBack(filePath, text));
+  lauda.on("doc:gone-from-trash", ({ filePath }) => void workspace.fileGoneFromTrash(filePath));
   lauda.on("workspace:close-everything", async ({ reason }) => {
     const ok = await workspace.closeEverything(reason);
     await lauda.invoke("window:closed-everything", ok);

@@ -1,6 +1,6 @@
 import { standardKeymap } from "@codemirror/commands";
-import { openSearchPanel, search, searchKeymap } from "@codemirror/search";
-import { EditorSelection, EditorState, Transaction } from "@codemirror/state";
+import { closeSearchPanel, openSearchPanel, search, searchKeymap } from "@codemirror/search";
+import { Compartment, EditorSelection, EditorState, Transaction } from "@codemirror/state";
 import { drawSelection, EditorView, keymap } from "@codemirror/view";
 import type { WindowContext } from "../context";
 import type { LaudaDocument } from "../document";
@@ -23,6 +23,8 @@ export class Editor implements EditorFinding {
   /// Set while text from outside (a revert) is put in, so it isn't taken
   /// for the reader typing.
   private isReplacing = false;
+  /// Whether the text takes edits: not while its file is in the Trash.
+  private readonly lock = new Compartment();
 
   constructor(
     private readonly context: WindowContext,
@@ -39,6 +41,7 @@ export class Editor implements EditorFinding {
       state: EditorState.create({
         doc: document.text,
         extensions: [
+          this.lock.of([]),
           behaviors(context, document),
           keymap.of(standardKeymap),
           drawSelection(),
@@ -78,6 +81,17 @@ export class Editor implements EditorFinding {
   /// when its text reflows.
   setLinked(linked: boolean): void {
     this.scrolling.isLinked = linked;
+  }
+
+  /// Locked, the text takes no edit from the reader: typing, pasting,
+  /// undo, the replace bar (which closes). Text put in from outside (a
+  /// file read again) still goes in.
+  setLocked(locked: boolean): void {
+    if (locked) closeSearchPanel(this.view);
+    this.view.dispatch({
+      effects: this.lock.reconfigure(locked ? [EditorState.readOnly.of(true), EditorView.editable.of(false)] : []),
+    });
+    this.view.contentDOM.blur();
   }
 
   focus(): boolean {

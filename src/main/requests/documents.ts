@@ -1,6 +1,6 @@
 import { copyFile, rename, rm } from "node:fs/promises";
 import { basename, dirname, extname, join } from "node:path";
-import { app, type BrowserWindow, dialog, type IpcMainInvokeEvent } from "electron";
+import { app, type BrowserWindow, dialog, type IpcMainInvokeEvent, shell } from "electron";
 import type { Strings } from "../../shared/i18n";
 import { isImagePath } from "../../shared/markdown/content-policy";
 import { askWhereToSave, messageOf, showError, showMessage, showWarning } from "../dialogs";
@@ -20,6 +20,10 @@ export interface DocumentRequestContext {
   recentFiles: RecentFiles;
   strings: Strings;
   windowFor: (event: IpcMainInvokeEvent) => BrowserWindow;
+  /// The questions about closing a document whose file is in the Trash,
+  /// by file, so the file being deleted from the Trash can take its
+  /// question down (TRASH-01.16).
+  closingQuestions: Map<string, AbortController>;
 }
 
 /// Writing, saving as, renaming, moving and watching documents, the
@@ -30,6 +34,7 @@ export function registerDocumentRequests({
   recentFiles,
   strings,
   windowFor,
+  closingQuestions,
 }: DocumentRequestContext): void {
   handle("doc:register-folder", (_event, documentId, filePath) =>
     registerDocumentFolder(documentId, granted.has(filePath) ? dirname(filePath) : null),
@@ -148,6 +153,42 @@ export function registerDocumentRequests({
       cancelId: 0,
     });
     return result.response === 1 ? "revert" : "saveAnyway";
+  });
+  handle("doc:show-in-trash", (_event, filePath) => {
+    const inTrash = granted.has(filePath) ? watcher.trashedPathOf(filePath) : undefined;
+    if (inTrash) shell.showItemInFolder(inTrash);
+  });
+  // As the native app asks: Close loses the edit, so it is neither the
+  // default nor Escape's; Return and Escape both keep the document open.
+  handle("doc:ask-close-in-trash", async (event, filePath, title) => {
+    if (closingQuestions.has(filePath)) return false;
+    const question = new AbortController();
+    closingQuestions.set(filePath, question);
+    try {
+      const result = await showMessage(windowFor(event), {
+        type: "warning",
+        message: strings.t("Close “%@” without saving?", title),
+        detail: strings.t("The file is in the Trash, so your changes can't be saved. Put it back to keep them."),
+        buttons: [strings.t("Close"), strings.t("Cancel")],
+        defaultId: 1,
+        cancelId: 1,
+        signal: question.signal,
+      });
+      return result.response === 0 && !question.signal.aborted;
+    } finally {
+      closingQuestions.delete(filePath);
+    }
+  });
+  handle("doc:ask-changed-in-trash", async (event, title) => {
+    const result = await showMessage(windowFor(event), {
+      type: "warning",
+      message: strings.t("“%@” changed while it was in the Trash", title),
+      detail: strings.t("Keep the changes you made here, or use the file as it is now?"),
+      buttons: [strings.t("Keep My Changes"), strings.t("Use the File")],
+      defaultId: 0,
+      cancelId: 0,
+    });
+    return result.response === 1 ? "useFile" : "keep";
   });
   handle("doc:watch", (_event, filePath) => {
     if (granted.has(filePath)) watcher.watch(filePath);

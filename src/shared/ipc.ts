@@ -28,6 +28,15 @@ export interface Requests {
   /// Another app changed a file the reader has changes of their own to:
   /// which of the two to keep.
   "doc:ask-changed-elsewhere": { args: [title: string]; result: "saveAnyway" | "revert" };
+  /// The file manager opens on the Trash, with the document's file chosen.
+  "doc:show-in-trash": { args: [filePath: string]; result: void };
+  /// Closing a document whose file is in the Trash, with an edit kept that
+  /// can't be saved there: whether to close all the same. Taken down as
+  /// Cancel when the file is deleted from the Trash meanwhile.
+  "doc:ask-close-in-trash": { args: [filePath: string, title: string]; result: boolean };
+  /// The file came back from the Trash changed, and the document has an
+  /// edit kept: which text to keep.
+  "doc:ask-changed-in-trash": { args: [title: string]; result: "keep" | "useFile" };
   "doc:watch": { args: [filePath: string]; result: void };
   "doc:unwatch": { args: [filePath: string]; result: void };
   "doc:show-error": { args: [message: string, detail: string]; result: void };

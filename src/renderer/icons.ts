@@ -22,6 +22,10 @@ export const icons = {
   close: `<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M5 5l6 6M11 5l-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
   dot: `<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="3.5" fill="currentColor"/></svg>`,
   menu: svg(`<path d="M5 7.5h14M5 12h14M5 16.5h14"/>`),
+  // The Trash notice's can, standing in for the trash symbol.
+  trash: svg(
+    `<path d="M4.5 6.5h15M9.5 6.5V4.8c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v1.7M6.3 6.5l.9 12.6c.1 1 .9 1.7 1.9 1.7h5.8c1 0 1.8-.7 1.9-1.7l.9-12.6M10 10.2v6.9M14 10.2v6.9"/>`,
+  ),
   magnifier: `<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="6.8" cy="6.8" r="4.6"/><path d="M10.3 10.3l3.9 3.9"/></svg>`,
   chevronLeft: `<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>`,
   chevronRight: `<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>`,

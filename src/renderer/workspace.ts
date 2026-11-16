@@ -1,3 +1,4 @@
+import { afterDeletedFromTrash, afterPutBack } from "../shared/document";
 import type { MenuCommand, OpenDocument, SessionContents } from "../shared/ipc";
 import { modeChangeMs } from "../shared/layout";
 import { nextPreviewWidthLevel, previewWidthShowing, type Settings, type ViewMode } from "../shared/settings";
@@ -209,6 +210,12 @@ export class Workspace {
   }
 
   private async canClose(document: LaudaDocument): Promise<boolean> {
+    if (document.isInTrash && document.isEdited && document.filePath) {
+      // The edit kept out of the Trash has nowhere to be saved: closing
+      // loses it, which is asked with its tab in front (TRASH-01.12).
+      this.select(document);
+      return this.context.lauda.invoke("doc:ask-close-in-trash", document.filePath, document.title);
+    }
     if (document.filePath) return document.autosave();
     if (!document.isEdited) return true;
     // Whether to keep the text is asked with its tab in front.
@@ -400,6 +407,59 @@ export class Workspace {
     document.releaseWrites();
     if (answer === "revert") this.views.get(document.id)?.replaceText(onDisk, true);
     else await document.autosave();
+  }
+
+  // MARK: - The Trash (features/F01, TRASH-01)
+
+  fileTrashed(filePath: string): void {
+    this.documents.find((d) => d.filePath === filePath)?.trashed();
+  }
+
+  /// Back from the Trash. With nothing unsaved the file is read again; an
+  /// edit kept is saved when the file is as the document last knew it,
+  /// and asked about when the file changed too. Until the answer nothing
+  /// is written, and another change meanwhile is what "Use the File" takes.
+  async filePutBack(filePath: string, text: string): Promise<void> {
+    const document = this.documents.find((d) => d.filePath === filePath);
+    if (!document) return;
+    document.putBack();
+    const view = this.views.get(document.id);
+    const next = afterPutBack(document, text);
+    if (next === "read") {
+      if (document.text !== text) view?.replaceText(text, true);
+      return;
+    }
+    if (next === "save") {
+      await document.autosave();
+      return;
+    }
+    if (this.conflicts.has(document)) {
+      this.conflicts.set(document, text);
+      return;
+    }
+    this.conflicts.set(document, text);
+    document.holdWrites();
+    this.select(document);
+    const answer = await this.context.lauda.invoke("doc:ask-changed-in-trash", document.title);
+    const onDisk = this.conflicts.get(document) ?? text;
+    this.conflicts.delete(document);
+    document.releaseWrites();
+    // Thrown away again before the answer: the edit stays kept.
+    if (document.isInTrash || document.filePath !== filePath) return;
+    if (answer === "useFile") view?.replaceText(onDisk, true);
+    else await document.autosave();
+  }
+
+  /// Deleted from the Trash: nothing is left to put back. A document with
+  /// nothing to lose closes; one with an edit kept becomes untitled.
+  async fileGoneFromTrash(filePath: string): Promise<void> {
+    const document = this.documents.find((d) => d.filePath === filePath);
+    if (!document) return;
+    if (afterDeletedFromTrash(document) === "close") {
+      await this.closeTab(document);
+      return;
+    }
+    document.becomeUntitled(this.nextUntitledTitle());
   }
 
   /// Writes every document with a file; the window lost focus.

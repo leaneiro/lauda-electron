@@ -3,6 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type ElectronApplication, _electron as electron, type Page } from "@playwright/test";
 
+/// The app's windows stay out of sight and never take the keyboard from
+/// the app in use (LAUDA_OFFSCREEN, see windows.ts), so a test run can go
+/// on while the reader works. LAUDA_ONSCREEN=1 shows them, to watch a run.
+export const outOfSight: Record<string, string> = process.env.LAUDA_ONSCREEN === "1" ? {} : { LAUDA_OFFSCREEN: "1" };
+
 export interface Launched {
   app: ElectronApplication;
   window: Page;
@@ -38,7 +43,13 @@ export async function launch(
     colorScheme: null,
     executablePath,
     args: executablePath ? paths : [".", ...paths],
-    env: { ...process.env, LAUDA_USER_DATA: userData, LAUDA_LOCALE: options.locale ?? "en", LAUDA_TRASH: trash },
+    env: {
+      ...process.env,
+      ...outOfSight,
+      LAUDA_USER_DATA: userData,
+      LAUDA_LOCALE: options.locale ?? "en",
+      LAUDA_TRASH: trash,
+    },
   });
   const window = await app.firstWindow();
   await window.waitForSelector("#titlebar");

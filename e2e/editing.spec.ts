@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } fro
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron as electron, expect, test } from "@playwright/test";
-import { clickMenu, forceQuit, launch, previewFrame } from "./launch";
+import { clickMenu, forceQuit, launch, outOfSight, previewFrame } from "./launch";
 
 test("a backtick from a dead key pairs and closes, as on a Brazilian keyboard", async () => {
   const { app, window } = await launch({ files: { "dead.md": "" } });
@@ -26,7 +26,7 @@ test("the welcome guide opens on the first launch", async () => {
   const app = await electron.launch({
     colorScheme: null,
     args: ["."],
-    env: { ...process.env, LAUDA_USER_DATA: folder, LAUDA_LOCALE: "pt-BR" },
+    env: { ...process.env, ...outOfSight, LAUDA_USER_DATA: folder, LAUDA_LOCALE: "pt-BR" },
   });
   const window = await app.firstWindow();
   await expect(window.locator(".window-title")).toHaveText("Boas-vindas");
@@ -62,7 +62,7 @@ test("the welcome guide speaks the system's shortcuts", async () => {
   const app = await electron.launch({
     colorScheme: null,
     args: ["."],
-    env: { ...process.env, LAUDA_USER_DATA: folder, LAUDA_LOCALE: "pt-BR", LAUDA_PLATFORM: "win32" },
+    env: { ...process.env, ...outOfSight, LAUDA_USER_DATA: folder, LAUDA_LOCALE: "pt-BR", LAUDA_PLATFORM: "win32" },
   });
   const window = await app.firstWindow();
   const guide = window.locator(".cm-content");

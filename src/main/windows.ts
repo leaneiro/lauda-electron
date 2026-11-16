@@ -9,6 +9,28 @@ import { tabKeyCommand } from "./tab-keys";
 
 const isMac = process.platform === "darwin";
 
+/// For the end-to-end tests (LAUDA_OFFSCREEN): the windows never come up
+/// on the screen in use. They open as far off the screens as the system
+/// lets them (macOS keeps a strip of a titled window on screen), wholly
+/// see-through, letting the pointer through to what is under them, and
+/// without taking the keyboard from the app the reader is in. The tests
+/// reach them through the page, which none of that changes.
+export const isOffscreen = process.env.LAUDA_OFFSCREEN === "1";
+const offscreenCorner = -20_000;
+
+/// Shows a window, where the reader sees it, or out of sight for a test run.
+function reveal(window: BrowserWindow): void {
+  if (!isOffscreen) {
+    window.show();
+    return;
+  }
+  window.setOpacity(0);
+  window.setIgnoreMouseEvents(true);
+  window.setPosition(offscreenCorner, offscreenCorner);
+  window.showInactive();
+  window.setPosition(offscreenCorner, offscreenCorner);
+}
+
 /// The app's icon as a file of its own, for Linux's window and About
 /// panel: GTK reads the panel's from the disk and can't look inside the
 /// app's archive, so the packaged app keeps a copy beside it
@@ -110,9 +132,9 @@ export class DocumentWindow {
     if (!this.window) return false;
     // Still waiting for its page to draw: the reader asked for it, so it
     // shows now.
-    if (!this.window.isVisible()) this.window.show();
+    if (!this.window.isVisible()) reveal(this.window);
     if (this.window.isMinimized()) this.window.restore();
-    this.window.focus();
+    if (!isOffscreen) this.window.focus();
     return true;
   }
 
@@ -150,8 +172,8 @@ export class DocumentWindow {
     // the page has drawn: waiting for that left the window hidden for good
     // when the first frame never came (a Windows virtual machine), and
     // Electron advises showing at once where it may come late.
-    if (state?.maximized) window.maximize();
-    window.show();
+    if (state?.maximized && !isOffscreen) window.maximize();
+    reveal(window);
     window.on("unresponsive", () => logNote("app", "The window stopped responding"));
     // Ctrl+Tab and Ctrl+Shift+Tab walk the tabs, as in browsers. Hidden
     // items in the Window menu carried them, and on Windows those shortcuts
@@ -265,6 +287,6 @@ export class SettingsWindow {
   private reveal(): void {
     if (this.isRevealed || !this.window || this.window.isDestroyed()) return;
     this.isRevealed = true;
-    this.window.show();
+    reveal(this.window);
   }
 }

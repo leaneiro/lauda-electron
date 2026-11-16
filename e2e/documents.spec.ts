@@ -1,7 +1,7 @@
 import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { _electron as electron, expect, type Page, test } from "@playwright/test";
-import { clickMenu, forceQuit, launch, previewFrame } from "./launch";
+import { clickMenu, forceQuit, launch, outOfSight, previewFrame } from "./launch";
 
 test("exports HTML and PDF next to the document", async () => {
   const { app, window, folder } = await launch({ files: { "report.md": "# Report\n\nSome **text**.\n" } });
@@ -51,7 +51,7 @@ test("the tabs left open come back at the next launch", async () => {
 
   const app = await electron.launch({
     args: ["."],
-    env: { ...process.env, LAUDA_USER_DATA: userData, LAUDA_LOCALE: "en" },
+    env: { ...process.env, ...outOfSight, LAUDA_USER_DATA: userData, LAUDA_LOCALE: "en" },
   });
   const window = await app.firstWindow();
   await expect(window.locator(".tab")).toHaveCount(2);
@@ -293,6 +293,7 @@ test("duplicate, rename and move", async () => {
 /// brings such a window back by itself; Windows and Linux leave it where it
 /// is told, which is what this checks there (placement.test.ts has the rule).
 test("a window last seen on a screen that is gone opens where it can be reached", async () => {
+  test.skip(Object.keys(outOfSight).length > 0, "the windows are kept out of sight; run with LAUDA_ONSCREEN=1");
   const { app } = await launch({
     files: { "a.md": "# A\n" },
     windowState: { x: 20000, y: 20000, width: 900, height: 600, maximized: false },

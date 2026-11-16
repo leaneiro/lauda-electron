@@ -75,6 +75,12 @@ The end-to-end tests (Playwright) run the app with a data folder of its
 own, so nothing of the reader's is touched, and a folder that stands for
 the Trash (`LAUDA_TRASH`), so the real one never is. A test never writes
 outside the folders it made.
+They run out of sight (`LAUDA_OFFSCREEN`, which `e2e/launch.ts` sets):
+the windows open as far off the screens as the system lets them, wholly
+see-through, out of the Dock, letting the pointer through and never
+taking the keyboard, so a run can go on while the reader works.
+`LAUDA_ONSCREEN=1 npm run e2e` shows them, to watch a run; the one test
+about where a window opens runs only then.
 
 ## Staying in step with the native app
 

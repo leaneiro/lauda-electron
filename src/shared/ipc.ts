@@ -67,6 +67,8 @@ export interface Events {
   "doc:put-back": { filePath: string; text: string };
   /// It left the Trash without coming back: there is no file any more.
   "doc:gone-from-trash": { filePath: string };
+  /// Another program renamed the file in its folder: the document follows.
+  "doc:renamed": { from: string; to: string };
   "window:state": { isFullScreen: boolean; isFocused: boolean };
 }
 

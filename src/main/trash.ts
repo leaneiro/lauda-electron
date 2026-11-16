@@ -50,16 +50,21 @@ async function entriesOf(folder: string): Promise<string[]> {
   }
 }
 
+/// Where in these folders the file is, by which file it is, or null.
+export async function findIn(identity: FileIdentity, folders: string[]): Promise<string | null> {
+  for (const folder of folders) {
+    for (const entry of await entriesOf(folder)) {
+      if (isSameFile(identity, await identityOf(entry))) return entry;
+    }
+  }
+  return null;
+}
+
 /// Where in the Trash the file is, or null when it is in none of the
 /// places. Every entry is asked which file it is: a Trash holds what the
 /// reader threw away and forgot, hundreds at most, and this runs when a
 /// document's file disappears, not while typing.
 export async function findInTrash(identity: FileIdentity, places: TrashPlaces): Promise<string | null> {
   const perUser = (await Promise.all(places.perUserParents.map(entriesOf))).flat();
-  for (const folder of [...places.folders, ...perUser]) {
-    for (const entry of await entriesOf(folder)) {
-      if (isSameFile(identity, await identityOf(entry))) return entry;
-    }
-  }
-  return null;
+  return findIn(identity, [...places.folders, ...perUser]);
 }

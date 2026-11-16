@@ -3,7 +3,7 @@ import { readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promise
 import { basename, dirname, join } from "node:path";
 import { isInsideTrash, type TrashPlaces } from "../shared/document";
 import { logFailure } from "./log";
-import { type FileIdentity, findInTrash, identityOf, trashPlacesOf } from "./trash";
+import { type FileIdentity, findIn, findInTrash, identityOf, trashPlacesOf } from "./trash";
 
 /// Strict UTF-8 with a Latin-1 fallback, never lossy, so a save can't
 /// silently corrupt a file that came in another encoding (as the native
@@ -77,6 +77,9 @@ export interface DocumentWatcherEvents {
   putBack: (filePath: string, text: string) => void;
   /// The file left the Trash without coming back: deleted for good.
   goneFromTrash: (filePath: string) => void;
+  /// Another program renamed the file in its folder. The watcher stops
+  /// watching the old name; who heard of it watches the new one.
+  renamed: (from: string, to: string) => void;
 }
 
 interface WatchedFile {
@@ -241,9 +244,16 @@ export class DocumentWatcher {
       return;
     }
     // Not where it was and in no Trash. Out of the Trash that way, it is
-    // gone; never having been there, it was deleted or moved by another
-    // program, which this edition leaves as it always did.
-    if (entry.trashedAt === undefined) return;
+    // gone. Never having been there, it may have been renamed in its
+    // folder, which the document follows; moved elsewhere or deleted, this
+    // edition leaves it as it always did.
+    if (entry.trashedAt === undefined) {
+      const renamedTo = await findIn(entry.identity, [dirname(filePath)]);
+      if (!renamedTo || this.files.get(filePath) !== entry) return;
+      this.unwatch(filePath);
+      this.events.renamed(filePath, renamedTo);
+      return;
+    }
     this.unwatch(filePath);
     this.events.goneFromTrash(filePath);
   }

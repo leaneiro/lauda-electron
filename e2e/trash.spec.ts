@@ -1,4 +1,4 @@
-import { readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { type ElectronApplication, expect, type Page, test } from "@playwright/test";
 import { clickMenu, forceQuit, type Launched, launch } from "./launch";
@@ -243,4 +243,18 @@ test("TRASH-01.16 the file deleted while the closing question is up takes it dow
   await expect(scene.window.locator(".window-title")).toHaveText("Untitled");
   await expect(editor(scene.window)).toHaveText("draftx");
   await forceQuit(scene.app);
+});
+
+test("TRASH-01.8 a file renamed in its folder is followed, and typing saves under the new name", async () => {
+  const scene = await open();
+  const renamed = join(scene.folder, "ideas.md");
+  renameSync(scene.home, renamed);
+  await expect(scene.window.locator(".window-title")).toHaveText("ideas.md");
+  await expect(notice(scene.window)).toBeHidden();
+  await editor(scene.window).click();
+  await scene.window.keyboard.press("End");
+  await scene.window.keyboard.type("x");
+  await expect.poll(() => readFileSync(renamed, "utf8"), { timeout: 6000 }).toBe("draftx");
+  expect(existsSync(scene.home)).toBe(false);
+  await scene.app.close();
 });

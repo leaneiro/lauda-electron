@@ -82,6 +82,16 @@ const watcher = new DocumentWatcher({
     closingQuestions.get(filePath)?.abort();
     send("doc:gone-from-trash", { filePath });
   },
+  renamed: (from, to) => {
+    granted.revoke(from);
+    granted.grant(to);
+    if (recentFiles.list.includes(from)) {
+      recentFiles.forget(from);
+      recentFiles.note(to);
+    }
+    watcher.watch(to);
+    send("doc:renamed", { from, to });
+  },
 });
 /// The files this process has handed the window, the only ones it may
 /// write to, move or watch (see GrantedFiles).

@@ -19,6 +19,7 @@ function scene() {
       trashed: () => said.push("trashed"),
       putBack: (_path, text) => said.push(`putBack:${text}`),
       goneFromTrash: () => said.push("gone"),
+      renamed: (_from, to) => said.push(`renamed:${to.split(/[\\/]/).pop()}`),
     },
     () => ({ folders: [bin], perUserParents: [] }),
   );
@@ -134,6 +135,7 @@ describe("a document's file and the Trash", () => {
         trashed: () => said.push("trashed"),
         putBack: () => said.push("putBack"),
         goneFromTrash: () => said.push("gone"),
+        renamed: () => said.push("renamed"),
       },
       () => ({ folders: [folder], perUserParents: [] }),
     );
@@ -154,6 +156,22 @@ describe("a document's file and the Trash", () => {
     // the one before: read now, it would look like another program's.
     watcher.noteWritten(file, "typed");
     expect(await watcher.isInTrashNow(file)).toBe(false);
+    expect(said).toEqual([]);
+  });
+
+  it("TRASH-01.8 follows a file another program renamed in its folder", async () => {
+    const { root, file, said } = await watching();
+    renameSync(file, join(root, "ideas.md"));
+    expect(await until(() => said.includes("renamed:ideas.md"))).toBe(true);
+    expect(said).toEqual(["renamed:ideas.md"]);
+  });
+
+  it("TRASH-01.8 leaves a file moved to another folder as before", async () => {
+    const { root, file, said } = await watching();
+    const elsewhere = join(root, "elsewhere");
+    mkdirSync(elsewhere);
+    renameSync(file, join(elsewhere, "notes.md"));
+    await quiet();
     expect(said).toEqual([]);
   });
 });

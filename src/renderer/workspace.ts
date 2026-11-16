@@ -462,6 +462,15 @@ export class Workspace {
     document.becomeUntitled(this.nextUntitledTitle());
   }
 
+  /// Another program renamed the file in its folder (TRASH-01.8): the
+  /// document follows it, as it does a rename made here.
+  fileRenamed(from: string, to: string): void {
+    const document = this.documents.find((d) => d.filePath === from);
+    if (!document) return;
+    document.moved(to);
+    this.views.get(document.id)?.fileMoved();
+  }
+
   /// Writes every document with a file; the window lost focus.
   flushAutosaves(): void {
     for (const document of this.documents) void document.autosave("unasked");

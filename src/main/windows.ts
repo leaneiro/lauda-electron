@@ -9,8 +9,8 @@ import { tabKeyCommand } from "./tab-keys";
 
 const isMac = process.platform === "darwin";
 
-/// For the end-to-end tests (LAUDA_OFFSCREEN): the windows never come up
-/// on the screen in use. They are wholly see-through, let the pointer
+/// For the end-to-end tests (LAUDA_OFFSCREEN): the windows keep out of the
+/// reader's way, as far as the system allows. They are wholly see-through, let the pointer
 /// through to what is under them, and never take the keyboard from the app
 /// the reader is in. On macOS they also go as far off the screens as the
 /// system lets them (it keeps a strip of a titled window on screen): in

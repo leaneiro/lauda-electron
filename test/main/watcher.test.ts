@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -49,7 +49,8 @@ const quiet = () => new Promise((done) => setTimeout(done, 700));
 
 async function watching(): Promise<ReturnType<typeof scene>> {
   const made = scene();
-  made.watcher.watch(made.file);
+  // From the text the window holds, as an opened document is watched.
+  made.watcher.watch(made.file, "draft");
   // The watcher asks which file this is before it can follow it anywhere.
   await new Promise((done) => setTimeout(done, 100));
   return made;
@@ -139,8 +140,10 @@ describe("a document's file and the Trash", () => {
       () => ({ folders: [folder], perUserParents: [] }),
     );
     scenes.push({ root, watcher, file });
-    watcher.watch(file);
+    watcher.watch(file, "old");
     expect(await until(() => said.includes("trashed"))).toBe(true);
+    // Nothing is written there either.
+    expect(await watcher.isInTrashNow(file)).toBe(true);
     rmSync(file);
     expect(await until(() => said.includes("gone"))).toBe(true);
   });
@@ -262,5 +265,15 @@ describe("a document's file and the Trash", () => {
     await new Promise((done) => setTimeout(done, 100));
     watcher.checkAll();
     expect(await until(() => said.includes("changed:draft"))).toBe(true);
+  });
+
+  it("TRASH-01.14 TRASH-01.15 writes nothing where the file was once it has left the Trash for good", async () => {
+    const { file, inBin, said, watcher } = await watching();
+    renameSync(file, inBin);
+    await until(() => said.includes("trashed"));
+    rmSync(inBin);
+    expect(await watcher.isInTrashNow(file)).toBe(true);
+    expect(said).toEqual(["trashed", "gone"]);
+    expect(existsSync(file)).toBe(false);
   });
 });

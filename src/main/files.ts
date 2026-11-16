@@ -77,8 +77,8 @@ export interface DocumentWatcherEvents {
   putBack: (filePath: string, text: string) => void;
   /// The file left the Trash without coming back: deleted for good.
   goneFromTrash: (filePath: string) => void;
-  /// Another program renamed the file in its folder. The watcher stops
-  /// watching the old name; who heard of it watches the new one.
+  /// Another program renamed the file in its folder. The watcher goes on
+  /// watching it under the new name.
   renamed: (from: string, to: string) => void;
 }
 
@@ -86,8 +86,8 @@ interface WatchedFile {
   folderWatcher?: FSWatcher;
   trashWatcher?: FSWatcher;
   timer?: NodeJS.Timeout;
-  /// The text the file was last known to hold: read when watching begins,
-  /// and each time the app writes it or another program changes it.
+  /// The text the file was last known to hold: the window's when watching
+  /// begins, and each time the app writes it or another program changes it.
   lastWritten?: string;
   /// How often watching the folder failed: after the first, the next look
   /// at every file (checkAll) tries once more, then no more; the file is
@@ -230,9 +230,10 @@ export class DocumentWatcher {
   async isInTrashNow(filePath: string): Promise<boolean> {
     const entry = this.files.get(filePath);
     if (!entry) return false;
+    // Opened from inside the Trash: there, though at the path it has.
+    if (entry.trashedAt === filePath) return true;
     const identity = await identityOf(filePath);
-    const isTheDocumentsFile =
-      !entry.trashedAt || entry.trashedAt === filePath || (entry.identity && isSameFile(entry.identity, identity));
+    const isTheDocumentsFile = !entry.trashedAt || (entry.identity && isSameFile(entry.identity, identity));
     if (identity && isTheDocumentsFile) return false;
     const wasInTrash = entry.trashedAt !== undefined;
     await this.fileIsNotThere(filePath, entry);

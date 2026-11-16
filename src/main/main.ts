@@ -89,7 +89,6 @@ const watcher = new DocumentWatcher({
       recentFiles.forget(from);
       recentFiles.note(to);
     }
-    watcher.watch(to);
     send("doc:renamed", { from, to });
   },
 });

@@ -140,7 +140,9 @@ export class Workspace {
     this.views.set(document.id, view);
     this.container.append(view.element);
     document.onChange(() => this.notifyChanged());
-    if (document.filePath) void this.context.lauda.invoke("doc:watch", document.filePath);
+    if (document.filePath) {
+      void this.context.lauda.invoke("doc:watch", document.filePath, document.savedText ?? document.text);
+    }
     this.tabsChanged();
     this.showSelected();
   }
@@ -367,7 +369,7 @@ export class Workspace {
         if (!to) return;
         void this.context.lauda.invoke("doc:unwatch", from);
         document.moved(to);
-        void this.context.lauda.invoke("doc:watch", to);
+        void this.context.lauda.invoke("doc:watch", to, document.savedText ?? document.text);
         view.fileMoved();
         return;
       }

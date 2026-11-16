@@ -37,7 +37,8 @@ export interface Requests {
   /// The file came back from the Trash changed, and the document has an
   /// edit kept: which text to keep.
   "doc:ask-changed-in-trash": { args: [title: string]; result: "keep" | "useFile" };
-  "doc:watch": { args: [filePath: string]; result: void };
+  /// Watches a document's file, from the text the window holds of it.
+  "doc:watch": { args: [filePath: string, text: string]; result: void };
   "doc:unwatch": { args: [filePath: string]; result: void };
   "doc:show-error": { args: [message: string, detail: string]; result: void };
   "session:store": { args: [session: SessionContents]; result: void };

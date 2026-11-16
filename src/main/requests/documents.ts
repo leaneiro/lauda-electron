@@ -73,7 +73,7 @@ export function registerDocumentRequests({
       recentFiles.note(filePath);
       granted.grant(filePath);
       // From now on a document with a file, watched as an opened one is.
-      watcher.watch(filePath);
+      watcher.watch(filePath, request.text);
       await watcher.noteWritten(filePath, request.text);
       return filePath;
     } catch (error) {
@@ -194,8 +194,8 @@ export function registerDocumentRequests({
     });
     return result.response === 1 ? "useFile" : "keep";
   });
-  handle("doc:watch", (_event, filePath) => {
-    if (granted.has(filePath)) watcher.watch(filePath);
+  handle("doc:watch", (_event, filePath, text) => {
+    if (granted.has(filePath)) watcher.watch(filePath, text);
   });
   handle("doc:unwatch", (_event, filePath) => watcher.unwatch(filePath));
   handle("doc:show-error", async (event, message, detail) => {

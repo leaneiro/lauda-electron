@@ -238,4 +238,29 @@ describe("a document's file and the Trash", () => {
     await quiet();
     expect(said).toEqual([]);
   });
+
+  it("TRASH-01.4 writes nothing over another program's file where this one was, while this one is in the Trash", async () => {
+    const { file, inBin, said, watcher } = await watching();
+    renameSync(file, inBin);
+    await until(() => said.includes("trashed"));
+    writeFileSync(file, "someone else's");
+    expect(await watcher.isInTrashNow(file)).toBe(true);
+  });
+
+  it("TRASH-01.8 goes on watching a renamed file under its new name", async () => {
+    const { root, file, said } = await watching();
+    const renamed = join(root, "ideas.md");
+    renameSync(file, renamed);
+    await until(() => said.includes("renamed:ideas.md"));
+    writeFileSync(renamed, "edited elsewhere");
+    expect(await until(() => said.includes("changed:edited elsewhere"))).toBe(true);
+  });
+
+  it("tells a change made between the opening and the watching", async () => {
+    const { file, said, watcher } = scene();
+    watcher.watch(file, "as opened");
+    await new Promise((done) => setTimeout(done, 100));
+    watcher.checkAll();
+    expect(await until(() => said.includes("changed:draft"))).toBe(true);
+  });
 });

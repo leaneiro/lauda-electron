@@ -153,12 +153,12 @@ test("TRASH-01.12 closing with an edit kept asks first, and Cancel keeps the tab
   await expect(notice(scene.window)).toBeVisible();
 
   await answerQuestions(scene.app, 0);
+  // Close loses the edit and closes the last tab, and with it the window
+  // and the app.
+  const quit = scene.app.waitForEvent("close");
   await clickMenu(scene.app, "File", "Close");
-  await expect(scene.window.locator(".window-title, .tab"))
-    .toHaveCount(0, { timeout: 10_000 })
-    .catch(() => {});
+  await quit;
   expect(readFileSync(scene.trashed, "utf8")).toBe("draft");
-  await forceQuit(scene.app);
 });
 
 test("TRASH-01.5 closing with nothing unsaved asks nothing while the file is in the Trash", async () => {

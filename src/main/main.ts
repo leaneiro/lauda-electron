@@ -406,9 +406,10 @@ app.on("browser-window-focus", () => {
   refreshMenu();
 });
 
-app.on("window-all-closed", () => {
-  if (!isMac || documentWindow.isQuitting) app.quit();
-});
+/// One window is the whole app, on the Mac too, as the native app since
+/// November 2026: closed, the app quits. The tabs the window's close button
+/// closed come back at the next launch.
+app.on("window-all-closed", () => app.quit());
 
 app.on("activate", () => {
   if (!documentWindow.current && isReady) void showOpenDialog();

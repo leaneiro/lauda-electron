@@ -62,10 +62,6 @@ export class DocumentWindow {
     return this.window;
   }
 
-  get isQuitting(): boolean {
-    return this.quitting;
-  }
-
   send<C extends keyof Events>(channel: C, payload: Events[C]): void {
     this.window?.webContents.send(channel, payload);
   }
@@ -171,12 +167,12 @@ export class DocumentWindow {
 
     // The close button means every tab. The window asks each document in
     // turn (untitled text asks whether to keep it) and answers; only then
-    // does it really close. On Windows and Linux closing the window is how
-    // the app quits, so the tabs are remembered for the next launch.
+    // does it really close. Closing the window is how the app quits, on
+    // every system, so the tabs are remembered for the next launch.
     window.on("close", (event) => {
       if (this.closeIsConfirmed) return;
       event.preventDefault();
-      this.send("workspace:close-everything", { reason: this.quitting || !isMac ? "quit" : "window" });
+      this.send("workspace:close-everything", { reason: "quit" });
     });
     window.on("closed", () => {
       this.window = null;

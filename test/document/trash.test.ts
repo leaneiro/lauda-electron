@@ -16,6 +16,15 @@ describe("telling the Trash from everywhere else", () => {
     expect(isInsideTrash("/home/ana/Trash/files/notes.md")).toBe(false);
     expect(isInsideTrash("/Users/ana/Documents/.Trash")).toBe(false);
   });
+
+  it("knows a Trash put elsewhere by the places where a thrown away file would be", () => {
+    // Linux with XDG_DATA_HOME of the user's own, or the tests' Trash.
+    const places = { folders: ["/home/ana/data/Trash/files"], perUserParents: [] };
+    expect(isInsideTrash("/home/ana/data/Trash/files/notes.md", places)).toBe(true);
+    expect(isInsideTrash("/home/ana/data/Trash/files/old/notes.md", places)).toBe(true);
+    expect(isInsideTrash("/home/ana/data/Trash/notes.md", places)).toBe(false);
+    expect(isInsideTrash("/home/ana/data/Trash/files-old/notes.md", places)).toBe(false);
+  });
 });
 
 describe("where a thrown away file would be", () => {

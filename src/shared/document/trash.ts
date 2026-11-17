@@ -13,8 +13,15 @@ function parts(filePath: string): string[] {
 /// Whether `filePath` is inside a Trash: the home folder's, or the one a
 /// volume keeps at its root. Told by the folders' names, as the native
 /// app does for volumes, so a file opened straight from the Trash counts.
-export function isInsideTrash(filePath: string): boolean {
+/// A Trash the names don't tell (Linux with XDG_DATA_HOME of the user's
+/// own) is told by `places`, where a thrown away file would be.
+export function isInsideTrash(filePath: string, places?: TrashPlaces): boolean {
   const folders = parts(filePath).slice(0, -1);
+  const inAPlace = places?.folders.some((place) => {
+    const placeFolders = parts(place);
+    return placeFolders.length <= folders.length && placeFolders.every((name, index) => name === folders[index]);
+  });
+  if (inAPlace) return true;
   return folders.some(
     (name, index) =>
       trashFolderNames.has(name) ||

@@ -156,7 +156,11 @@ export class DocumentWatcher {
     void identityOf(filePath).then((identity) => {
       watched.identity ??= identity;
       // Opened from inside the Trash: there from the start.
-      if (isInsideTrash(filePath) && !watched.trashedAt && this.files.get(filePath) === watched) {
+      if (
+        isInsideTrash(filePath, this.placesOf(filePath)) &&
+        !watched.trashedAt &&
+        this.files.get(filePath) === watched
+      ) {
         watched.trashedAt = filePath;
         this.events.trashed(filePath);
       }
@@ -235,7 +239,7 @@ export class DocumentWatcher {
   async isInTrashNow(filePath: string): Promise<boolean> {
     // Opened from inside the Trash: there, though at the path it has, told
     // by the path alone, before the watcher has even asked which file it is.
-    if (isInsideTrash(filePath) || this.goneForGood.has(filePath)) return true;
+    if (isInsideTrash(filePath, this.placesOf(filePath)) || this.goneForGood.has(filePath)) return true;
     const entry = this.files.get(filePath);
     if (!entry) return false;
     const identity = await identityOf(filePath);

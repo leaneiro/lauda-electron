@@ -71,7 +71,7 @@ NSIS tools don't run, but `npx electron-builder --linux deb` and
 The icons in `build/` come from one drawing, `build/icon.svg`, the native
 app's: `npm run icons` draws every size Windows and Linux show, each on
 its own, with the margin each system's grid keeps. With
-`-- --mac ../markeditor/Resources/Icons` it also draws the native app's
+`-- --mac ../lauda-mac/Resources/Icons` it also draws the native app's
 PNGs, which its `make icon` turns into the .icns. Run it after changing
 the drawing.
 
@@ -110,7 +110,7 @@ e2e/           # end-to-end tests (Playwright)
 
 `npm run sync-native` copies the preview stylesheet, the wordmark font, the
 welcome guides, the icon's drawing and the string catalog (converted to
-JSON) from the native repository, expected at `../markeditor` (or wherever
+JSON) from the native repository, expected at `../lauda-mac` (or wherever
 `LAUDA_NATIVE` points). Strings the native app gets from macOS, like the
 Edit menu's, live in `resources/locales/app.json`.
 

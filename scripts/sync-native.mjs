@@ -8,7 +8,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const native = process.env.LAUDA_NATIVE ?? join(root, "..", "markeditor");
+const native = process.env.LAUDA_NATIVE ?? join(root, "..", "lauda-mac");
 
 function copy(from, to) {
   mkdirSync(dirname(join(root, to)), { recursive: true });

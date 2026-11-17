@@ -10,15 +10,16 @@ import { tabKeyCommand } from "./tab-keys";
 const isMac = process.platform === "darwin";
 
 /// For the end-to-end tests (LAUDA_OFFSCREEN): the windows keep out of the
-/// reader's way, as far as the system allows. They are wholly see-through, let the pointer
-/// through to what is under them, and never take the keyboard from the app
-/// the reader is in. On macOS they also go as far off the screens as the
-/// system lets them (it keeps a strip of a titled window on screen): in
-/// place, the reader's own pointer passing over still lit what is lit under
-/// it, and a test of that failed. Elsewhere they stay where they open, so
-/// where a window opens is still tested there. The tests reach the windows
-/// through the page, which none of this changes. Measured on macOS; on
-/// Linux a window can't be made see-through, and shows.
+/// reader's way, as far as the system allows. They are wholly see-through,
+/// let the pointer through to what is under them, and never take the
+/// keyboard from the app the reader is in. On macOS they also go as far off
+/// the screens as the system lets them (it keeps a strip of a titled window
+/// on screen): in place, the reader's own pointer passing over still lit
+/// what is lit under it, and a test of that failed. Elsewhere they stay
+/// where they open, so where a window opens is still tested there. The
+/// tests reach the windows through the page, which none of this changes.
+/// Measured on macOS; on Linux a window can't be made see-through, and
+/// shows.
 export const isOffscreen = process.env.LAUDA_OFFSCREEN === "1";
 const offscreenCorner = -20_000;
 

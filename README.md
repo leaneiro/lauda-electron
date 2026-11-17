@@ -36,8 +36,8 @@ the same cases.
 - **Outline**, **Find** (in every view mode, with a match counter) and
   **Find and Replace** (Ctrl+H).
 - **Export** as standalone HTML or paginated PDF.
-- **Documents**: autosave, Save As, Duplicate, Rename, Move To, Revert to
-  Saved, recent files, and files changed by other programs reloaded.
+- **Documents**: autosave, Duplicate, Rename, Move To, recent files, and
+  files changed by other programs reloaded.
 - **Settings**: appearance (automatic, light or dark), editor and preview
   fonts and sizes, preview line height, strict line breaks.
 - **Languages**: English and Brazilian Portuguese, reviewed; German,

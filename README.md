@@ -22,8 +22,10 @@ the same cases.
 - **View modes**: editor only (Ctrl+1), split (Ctrl+2) or preview only
   (Ctrl+3), also in the toolbar. Preview-only mode offers three text widths.
 - **Tabs**: every document opens as a tab of one window, and the files you
-  leave open come back when you open Lauda again. Ctrl+Tab and
-  Ctrl+Shift+Tab switch tabs; Ctrl+W or a middle click closes one.
+  leave open come back when you open Lauda again. Ctrl+Shift+] and
+  Ctrl+Shift+[ switch tabs, and so do Ctrl+Tab and Ctrl+Shift+Tab on
+  Linux (on Windows, Ctrl+Tab never reaches the app); Ctrl+W or a middle
+  click closes one.
 - **Writing**: Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Shift+X and Ctrl+K; Return
   continues lists; Tab and Shift+Tab indent items; brackets, quotes and the
   `*`, `_` and `` ` `` markers close themselves, and typed over a selection
@@ -118,7 +120,11 @@ Edit menu's, live in `resources/locales/app.json`.
 
 **Linux.** The .deb installs an AppArmor profile for Lauda, since Ubuntu
 24.04 and later only let programs with a profile create the user
-namespaces Chromium's sandbox needs. Lauda runs natively on Wayland.
+namespaces Chromium's sandbox needs. Lauda runs under X11, through
+XWayland on a Wayland desktop: its `.desktop` launcher starts it with
+`--ozone-platform=x11`, since on Wayland it could neither keep Settings
+above the document window nor place its windows. Started another way, as
+the AppImage file itself or `lauda` from a terminal, it runs on Wayland.
 
 **Windows.** Installers aren't code-signed yet; until they are, SmartScreen
 warns before the first run.

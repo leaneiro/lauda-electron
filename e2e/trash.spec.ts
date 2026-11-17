@@ -173,6 +173,18 @@ test("TRASH-01.12 closing with an edit kept asks first, and Cancel keeps the tab
   expectNothingWritten(scene);
 });
 
+test("TRASH-01.5 closing the only document of the window, with its file in the Trash and nothing unsaved, asks nothing", async () => {
+  const scene = await open();
+  await throwAway(scene);
+  // A question, answered Cancel, would keep the window: the close would never come.
+  await answerQuestions(scene.app, 1);
+  // The last tab closes the window, and with it the app.
+  const closed = scene.app.waitForEvent("close");
+  await clickMenu(scene.app, "File", "Close");
+  await closed;
+  expectNothingWritten(scene);
+});
+
 test("TRASH-01.5 TRASH-01.10 closing a file saved before it was thrown away asks nothing", async () => {
   const scene = await open("draft", { "other.md": "other" });
   await scene.window.locator(".tab", { hasText: "notes.md" }).click();

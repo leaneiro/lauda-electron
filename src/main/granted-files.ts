@@ -7,17 +7,29 @@ import { extname, resolve } from "node:path";
 /// on the disk and have it written over.
 export class GrantedFiles {
   private readonly paths = new Set<string>();
+  /// Where a granted file was before it was renamed or moved away: a write
+  /// the window asked there before it heard is nothing to do, not a failure.
+  private readonly left = new Set<string>();
 
   grant(filePath: string): void {
-    this.paths.add(resolve(filePath));
+    const path = resolve(filePath);
+    this.paths.add(path);
+    this.left.delete(path);
   }
 
   revoke(filePath: string): void {
-    this.paths.delete(resolve(filePath));
+    const path = resolve(filePath);
+    this.paths.delete(path);
+    this.left.add(path);
   }
 
   has(filePath: unknown): filePath is string {
     return typeof filePath === "string" && filePath !== "" && this.paths.has(resolve(filePath));
+  }
+
+  /// Granted once, and left by its file since.
+  wasLeft(filePath: unknown): boolean {
+    return typeof filePath === "string" && filePath !== "" && this.left.has(resolve(filePath));
   }
 }
 

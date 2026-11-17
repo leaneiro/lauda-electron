@@ -11,6 +11,10 @@ import { forgetDocumentFolder, registerDocumentFolder } from "../protocols";
 import { type RecentFiles, sessionFile } from "../store";
 import { handle, notGranted } from "./handle";
 
+/// Nothing written, and no failure to tell: the file is not where the write
+/// was asked, and the news of where it went is on its way to the window.
+const withheld = { ok: false, withheld: true } as const;
+
 /// What the document requests work with: the files the window was handed,
 /// the watcher that tells of changes made elsewhere, the recent files, the
 /// strings, and the window a request came from.
@@ -41,14 +45,16 @@ export function registerDocumentRequests({
   );
   handle("doc:forget-folder", (_event, documentId) => forgetDocumentFolder(documentId));
   handle("doc:write", async (_event, filePath, text) => {
-    if (!granted.has(filePath)) return notGranted;
+    // Renamed or moved before the window heard (a write already on its way
+    // under the old name): the document follows the new name, and the old
+    // one is not to be made again.
+    if (!granted.has(filePath)) return granted.wasLeft(filePath) ? withheld : notGranted;
     // Asked of the disk now, not of what the watcher last heard: the
     // autosave can come before the news that the file was thrown away,
     // and would make the file again where it was.
-    if (await watcher.isInTrashNow(filePath)) return { ok: false, withheld: true };
-    // Renamed by another program while that was asked: the document follows
-    // the new name, and the old one is not to be made again.
-    if (!granted.has(filePath)) return { ok: false, withheld: true };
+    if (await watcher.isInTrashNow(filePath)) return withheld;
+    // Renamed by another program while that was asked.
+    if (!granted.has(filePath)) return withheld;
     try {
       await writeAtomically(filePath, text);
       await watcher.noteWritten(filePath, text);

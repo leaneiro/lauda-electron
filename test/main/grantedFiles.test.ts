@@ -25,6 +25,19 @@ describe("GrantedFiles", () => {
     expect(granted.has("/notes/new.md")).toBe(true);
   });
 
+  it("tells a path its file left from one it never had", () => {
+    const granted = new GrantedFiles();
+    granted.grant("/notes/old.md");
+    granted.revoke("/notes/old.md");
+    expect(granted.wasLeft("/notes/old.md")).toBe(true);
+    expect(granted.wasLeft("/notes/../notes/old.md")).toBe(true);
+    expect(granted.wasLeft("/etc/hosts")).toBe(false);
+    expect(granted.wasLeft(undefined)).toBe(false);
+    // A file there again (saved as, opened) is the window's to write.
+    granted.grant("/notes/old.md");
+    expect(granted.wasLeft("/notes/old.md")).toBe(false);
+  });
+
   it("refuses what isn't a path", () => {
     const granted = new GrantedFiles();
     expect(granted.has(undefined)).toBe(false);

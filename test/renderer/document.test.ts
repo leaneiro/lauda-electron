@@ -279,6 +279,23 @@ describe("LaudaDocument and the Trash (TRASH-01)", () => {
     expect(document.isEdited).toBe(true);
   });
 
+  it("TRASH-01.8 writes an edit held back under the old name once the new name comes", async () => {
+    const { document, requests } = fileDocument({
+      "doc:write": (filePath) => (filePath === "/docs/notes.md" ? { ok: false, withheld: true } : { ok: true }),
+    });
+    document.edit("# Notes\n\nMore");
+    // The autosave goes out under the old name, which the file has just left.
+    await vi.advanceTimersByTimeAsync(autosaveDelay * 2);
+    expect(writes(requests)).toEqual([["/docs/notes.md", "# Notes\n\nMore"]]);
+    document.moved("/docs/ideas.md");
+    await vi.advanceTimersByTimeAsync(autosaveDelay * 2);
+    expect(writes(requests)).toEqual([
+      ["/docs/notes.md", "# Notes\n\nMore"],
+      ["/docs/ideas.md", "# Notes\n\nMore"],
+    ]);
+    expect(document.isEdited).toBe(false);
+  });
+
   it("TRASH-01.15 becomes a new document holding the edits kept", () => {
     const { document } = fileDocument();
     document.edit("# Notes\n\nMore");

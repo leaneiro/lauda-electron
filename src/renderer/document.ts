@@ -228,5 +228,7 @@ export class LaudaDocument {
   moved(to: string): void {
     this.filePath = to;
     this.notifyChanged();
+    // An edit whose write was held back under the old name goes under the new one.
+    if (this.isEdited) this.scheduleAutosave();
   }
 }

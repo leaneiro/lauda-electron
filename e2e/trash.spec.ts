@@ -46,6 +46,16 @@ async function throwAwayWithAnEditKept(scene: Scene): Promise<void> {
   await throwAway(scene);
 }
 
+/// Nothing was written: not into the Trash, nor where the file was, which
+/// a write would make again.
+function expectNothingWritten(scene: Scene): void {
+  expect(readFileSync(scene.trashed, "utf8")).toBe("draft");
+  expect(existsSync(scene.home)).toBe(false);
+}
+
+const windowCount = (app: ElectronApplication) =>
+  app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length);
+
 /// Every message box answers with `response`, and what it asked is kept.
 async function answerQuestions(app: ElectronApplication, response: number): Promise<void> {
   await app.evaluate(({ dialog }, response) => {
@@ -77,7 +87,7 @@ test("TRASH-01.1 TRASH-01.3 TRASH-01.4 TRASH-01.7 the file in the Trash shows th
   await clickMenu(scene.app, "File", "Save");
   await clickMenu(scene.app, "Format", "Bold");
   await expect(editor(scene.window)).toHaveText("draft");
-  expect(readFileSync(scene.trashed, "utf8")).toBe("draft");
+  expectNothingWritten(scene);
   await scene.app.close();
 });
 
@@ -111,7 +121,7 @@ test("TRASH-01.10 TRASH-01.11 an edit kept out of the Trash is saved once the fi
   await throwAwayWithAnEditKept(scene);
   await clickMenu(scene.app, "File", "Save");
   await scene.window.waitForTimeout(2500);
-  expect(readFileSync(scene.trashed, "utf8")).toBe("draft");
+  expectNothingWritten(scene);
 
   await putBack(scene);
   await expect.poll(() => readFileSync(scene.home, "utf8")).toBe("draftx");
@@ -158,7 +168,7 @@ test("TRASH-01.12 closing with an edit kept asks first, and Cancel keeps the tab
   const quit = scene.app.waitForEvent("close");
   await clickMenu(scene.app, "File", "Close");
   await quit;
-  expect(readFileSync(scene.trashed, "utf8")).toBe("draft");
+  expectNothingWritten(scene);
 });
 
 test("TRASH-01.5 TRASH-01.10 closing a file saved before it was thrown away asks nothing", async () => {
@@ -170,7 +180,7 @@ test("TRASH-01.5 TRASH-01.10 closing a file saved before it was thrown away asks
   await expect(scene.window.locator(".tab")).toHaveCount(0);
   await expect(scene.window.locator(".window-title")).toHaveText("other.md");
   expect(await asked(scene.app)).toEqual([]);
-  expect(readFileSync(scene.trashed, "utf8")).toBe("draft");
+  expectNothingWritten(scene);
   await scene.app.close();
 });
 
@@ -322,8 +332,10 @@ test("TRASH-01.2 the notice cannot be dismissed by a click, Esc or a tab switch"
   const scene = await open("draft", { "other.md": "other" });
   await showTab(scene, "notes.md");
   await throwAway(scene);
-  // On the veil over the text, away from the card and its Show in Trash.
+  // On the veil over the text, and on the card's title, away from its Show in Trash.
   await notice(scene.window).click({ position: { x: 5, y: 5 } });
+  await expect(notice(scene.window)).toBeVisible();
+  await notice(scene.window).locator(".trash-title").click();
   await expect(notice(scene.window)).toBeVisible();
   await scene.window.keyboard.press("Escape");
   await expect(notice(scene.window)).toBeVisible();
@@ -457,7 +469,7 @@ test("TRASH-01.10 the edit kept shows in the dimmed text and stays out of the fi
   expect((await veilOver(scene.window)).covers).toBe(true);
   // Past the autosave's delay: nothing written since.
   await scene.window.waitForTimeout(2500);
-  expect(readFileSync(scene.trashed, "utf8")).toBe("draft");
+  expectNothingWritten(scene);
   await forceQuit(scene.app);
 });
 
@@ -508,15 +520,14 @@ test("TRASH-01.12 quitting with another tab in front brings the trashed tab forw
   await throwAwayWithAnEditKept(scene);
   await showTab(scene, "other.md");
   await answerQuestions(scene.app, 1);
-  const windows = () => scene.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length);
-  const windowsBefore = await windows();
+  const windowsBefore = await windowCount(scene.app);
   await scene.app.evaluate(({ app }) => app.quit());
   await expect.poll(() => asked(scene.app)).toEqual(["Close “notes.md” without saving?"]);
   await expect(selectedTab(scene.window)).toHaveText("notes.md");
   await expect(notice(scene.window)).toBeVisible();
   // Quitting takes a moment: every window still there a second later, it was kept.
   await scene.window.waitForTimeout(1000);
-  expect(await windows()).toBe(windowsBefore);
+  expect(await windowCount(scene.app)).toBe(windowsBefore);
   await forceQuit(scene.app);
 });
 
@@ -530,7 +541,7 @@ test("TRASH-01.12 quitting without an edit kept asks nothing, and the app quits"
   // The app may be gone before the call returns.
   await scene.app.evaluate(({ app }) => app.quit()).catch(() => {});
   await closed;
-  expect(readFileSync(scene.trashed, "utf8")).toBe("draft");
+  expectNothingWritten(scene);
 });
 
 test("TRASH-01.13 the sheet has the text and buttons, and nothing is written before the answer", async () => {
@@ -667,13 +678,15 @@ test("TRASH-01.16 the sheet taken down by the deleted file keeps the app from qu
       );
     }) as typeof dialog.showMessageBox;
   });
+  const windowsBefore = await windowCount(scene.app);
   await scene.app.evaluate(({ app }) => app.quit());
   await expect.poll(() => asked(scene.app)).toHaveLength(1);
   rmSync(scene.trashed);
   await expect(scene.window.locator(".window-title")).toHaveText("Untitled");
   await expect(editor(scene.window)).toHaveText("draftx");
+  // Quitting takes a moment: every window still there a second later, it was kept.
   await scene.window.waitForTimeout(1000);
-  expect(await scene.app.evaluate(({ app }) => app.isReady())).toBe(true);
+  expect(await windowCount(scene.app)).toBe(windowsBefore);
   expect(await asked(scene.app)).toHaveLength(1);
   await scene.app.evaluate(({ dialog }) => {
     (globalThis as { asked?: string[] }).asked = [];

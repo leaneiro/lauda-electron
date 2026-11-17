@@ -141,7 +141,8 @@ describe("a document's file and the Trash", () => {
           goneFromTrash: () => said.push("gone"),
           renamed: () => said.push("renamed"),
         },
-        () => ({ folders: [folder], perUserParents: [] }),
+        // .Trash by its name alone, bin by its place alone.
+        () => ({ folders: name === "bin" ? [folder] : [], perUserParents: [] }),
       );
       scenes.push({ root, watcher, file });
       watcher.watch(file, "old");

@@ -83,6 +83,51 @@ window opens is left out there (macOS places it itself). That is measured
 on macOS; on Linux a window can't be made see-through and shows.
 `LAUDA_ONSCREEN=1 npm run e2e` shows them anywhere, to watch a run.
 
+What Playwright and Electron don't do, and what the tests do instead:
+
+- Keys typed through the page reach neither the system's menus nor the
+  main process's `before-input-event`. A test clicks a menu item through
+  `clickMenu` (`e2e/launch.ts`) and emits `before-input-event` on the
+  window's `webContents` itself (see the Ctrl+Tab test). Items with a
+  `role`, like Paste, act on the focused window, which a test's may not
+  be: call `webContents.paste()` instead.
+- `launch` passes `colorScheme: null`, or Playwright forces the light
+  appearance on the app.
+- Hovering the divider's handle at its middle never completes: the chain
+  comes up under the pointer and takes it. Hover away from the middle, as
+  the chain tests do.
+- A hidden preview frame (`display: none`) loses its scroll position with
+  no event, and back in view its first event is a scroll at the top.
+  `DocumentView.setVisible` puts it back where it was.
+- The main process's clipboard is asynchronous: `readText`, `read` and
+  `write` return promises, and an image goes in as a `ClipboardItem`.
+- Word counts are the native app's. Chromium's ICU splits a word like
+  "example.com" at the full stop, where macOS keeps it whole, and
+  `wordCount` joins the pieces again.
+
+## Platform traps
+
+- **Linux runs under X11.** On Wayland a window can't be kept above
+  another (Settings fell behind the document window, whatever its
+  `parent`), nor moved or resized once it is made. The switch has to be
+  on the command line itself: `app.commandLine.appendSwitch` comes too
+  late, and Electron no longer reads `ELECTRON_OZONE_PLATFORM_HINT`.
+  `build.linux.executableArgs` in `package.json` puts
+  `--ozone-platform=x11` in the `.desktop` launcher's `Exec` line, so it
+  only applies from there: the AppImage file run directly, or `lauda`
+  typed in a terminal, still runs on Wayland.
+- A `<select>` whose menu stays open only while the button is held means
+  the app is running on Wayland.
+- GTK's message dialog centres a one-line detail but sets a wrapped one
+  flush left under the centred message: keep a dialog's detail to one
+  short line.
+- GTK can't read a file inside the app's archive, and its save panel adds
+  no extension: see `appIconFile` in `src/main/windows.ts` and
+  `pathWithExtension` in `src/main/document-files.ts`.
+- The Ubuntu fonts draw arrows tiny, so the system font stacks put the
+  "Lauda Arrows" faces (DejaVu's arrows only) first: see `cssFontFamily`
+  in `src/shared/settings.ts`.
+
 ## Staying in step with the native app
 
 `npm run sync-native` copies the preview stylesheet, the wordmark font,

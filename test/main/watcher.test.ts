@@ -122,33 +122,38 @@ describe("a document's file and the Trash", () => {
     expect(readFileSync(inBin, "utf8")).toBe("draft");
   });
 
-  it("TRASH-01.1 TRASH-01.4 counts a file opened from inside the Trash as there from the start", async () => {
-    const root = mkdtempSync(join(tmpdir(), "lauda-watcher-"));
-    const folder = join(root, ".Trash");
-    mkdirSync(folder);
-    const file = join(folder, "old.md");
-    writeFileSync(file, "old");
-    const said: string[] = [];
-    const watcher = new DocumentWatcher(
-      {
-        changed: () => said.push("changed"),
-        trashed: () => said.push("trashed"),
-        putBack: () => said.push("putBack"),
-        goneFromTrash: () => said.push("gone"),
-        renamed: () => said.push("renamed"),
-      },
-      () => ({ folders: [folder], perUserParents: [] }),
-    );
-    scenes.push({ root, watcher, file });
-    watcher.watch(file, "old");
-    // Nothing is written there, even before the watcher knows which file it is.
-    expect(await watcher.isInTrashNow(file)).toBe(true);
-    expect(await until(() => said.includes("trashed"))).toBe(true);
-    rmSync(file);
-    expect(await until(() => said.includes("gone"))).toBe(true);
-    // Nor is it made again there once it is gone.
-    expect(await watcher.isInTrashNow(file)).toBe(true);
-  });
+  // A Trash told by its name (.Trash), or only by where a thrown away file
+  // would be (bin: Linux with XDG_DATA_HOME of the user's own, the tests').
+  it.each([".Trash", "bin"])(
+    "TRASH-01.1 TRASH-01.4 counts a file opened from inside the Trash (%s) as there from the start",
+    async (name) => {
+      const root = mkdtempSync(join(tmpdir(), "lauda-watcher-"));
+      const folder = join(root, name);
+      mkdirSync(folder);
+      const file = join(folder, "old.md");
+      writeFileSync(file, "old");
+      const said: string[] = [];
+      const watcher = new DocumentWatcher(
+        {
+          changed: () => said.push("changed"),
+          trashed: () => said.push("trashed"),
+          putBack: () => said.push("putBack"),
+          goneFromTrash: () => said.push("gone"),
+          renamed: () => said.push("renamed"),
+        },
+        () => ({ folders: [folder], perUserParents: [] }),
+      );
+      scenes.push({ root, watcher, file });
+      watcher.watch(file, "old");
+      // Nothing is written there, even before the watcher knows which file it is.
+      expect(await watcher.isInTrashNow(file)).toBe(true);
+      expect(await until(() => said.includes("trashed"))).toBe(true);
+      rmSync(file);
+      expect(await until(() => said.includes("gone"))).toBe(true);
+      // Nor is it made again there once it is gone.
+      expect(await watcher.isInTrashNow(file)).toBe(true);
+    },
+  );
 
   it("TRASH-01.4 asks only where the file is before a write, never taking its text for a change", async () => {
     const { file, said, watcher } = await watching();

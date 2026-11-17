@@ -105,6 +105,10 @@ interface WatchedFile {
 /// the Trash is looked into only when a document's file disappears.
 export class DocumentWatcher {
   private readonly files = new Map<string, WatchedFile>();
+  /// Where a file was before it left the Trash for good: a write still on
+  /// its way there (asked before the window heard) would make it again.
+  /// Kept until a file there is watched anew.
+  private readonly goneForGood = new Set<string>();
 
   constructor(
     private readonly events: DocumentWatcherEvents,
@@ -128,6 +132,7 @@ export class DocumentWatcher {
   /// between the opening and now is told as one. Without it (a file
   /// renamed elsewhere), from what the file holds now.
   watch(filePath: string, knownText?: string): void {
+    this.goneForGood.delete(filePath);
     let entry = this.files.get(filePath);
     if (!entry) {
       entry = { identity: null };
@@ -228,11 +233,11 @@ export class DocumentWatcher {
   /// the Trash, is not written over; nor is anything, when this one has
   /// just left the Trash for good.
   async isInTrashNow(filePath: string): Promise<boolean> {
-    const entry = this.files.get(filePath);
-    if (!entry) return false;
     // Opened from inside the Trash: there, though at the path it has, told
     // by the path alone, before the watcher has even asked which file it is.
-    if (isInsideTrash(filePath)) return true;
+    if (isInsideTrash(filePath) || this.goneForGood.has(filePath)) return true;
+    const entry = this.files.get(filePath);
+    if (!entry) return false;
     const identity = await identityOf(filePath);
     const isTheDocumentsFile = !entry.trashedAt || (entry.identity && isSameFile(entry.identity, identity));
     if (identity && isTheDocumentsFile) return false;
@@ -331,6 +336,7 @@ export class DocumentWatcher {
       return;
     }
     this.unwatch(filePath);
+    this.goneForGood.add(filePath);
     this.events.goneFromTrash(filePath);
   }
 }

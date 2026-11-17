@@ -141,11 +141,13 @@ describe("a document's file and the Trash", () => {
     );
     scenes.push({ root, watcher, file });
     watcher.watch(file, "old");
-    expect(await until(() => said.includes("trashed"))).toBe(true);
-    // Nothing is written there either.
+    // Nothing is written there, even before the watcher knows which file it is.
     expect(await watcher.isInTrashNow(file)).toBe(true);
+    expect(await until(() => said.includes("trashed"))).toBe(true);
     rmSync(file);
     expect(await until(() => said.includes("gone"))).toBe(true);
+    // Nor is it made again there once it is gone.
+    expect(await watcher.isInTrashNow(file)).toBe(true);
   });
 
   it("TRASH-01.4 asks only where the file is before a write, never taking its text for a change", async () => {
@@ -273,6 +275,20 @@ describe("a document's file and the Trash", () => {
     await until(() => said.includes("trashed"));
     rmSync(inBin);
     expect(await watcher.isInTrashNow(file)).toBe(true);
+    // A second write, asked before the window heard, is held back too.
+    expect(await watcher.isInTrashNow(file)).toBe(true);
     expect(said).toEqual(["trashed", "gone"]);
+  });
+
+  it("TRASH-01.15 writes again where the file was once a file there is watched anew", async () => {
+    const { file, inBin, said, watcher } = await watching();
+    renameSync(file, inBin);
+    await until(() => said.includes("trashed"));
+    rmSync(inBin);
+    await until(() => said.includes("gone"));
+    // Saved there again as another document (Save As), or opened afresh.
+    writeFileSync(file, "new");
+    watcher.watch(file, "new");
+    expect(await watcher.isInTrashNow(file)).toBe(false);
   });
 });

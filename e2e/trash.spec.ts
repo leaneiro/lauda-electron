@@ -48,8 +48,8 @@ async function throwAwayWithAnEditKept(scene: Scene): Promise<void> {
 
 /// Nothing was written: not into the Trash, nor where the file was, which
 /// a write would make again.
-function expectNothingWritten(scene: Scene): void {
-  expect(readFileSync(scene.trashed, "utf8")).toBe("draft");
+function expectNothingWritten(scene: Scene, thrownAway = "draft"): void {
+  expect(readFileSync(scene.trashed, "utf8")).toBe(thrownAway);
   expect(existsSync(scene.home)).toBe(false);
 }
 
@@ -87,6 +87,8 @@ test("TRASH-01.1 TRASH-01.3 TRASH-01.4 TRASH-01.7 the file in the Trash shows th
   await clickMenu(scene.app, "File", "Save");
   await clickMenu(scene.app, "Format", "Bold");
   await expect(editor(scene.window)).toHaveText("draft");
+  // A write is held back in the main process, a moment after the menu.
+  await scene.window.waitForTimeout(1000);
   expectNothingWritten(scene);
   await scene.app.close();
 });
@@ -376,7 +378,7 @@ test("TRASH-01.4 the text of a file in the Trash can't take the keyboard, and un
   await scene.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.undo());
   await scene.window.waitForTimeout(2500);
   await expect(editor(scene.window)).toHaveText("draftx");
-  expect(readFileSync(scene.trashed, "utf8")).toBe("draftx");
+  expectNothingWritten(scene, "draftx");
   await scene.app.close();
 });
 

@@ -87,7 +87,7 @@ test("TRASH-01.1 TRASH-01.3 TRASH-01.4 TRASH-01.7 the file in the Trash shows th
   await clickMenu(scene.app, "File", "Save");
   await clickMenu(scene.app, "Format", "Bold");
   await expect(editor(scene.window)).toHaveText("draft");
-  // A write is held back in the main process, a moment after the menu.
+  // A write, were there one, would reach the main process a moment after the menu.
   await scene.window.waitForTimeout(1000);
   expectNothingWritten(scene);
   await scene.app.close();

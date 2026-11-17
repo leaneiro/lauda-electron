@@ -451,6 +451,31 @@ test("TRASH-01.8 a file renamed in its folder, in a tab, is followed with no not
   await scene.app.close();
 });
 
+test("TRASH-01.8 a write still on its way under the name the file left is held back, and a name never opened is refused", async () => {
+  const scene = await open();
+  const renamed = join(scene.folder, "ideas.md");
+  renameSync(scene.home, renamed);
+  await expect(scene.window.locator(".window-title")).toHaveText("ideas.md");
+  // As the window would ask it, through the bridge.
+  const write = (path: string) =>
+    scene.window.evaluate(
+      (path) =>
+        (globalThis as unknown as { lauda: { invoke: (...args: unknown[]) => Promise<unknown> } }).lauda.invoke(
+          "doc:write",
+          path,
+          "late",
+        ),
+      path,
+    );
+  expect(await write(scene.home)).toEqual({ ok: false, withheld: true });
+  expect(existsSync(scene.home)).toBe(false);
+  const never = join(scene.folder, "never.md");
+  expect(await write(never)).toMatchObject({ ok: false, error: expect.any(String) });
+  expect(existsSync(never)).toBe(false);
+  expect(readFileSync(renamed, "utf8")).toBe("draft");
+  await scene.app.close();
+});
+
 test("TRASH-01.8 a file moved to another folder is not followed: no notice, and it saves where it was", async () => {
   const scene = await open();
   const desk = join(scene.folder, "..", "desk");
